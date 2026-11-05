@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbe:messageSchema xmlns:sbe="http://fixprotocol.io/2016/sbe"
+                   package="market.sbe"
+                   id="1"
+                   version="0"
+                   semanticVersion="1.0"
+                   description="Market Data Schema for Track My Market"
+                   byteOrder="littleEndian">
+    <types>
+        <type name="uInt64" primitiveType="uint64"/>
+        <type name="int64" primitiveType="int64"/>
+        <type name="uInt16" primitiveType="uint16"/>
+        <type name="uInt8" primitiveType="uint8"/>
+
+        <enum name="ModelProvider" encodingType="uInt8">
+            <validValue name="YAHOO">1</validValue>
+            <validValue name="ZERODHA">2</validValue>
+            <validValue name="DHAN">3</validValue>
+            <validValue name="SIMULATED">4</validValue>
+        </enum>
+
+        <composite name="messageHeader" description="Message identifiers and length of message root">
+            <type name="blockLength" primitiveType="uint16"/>
+            <type name="templateId" primitiveType="uint16"/>
+            <type name="schemaId" primitiveType="uint16"/>
+            <type name="version" primitiveType="uint16"/>
+        </composite>
+
+        <composite name="fixedString16">
+            <type name="value" primitiveType="char" length="16"/>
+        </composite>
+        <composite name="fixedString12">
+            <type name="value" primitiveType="char" length="12"/>
+        </composite>
+        <composite name="fixedString7">
+            <type name="value" primitiveType="char" length="7"/>
+        </composite>
+    </types>
+
+    <sbe:message name="MarketTick" id="1" description="Market Tick Quote with latency instrumentation">
+        <field name="price" id="1" type="uInt64" description="Price scaled by 10^4"/>
+        <field name="quoteTimestampNs" id="2" type="int64" description="Exchange quote epoch nanoseconds"/>
+        <field name="ingressTimestampNs" id="3" type="int64" description="Ingress received epoch nanoseconds"/>
+        <field name="fetchDurationNs" id="4" type="int64" description="Roundtrip network fetch duration nanoseconds"/>
+        <field name="provider" id="5" type="ModelProvider"/>
+        <field name="symbol" id="6" type="fixedString16" description="Exchange ticker symbol"/>
+        <field name="isin" id="7" type="fixedString12" description="ISIN 12 characters"/>
+        <field name="sedol" id="8" type="fixedString7" description="SEDOL 7 characters"/>
+        <field name="ric" id="9" type="fixedString16" description="RIC symbol"/>
+    </sbe:message>
+</sbe:messageSchema>
