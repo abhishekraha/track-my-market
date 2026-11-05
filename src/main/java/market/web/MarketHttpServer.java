@@ -2,6 +2,8 @@ package market.web;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
+import market.alert.AlertController;
+import market.bus.aeron.AeronTelemetryCollector;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,6 +40,8 @@ public class MarketHttpServer {
     private final String contextPath;
     private final MarketStreamBroadcaster broadcaster;
     private final DynamicWatchlistController watchlistController;
+    private final AeronTelemetryCollector telemetryCollector;
+    private final AlertController alertController;
 
     public MarketHttpServer(
         String bindHost,
@@ -46,8 +50,33 @@ public class MarketHttpServer {
         MarketStreamBroadcaster broadcaster,
         DynamicWatchlistController watchlistController
     ) throws IOException {
+        this(bindHost, port, contextPath, broadcaster, watchlistController, null, null);
+    }
+
+    public MarketHttpServer(
+        String bindHost,
+        int port,
+        String contextPath,
+        MarketStreamBroadcaster broadcaster,
+        DynamicWatchlistController watchlistController,
+        AeronTelemetryCollector telemetryCollector
+    ) throws IOException {
+        this(bindHost, port, contextPath, broadcaster, watchlistController, telemetryCollector, null);
+    }
+
+    public MarketHttpServer(
+        String bindHost,
+        int port,
+        String contextPath,
+        MarketStreamBroadcaster broadcaster,
+        DynamicWatchlistController watchlistController,
+        AeronTelemetryCollector telemetryCollector,
+        AlertController alertController
+    ) throws IOException {
         this.broadcaster = Objects.requireNonNull(broadcaster, "broadcaster must not be null");
         this.watchlistController = Objects.requireNonNull(watchlistController, "watchlistController must not be null");
+        this.telemetryCollector = (telemetryCollector != null) ? telemetryCollector : new AeronTelemetryCollector();
+        this.alertController = alertController;
         this.contextPath = normalizeContextPath(contextPath);
 
         this.server = HttpServer.create(new InetSocketAddress(bindHost, port), 0);
@@ -88,6 +117,8 @@ public class MarketHttpServer {
         server.createContext(fullPath("/api/search"), this::handleSearch);
         server.createContext(fullPath("/api/chart"), this::handleChart);
         server.createContext(fullPath("/api/fx"), this::handleFx);
+        server.createContext(fullPath("/api/aeron/stats"), this::handleAeronStats);
+        server.createContext(fullPath("/api/alerts"), this::handleAlerts);
         server.createContext(baseContext, this::handleStatic);
     }
 
@@ -301,6 +332,114 @@ public class MarketHttpServer {
         sendJson(exchange, 200, json);
     }
 
+    private void handleAeronStats(HttpExchange exchange) throws IOException {
+        String method = exchange.getRequestMethod().toUpperCase();
+        if (!"GET".equals(method) && !"HEAD".equals(method)) {
+            sendError(exchange, 405, "Method Not Allowed");
+            return;
+        }
+
+        String path = exchange.getRequestURI().getPath();
+        String statsBase = fullPath("/api/aeron/stats");
+        if (!path.equals(statsBase) && !path.equals(statsBase + "/")) {
+            sendError(exchange, 404, "Not Found");
+            return;
+        }
+
+        String json = telemetryCollector.toJson();
+        sendJson(exchange, 200, json);
+    }
+
+    private void handleAlerts(HttpExchange exchange) throws IOException {
+        if (alertController == null) {
+            sendError(exchange, 503, "Alert system not available");
+            return;
+        }
+
+        String method = exchange.getRequestMethod().toUpperCase();
+        String path = exchange.getRequestURI().getPath();
+        String alertsBase = fullPath("/api/alerts");
+
+        String relPath = path.substring(alertsBase.length());
+        if (relPath.endsWith("/") && relPath.length() > 1) {
+            relPath = relPath.substring(0, relPath.length() - 1);
+        }
+
+        try {
+            switch (relPath) {
+                case "", "/" -> {
+                    if (!"GET".equals(method)) {
+                        exchange.sendResponseHeaders(405, -1);
+                        exchange.close();
+                        return;
+                    }
+                    String json = alertController.handleGetAlertsJson();
+                    sendJson(exchange, 200, json);
+                }
+                case "/create" -> {
+                    if (!"POST".equals(method)) {
+                        exchange.sendResponseHeaders(405, -1);
+                        exchange.close();
+                        return;
+                    }
+                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    String json = alertController.handleCreateAlertJson(body);
+                    sendJson(exchange, 200, json);
+                }
+                case "/toggle" -> {
+                    if (!"POST".equals(method)) {
+                        exchange.sendResponseHeaders(405, -1);
+                        exchange.close();
+                        return;
+                    }
+                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    String json = alertController.handleToggleAlertJson(body);
+                    sendJson(exchange, 200, json);
+                }
+                case "/delete" -> {
+                    if (!"POST".equals(method) && !"DELETE".equals(method)) {
+                        exchange.sendResponseHeaders(405, -1);
+                        exchange.close();
+                        return;
+                    }
+                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    String json = alertController.handleDeleteAlertJson(body);
+                    sendJson(exchange, 200, json);
+                }
+                case "/telegram/config" -> {
+                    if ("GET".equals(method)) {
+                        String json = alertController.handleGetTelegramConfigJson();
+                        sendJson(exchange, 200, json);
+                    } else if ("POST".equals(method)) {
+                        String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                        String json = alertController.handleSaveTelegramConfigJson(body);
+                        sendJson(exchange, 200, json);
+                    } else {
+                        exchange.sendResponseHeaders(405, -1);
+                        exchange.close();
+                    }
+                }
+                case "/telegram/test" -> {
+                    if (!"POST".equals(method)) {
+                        exchange.sendResponseHeaders(405, -1);
+                        exchange.close();
+                        return;
+                    }
+                    String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                    String json = alertController.handleTestTelegramJson(body);
+                    sendJson(exchange, 200, json);
+                }
+                default -> {
+                    sendError(exchange, 404, "Not Found");
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            sendError(exchange, 400, e.getMessage());
+        } catch (Exception e) {
+            sendError(exchange, 500, "Internal Server Error: " + e.getMessage());
+        }
+    }
+
     private void sendJson(HttpExchange exchange, int statusCode, String json) throws IOException {
         byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
@@ -340,5 +479,13 @@ public class MarketHttpServer {
 
     public String getContextPath() {
         return contextPath;
+    }
+
+    public AeronTelemetryCollector getTelemetryCollector() {
+        return telemetryCollector;
+    }
+
+    public AlertController getAlertController() {
+        return alertController;
     }
 }

@@ -40,6 +40,7 @@ public class AeronEventBus implements MarketEventBus {
     private final boolean deleteDirsOnClose;
     private final IdleStrategy idleStrategy;
     private final int maxOfferRetries;
+    private final AeronTelemetryCollector telemetryCollector;
 
     private final ConcurrentMap<Integer, Publication> publications = new ConcurrentHashMap<>();
     private final ConcurrentMap<Integer, Subscription> subscriptions = new ConcurrentHashMap<>();
@@ -83,6 +84,7 @@ public class AeronEventBus implements MarketEventBus {
         this.deleteDirsOnClose = deleteDirsOnClose;
         this.idleStrategy = (idleStrategy != null) ? idleStrategy : new YieldingIdleStrategy();
         this.maxOfferRetries = maxOfferRetries > 0 ? maxOfferRetries : DEFAULT_MAX_OFFER_RETRIES;
+        this.telemetryCollector = new AeronTelemetryCollector(this, this.channel, this.defaultStreamId);
     }
 
     @Override
@@ -124,6 +126,9 @@ public class AeronEventBus implements MarketEventBus {
             subscriptions.computeIfAbsent(streamId, s -> aeron.addSubscription(channel, s));
         }
 
+        // Auto-subscribe telemetry collector to defaultStreamId
+        subscribe(defaultStreamId, telemetryCollector);
+
         started.set(true);
     }
 
@@ -145,6 +150,9 @@ public class AeronEventBus implements MarketEventBus {
 
             long result = publication.offer(buffer, offset, length);
             if (result >= 0) {
+                if (telemetryCollector != null) {
+                    telemetryCollector.recordPublished(length, i);
+                }
                 return true;
             }
 
@@ -155,10 +163,19 @@ public class AeronEventBus implements MarketEventBus {
             if (result == Publication.BACK_PRESSURED
                     || result == Publication.ADMIN_ACTION
                     || result == Publication.NOT_CONNECTED) {
+                if (telemetryCollector != null) {
+                    if (result == Publication.BACK_PRESSURED) {
+                        telemetryCollector.recordBackpressure();
+                    }
+                    telemetryCollector.recordOfferRetry();
+                }
                 idleStrategy.idle();
                 continue;
             }
 
+            if (telemetryCollector != null) {
+                telemetryCollector.recordOfferRetry();
+            }
             idleStrategy.idle();
         }
 
@@ -175,8 +192,10 @@ public class AeronEventBus implements MarketEventBus {
         }
 
         List<FragmentHandler> streamHandlers = handlers.computeIfAbsent(streamId, k -> new CopyOnWriteArrayList<>());
-        streamHandlers.add(handler);
-        updateCompositeHandler(streamId, streamHandlers);
+        if (!streamHandlers.contains(handler)) {
+            streamHandlers.add(handler);
+            updateCompositeHandler(streamId, streamHandlers);
+        }
 
         if (started.get() && aeron != null) {
             subscriptions.computeIfAbsent(streamId, s -> aeron.addSubscription(channel, s));
@@ -294,5 +313,36 @@ public class AeronEventBus implements MarketEventBus {
 
     public Aeron aeron() {
         return aeron;
+    }
+
+    public AeronTelemetryCollector telemetryCollector() {
+        return telemetryCollector;
+    }
+
+    public Publication getPublication(int streamId) {
+        return publications.get(streamId);
+    }
+
+    public Subscription getSubscription(int streamId) {
+        return subscriptions.get(streamId);
+    }
+
+    public long getPublicationPosition(int streamId) {
+        Publication pub = publications.get(streamId);
+        return (pub != null && !pub.isClosed()) ? pub.position() : 0L;
+    }
+
+    public long getSubscriptionPosition(int streamId) {
+        Subscription sub = subscriptions.get(streamId);
+        if (sub == null || sub.isClosed()) {
+            return 0L;
+        }
+        long maxPos = 0L;
+        for (io.aeron.Image image : sub.images()) {
+            if (!image.isClosed()) {
+                maxPos = Math.max(maxPos, image.position());
+            }
+        }
+        return maxPos;
     }
 }

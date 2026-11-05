@@ -1,5 +1,9 @@
 package market.web;
 
+import market.alert.AlertController;
+import market.alert.AlertRepository;
+import market.alert.AlertRuleEngine;
+import market.bus.aeron.AeronTelemetryCollector;
 import market.provider.yahoo.YahooFinanceProvider;
 import market.sbe.MarketTickEncoder;
 import market.sbe.MessageHeaderEncoder;
@@ -29,6 +33,9 @@ class MarketHttpServerTest {
     private YahooFinanceProvider provider;
     private MarketStreamBroadcaster broadcaster;
     private DynamicWatchlistController controller;
+    private AlertRepository alertRepository;
+    private AlertRuleEngine alertEngine;
+    private AlertController alertController;
     private HttpClient client;
 
     @BeforeEach
@@ -38,7 +45,20 @@ class MarketHttpServerTest {
         broadcaster = new MarketStreamBroadcaster();
         controller = new DynamicWatchlistController(provider);
 
-        server = new MarketHttpServer("127.0.0.1", 0, "/market", broadcaster, controller);
+        java.nio.file.Path tempAlertsPath = java.nio.file.Files.createTempFile("alerts-test-", ".json");
+        alertRepository = new AlertRepository(tempAlertsPath, provider);
+        alertEngine = new AlertRuleEngine(alertRepository);
+        alertController = new AlertController(alertRepository, alertEngine, null, provider);
+
+        server = new MarketHttpServer(
+            "127.0.0.1",
+            0,
+            "/market",
+            broadcaster,
+            controller,
+            new AeronTelemetryCollector(),
+            alertController
+        );
         server.start();
 
         client = HttpClient.newBuilder()
@@ -50,6 +70,9 @@ class MarketHttpServerTest {
     void tearDown() {
         if (server != null) {
             server.stop();
+        }
+        if (alertRepository != null) {
+            alertRepository.close();
         }
     }
 
@@ -320,5 +343,124 @@ class MarketHttpServerTest {
         assertThat(resp.body()).contains("\"INR\":");
         assertThat(resp.body()).contains("\"BRL\":");
         assertThat(resp.body()).contains("\"CNY\":");
+    }
+
+    @Test
+    @DisplayName("Should serve Aeron telemetry stats API under context path")
+    void shouldServeAeronStatsEndpoint() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+            .uri(URI.create("http://127.0.0.1:" + server.getPort() + "/market/api/aeron/stats"))
+            .GET()
+            .build();
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+        assertThat(resp.statusCode()).isEqualTo(200);
+        assertThat(resp.headers().firstValue("Content-Type").orElse("")).contains("application/json");
+        assertThat(resp.body()).contains("\"channel\": \"aeron:ipc\"");
+        assertThat(resp.body()).contains("\"streamId\": 1001");
+        assertThat(resp.body()).contains("\"mediaDriver\": \"ArchivingMediaDriver Embedded IPC\"");
+        assertThat(resp.body()).contains("\"status\": \"HEALTHY\"");
+        assertThat(resp.body()).contains("\"lagBytes\":");
+        assertThat(resp.body()).contains("\"latencyUs\":");
+        assertThat(resp.body()).contains("\"backpressureEvents\":");
+        assertThat(resp.body()).contains("\"offHeapAllocation\": \"Zero (DirectBuffer)\"");
+
+        // Should reject POST with 405
+        HttpRequest postReq = HttpRequest.newBuilder()
+            .uri(URI.create("http://127.0.0.1:" + server.getPort() + "/market/api/aeron/stats"))
+            .POST(HttpRequest.BodyPublishers.noBody())
+            .build();
+        HttpResponse<String> postResp = client.send(postReq, HttpResponse.BodyHandlers.ofString());
+        assertThat(postResp.statusCode()).isEqualTo(405);
+    }
+
+    @Test
+    @DisplayName("Should serve Alert CRUD, toggle, and Telegram configuration endpoints under context path")
+    void shouldServeAlertEndpoints() throws Exception {
+        // 1. GET /api/alerts initially returns empty lists
+        HttpRequest getReq = HttpRequest.newBuilder()
+            .uri(URI.create("http://127.0.0.1:" + server.getPort() + "/market/api/alerts"))
+            .GET()
+            .build();
+        HttpResponse<String> getResp = client.send(getReq, HttpResponse.BodyHandlers.ofString());
+        assertThat(getResp.statusCode()).isEqualTo(200);
+        assertThat(getResp.body()).contains("\"rules\":[]");
+        assertThat(getResp.body()).contains("\"history\":[]");
+
+        // 2. POST /api/alerts/create creates a new alert
+        String createJson = """
+            {
+                "symbol": "INFY.NS",
+                "condition": "ABOVE",
+                "targetPrice": 1920.0,
+                "triggerMode": "ONE_SHOT",
+                "cooldownMinutes": 10,
+                "notifyTelegram": true,
+                "notifyUi": true
+            }
+            """;
+        HttpRequest createReq = HttpRequest.newBuilder()
+            .uri(URI.create("http://127.0.0.1:" + server.getPort() + "/market/api/alerts/create"))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(createJson))
+            .build();
+        HttpResponse<String> createResp = client.send(createReq, HttpResponse.BodyHandlers.ofString());
+        assertThat(createResp.statusCode()).isEqualTo(200);
+        assertThat(createResp.body()).contains("\"success\":true");
+        assertThat(createResp.body()).contains("\"symbol\":\"INFY.NS\"");
+        assertThat(createResp.body()).contains("\"targetPrice\":1920.0");
+
+        // Parse created alert ID
+        String body = createResp.body();
+        int idIdx = body.indexOf("\"id\":\"") + 6;
+        int endIdIdx = body.indexOf("\"", idIdx);
+        String alertId = body.substring(idIdx, endIdIdx);
+
+        // 3. POST /api/alerts/toggle pauses the alert
+        HttpRequest toggleReq = HttpRequest.newBuilder()
+            .uri(URI.create("http://127.0.0.1:" + server.getPort() + "/market/api/alerts/toggle"))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString("{\"id\":\"" + alertId + "\",\"active\":false}"))
+            .build();
+        HttpResponse<String> toggleResp = client.send(toggleReq, HttpResponse.BodyHandlers.ofString());
+        assertThat(toggleResp.statusCode()).isEqualTo(200);
+        assertThat(toggleResp.body()).contains("\"status\":\"DISABLED\"");
+
+        // 4. POST /api/alerts/telegram/config updates credentials
+        String tgConfigJson = """
+            {
+                "botToken": "987654321:XYZ987654321_token",
+                "chatId": "-100234567890",
+                "enabled": true
+            }
+            """;
+        HttpRequest tgConfigReq = HttpRequest.newBuilder()
+            .uri(URI.create("http://127.0.0.1:" + server.getPort() + "/market/api/alerts/telegram/config"))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString(tgConfigJson))
+            .build();
+        HttpResponse<String> tgConfigResp = client.send(tgConfigReq, HttpResponse.BodyHandlers.ofString());
+        assertThat(tgConfigResp.statusCode()).isEqualTo(200);
+        assertThat(tgConfigResp.body()).contains("\"success\":true");
+        assertThat(tgConfigResp.body()).contains("\"maskedToken\":\"****oken\"");
+
+        // 5. GET /api/alerts/telegram/config queries masked credentials
+        HttpRequest getTgReq = HttpRequest.newBuilder()
+            .uri(URI.create("http://127.0.0.1:" + server.getPort() + "/market/api/alerts/telegram/config"))
+            .GET()
+            .build();
+        HttpResponse<String> getTgResp = client.send(getTgReq, HttpResponse.BodyHandlers.ofString());
+        assertThat(getTgResp.statusCode()).isEqualTo(200);
+        assertThat(getTgResp.body()).contains("\"maskedToken\":\"****oken\"");
+        assertThat(getTgResp.body()).contains("\"chatId\":\"-100234567890\"");
+
+        // 6. POST /api/alerts/delete deletes the alert
+        HttpRequest delReq = HttpRequest.newBuilder()
+            .uri(URI.create("http://127.0.0.1:" + server.getPort() + "/market/api/alerts/delete"))
+            .header("Content-Type", "application/json")
+            .POST(HttpRequest.BodyPublishers.ofString("{\"id\":\"" + alertId + "\"}"))
+            .build();
+        HttpResponse<String> delResp = client.send(delReq, HttpResponse.BodyHandlers.ofString());
+        assertThat(delResp.statusCode()).isEqualTo(200);
+        assertThat(delResp.body()).contains("\"success\":true");
     }
 }

@@ -1,5 +1,10 @@
 package market;
 
+import market.alert.AlertController;
+import market.alert.AlertJsonCodec;
+import market.alert.AlertRepository;
+import market.alert.AlertRuleEngine;
+import market.alert.TelegramDispatcher;
 import market.bus.aeron.AeronEventBus;
 import market.consumer.MarketDisplayConsumer;
 import market.producer.MarketDataProducer;
@@ -98,14 +103,32 @@ public class MarketApp {
             Duration.ofMillis(pollIntervalMs)
         );
 
+        AlertRepository alertRepository = new AlertRepository(AlertRepository.DEFAULT_STORAGE_PATH, provider);
+        TelegramDispatcher telegramDispatcher = new TelegramDispatcher();
+        AlertRuleEngine alertEngine = new AlertRuleEngine(alertRepository, telegramDispatcher);
+
         MarketHttpServer webServer = null;
         MarketStreamBroadcaster broadcaster = null;
 
         if (enableUi) {
             broadcaster = new MarketStreamBroadcaster();
             DynamicWatchlistController watchlistController = new DynamicWatchlistController(provider);
+            AlertController alertController = new AlertController(
+                alertRepository,
+                alertEngine,
+                telegramDispatcher,
+                provider
+            );
             try {
-                webServer = new MarketHttpServer(bindHost, serverPort, contextPath, broadcaster, watchlistController);
+                webServer = new MarketHttpServer(
+                    bindHost,
+                    serverPort,
+                    contextPath,
+                    broadcaster,
+                    watchlistController,
+                    eventBus.telemetryCollector(),
+                    alertController
+                );
             } catch (Exception e) {
                 throw new RuntimeException("Failed to initialize embedded web server", e);
             }
@@ -120,6 +143,7 @@ public class MarketApp {
             if (finalServer != null) {
                 finalServer.stop();
             }
+            alertRepository.close();
             provider.stop();
             eventBus.close();
             System.out.println("Shutdown complete.");
@@ -128,11 +152,14 @@ public class MarketApp {
         try {
             eventBus.start();
             eventBus.subscribe(DEFAULT_STREAM_ID, displayConsumer);
+            eventBus.subscribe(DEFAULT_STREAM_ID, alertEngine);
 
             if (enableUi && broadcaster != null) {
                 MarketStreamBroadcaster sseBroadcaster = broadcaster;
                 provider.registerErrorListener((sym, reason) ->
                     sseBroadcaster.broadcastSymbolStatus(sym, "ERROR", reason));
+                alertEngine.registerListener((rule, event) ->
+                    sseBroadcaster.broadcastEvent("alert", AlertJsonCodec.serializeEvent(rule, event)));
                 eventBus.subscribe(DEFAULT_STREAM_ID, broadcaster);
                 webServer.start();
             }

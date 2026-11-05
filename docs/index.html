@@ -71,13 +71,71 @@
       font-variant-numeric: tabular-nums;
     }
 
+    /* Top Market Ticker Marquee */
+    .ticker-bar {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      background: var(--bg-darkest);
+      border-bottom: 1px solid var(--border-subtle);
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      overflow: hidden;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      z-index: 101;
+      backdrop-filter: blur(12px);
+    }
+
+    .ticker-track {
+      display: inline-flex;
+      gap: 2.5rem;
+      padding-right: 2.5rem;
+      animation: tickerLoop 36s linear infinite;
+    }
+
+    .ticker-track:hover {
+      animation-play-state: paused;
+    }
+
+    @keyframes tickerLoop {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .ticker-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ticker-symbol {
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .ticker-price {
+      color: var(--text-muted);
+    }
+
+    .ticker-up {
+      color: var(--accent-emerald);
+      font-weight: 600;
+    }
+
+    .ticker-down {
+      color: var(--accent-crimson);
+      font-weight: 600;
+    }
+
     /* Main Navigation */
     header.site-header {
       border-bottom: 1px solid var(--border-subtle);
       background: rgba(15, 23, 42, 0.88);
       backdrop-filter: blur(16px);
       position: sticky;
-      top: 0;
+      top: 32px;
       z-index: 100;
     }
 
@@ -794,6 +852,35 @@
     .val-green { color: #34d399; font-weight: 700; }
     .val-red { color: #fb7185; font-weight: 700; }
 
+    /* Fast Price Update Flashes */
+    @keyframes priceFlashGreen {
+      0% {
+        background-color: rgba(16, 185, 129, 0.45);
+        color: #34d399;
+      }
+      100% {
+        background-color: transparent;
+      }
+    }
+
+    @keyframes priceFlashRed {
+      0% {
+        background-color: rgba(244, 63, 94, 0.45);
+        color: #fb7185;
+      }
+      100% {
+        background-color: transparent;
+      }
+    }
+
+    .price-flash-up {
+      animation: priceFlashGreen 0.65s ease-out forwards;
+    }
+
+    .price-flash-down {
+      animation: priceFlashRed 0.65s ease-out forwards;
+    }
+
     /* REAL TERMINAL LOG PREVIEW */
     .terminal-real-box {
       background: #070a12;
@@ -1013,6 +1100,29 @@
 </head>
 <body>
 
+  <!-- Top Market Ticker Marquee -->
+  <div class="ticker-bar">
+    <div class="ticker-track" id="ticker-track">
+      <div class="ticker-item"><span class="ticker-symbol">RELIANCE.NS</span> <span class="ticker-price">₹ 1,418.50</span> <span class="ticker-up">+1.42%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">TCS.NS</span> <span class="ticker-price">₹ 4,124.00</span> <span class="ticker-up">+0.88%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">INFY.NS</span> <span class="ticker-price">₹ 1,892.30</span> <span class="ticker-down">-0.34%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">HDFCBANK.NS</span> <span class="ticker-price">₹ 1,745.20</span> <span class="ticker-up">+0.65%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">TATAMOTORS.NS</span> <span class="ticker-price">₹ 882.10</span> <span class="ticker-down">-0.12%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">BAJFINANCE.NS</span> <span class="ticker-price">₹ 7,105.00</span> <span class="ticker-up">+2.15%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">NIFTY 50</span> <span class="ticker-price">24,380.50</span> <span class="ticker-up">+0.54%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">SENSEX</span> <span class="ticker-price">80,210.15</span> <span class="ticker-up">+0.48%</span></div>
+      <!-- Duplicate for infinite smooth marquee -->
+      <div class="ticker-item"><span class="ticker-symbol">RELIANCE.NS</span> <span class="ticker-price">₹ 1,418.50</span> <span class="ticker-up">+1.42%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">TCS.NS</span> <span class="ticker-price">₹ 4,124.00</span> <span class="ticker-up">+0.88%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">INFY.NS</span> <span class="ticker-price">₹ 1,892.30</span> <span class="ticker-down">-0.34%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">HDFCBANK.NS</span> <span class="ticker-price">₹ 1,745.20</span> <span class="ticker-up">+0.65%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">TATAMOTORS.NS</span> <span class="ticker-price">₹ 882.10</span> <span class="ticker-down">-0.12%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">BAJFINANCE.NS</span> <span class="ticker-price">₹ 7,105.00</span> <span class="ticker-up">+2.15%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">NIFTY 50</span> <span class="ticker-price">24,380.50</span> <span class="ticker-up">+0.54%</span></div>
+      <div class="ticker-item"><span class="ticker-symbol">SENSEX</span> <span class="ticker-price">80,210.15</span> <span class="ticker-up">+0.48%</span></div>
+    </div>
+  </div>
+
   <!-- Top Navigation Header -->
   <header class="site-header">
     <div class="nav-container">
@@ -1129,15 +1239,15 @@
         <div class="desk-hud-chips">
           <div class="hud-chip">
             <span class="hud-chip-label">Ingestion RTT</span>
-            <span class="hud-chip-val mono">78.4 ms</span>
+            <span class="hud-chip-val mono" id="desk-ingest-val">78.4 ms</span>
           </div>
           <div class="hud-chip">
             <span class="hud-chip-label">Aeron Bus Latency</span>
-            <span class="hud-chip-val mono" style="color:var(--accent-cyan)">0.82 &mu;s</span>
+            <span class="hud-chip-val mono" id="desk-bus-val" style="color:var(--accent-cyan)">0.82 &mu;s</span>
           </div>
           <div class="hud-chip">
             <span class="hud-chip-label">Ticks Processed</span>
-            <span class="hud-chip-val mono" style="color:var(--accent-emerald)">24,892</span>
+            <span class="hud-chip-val mono" id="desk-ticks-val" style="color:var(--accent-emerald)">24,892</span>
           </div>
           <div class="hud-chip">
             <span class="hud-chip-label">Active Symbols</span>
@@ -1572,13 +1682,17 @@
     let isLocalCurrency = false;
     let isLocalTz = true;
     let currentTf = '1D';
+    let lastChartTime = 0;
+    let isCrosshairActive = false;
+    let ticksProcessed = 24892;
+    let tickTimer = null;
 
     const SYMBOL_DATA = {
-      'TCS.NS': { basePrice: 4124.00, high: 4148.50, low: 4095.10, curr: 'INR', symChar: '₹', points: 65, spread: 35 },
-      'RELIANCE.NS': { basePrice: 1418.50, high: 1426.00, low: 1404.20, curr: 'INR', symChar: '₹', points: 65, spread: 18 },
-      'INFY.NS': { basePrice: 1892.30, high: 1910.00, low: 1880.00, curr: 'INR', symChar: '₹', points: 65, spread: 22 },
-      'HDFCBANK.NS': { basePrice: 1745.20, high: 1758.00, low: 1736.00, curr: 'INR', symChar: '₹', points: 65, spread: 15 },
-      'AAPL': { basePrice: 234.80, high: 236.40, low: 232.10, curr: 'USD', symChar: '$', points: 65, spread: 3.5 }
+      'TCS.NS': { basePrice: 4124.00, currentPrice: 4124.00, openPrice: 4075.90, high: 4148.50, low: 4095.10, curr: 'INR', symChar: '₹', points: 65, spread: 35 },
+      'RELIANCE.NS': { basePrice: 1418.50, currentPrice: 1418.50, openPrice: 1398.64, high: 1426.00, low: 1404.20, curr: 'INR', symChar: '₹', points: 65, spread: 18 },
+      'INFY.NS': { basePrice: 1892.30, currentPrice: 1892.30, openPrice: 1900.85, high: 1910.00, low: 1880.00, curr: 'INR', symChar: '₹', points: 65, spread: 22 },
+      'HDFCBANK.NS': { basePrice: 1745.20, currentPrice: 1745.20, openPrice: 1740.85, high: 1758.00, low: 1736.00, curr: 'INR', symChar: '₹', points: 65, spread: 15 },
+      'AAPL': { basePrice: 234.80, currentPrice: 234.80, openPrice: 232.75, high: 236.40, low: 232.10, curr: 'USD', symChar: '$', points: 65, spread: 3.5 }
     };
 
     function generateRealisticHistory(sym) {
@@ -1588,12 +1702,15 @@
       const step = 300; // 5 min candles for 1D
       let price = info.basePrice - (info.spread * 0.4);
 
-      for (let i = info.points; i >= 0; i--) {
+      for (let i = info.points; i >= 1; i--) {
         const time = now - (i * step);
         const change = (Math.sin(i * 0.35) * (info.spread * 0.25)) + ((Math.random() - 0.48) * (info.spread * 0.15));
         price += change;
         data.push({ time: time, value: Math.max(10, +price.toFixed(2)) });
       }
+      const curr = info.currentPrice || info.basePrice;
+      data.push({ time: now, value: +curr.toFixed(2) });
+      lastChartTime = now;
       return data;
     }
 
@@ -1633,7 +1750,7 @@
         lineWidth: 2,
         priceFormat: {
           type: 'custom',
-          formatter: p => '₹ ' + Number(p).toFixed(2),
+          formatter: p => (isLocalCurrency ? '₹ ' : (SYMBOL_DATA[currentSymbol]?.symChar || '₹') + ' ') + Number(p).toFixed(2),
           minMove: 0.05
         }
       });
@@ -1645,9 +1762,11 @@
       // Crosshair tracking updating HUD
       tvChart.subscribeCrosshairMove(param => {
         if (!param || !param.point || !param.time) {
+          isCrosshairActive = false;
           resetHudSummary();
           return;
         }
+        isCrosshairActive = true;
         let price = null;
         if (param.seriesData && param.seriesData.get) {
           const val = param.seriesData.get(tvAreaSeries);
@@ -1687,10 +1806,20 @@
     function resetHudSummary() {
       const info = SYMBOL_DATA[currentSymbol] || SYMBOL_DATA['TCS.NS'];
       const symChar = isLocalCurrency ? '₹' : info.symChar;
-      document.getElementById('hud-stat-point').textContent = symChar + ' ' + Number(info.basePrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const curr = info.currentPrice || info.basePrice;
+      document.getElementById('hud-stat-point').textContent = symChar + ' ' + Number(curr).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       document.getElementById('hud-stat-high').textContent = symChar + ' ' + Number(info.high).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       document.getElementById('hud-stat-low').textContent = symChar + ' ' + Number(info.low).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      document.getElementById('hud-stat-time').textContent = '15:28:45';
+      const d = new Date();
+      document.getElementById('hud-stat-time').textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
+      const pct = ((curr - info.openPrice) / info.openPrice) * 100;
+      const sign = pct >= 0 ? '+' : '';
+      const chgEl = document.getElementById('hud-stat-chg');
+      if (chgEl) {
+        chgEl.textContent = `${sign}${pct.toFixed(2)}%`;
+        chgEl.className = 'mono ' + (pct >= 0 ? 'val-green' : 'val-red');
+      }
     }
 
     function switchSymbol(symbol, company, price, change, isin, sedol, ric, curr) {
@@ -1703,16 +1832,21 @@
       document.getElementById('active-sedol').textContent = sedol;
       document.getElementById('active-ric').textContent = ric;
 
+      const info = SYMBOL_DATA[symbol] || { currentPrice: price, basePrice: price, openPrice: price, high: price, low: price, symChar: curr === 'USD' ? '$' : '₹' };
+      const currentVal = info.currentPrice || price;
       const symChar = isLocalCurrency ? '₹' : (curr === 'USD' ? '$' : '₹');
-      document.getElementById('active-price-val').textContent = symChar + ' ' + Number(price).toFixed(2);
+      document.getElementById('active-price-val').textContent = symChar + ' ' + Number(currentVal).toFixed(2);
       
+      const pctChg = ((currentVal - (info.openPrice || price)) / (info.openPrice || price)) * 100;
+      const sign = pctChg >= 0 ? '+' : '';
+      const chgStr = `${sign}${pctChg.toFixed(2)}%`;
       const chgEl = document.getElementById('active-change-val');
-      chgEl.textContent = change;
-      chgEl.className = 'active-symbol-change mono ' + (change.startsWith('+') ? 'val-green' : 'val-red');
+      chgEl.textContent = chgStr;
+      chgEl.className = 'active-symbol-change mono ' + (pctChg >= 0 ? 'val-green' : 'val-red');
 
       // Update active row highlighting
       document.querySelectorAll('#watchlist-body tr').forEach(tr => {
-        if (tr.querySelector('.row-ticker')?.textContent === symbol) {
+        if (tr.querySelector('.row-ticker')?.textContent.trim() === symbol) {
           tr.classList.add('active-row');
         } else {
           tr.classList.remove('active-row');
@@ -1734,6 +1868,142 @@
       }
 
       resetHudSummary();
+    }
+
+    function updateSymbolTick(sym, isActive) {
+      const info = SYMBOL_DATA[sym];
+      if (!info) return;
+
+      const oldPrice = info.currentPrice;
+      const spread = info.spread || 20;
+      let delta = (Math.random() - 0.495) * (spread * 0.018);
+      const drift = info.currentPrice - info.basePrice;
+      if (Math.abs(drift) > spread * 0.8) {
+        delta -= Math.sign(drift) * (spread * 0.01);
+      }
+      delta = Math.round(delta / 0.05) * 0.05;
+      if (Math.abs(delta) < 0.05) {
+        delta = Math.random() > 0.5 ? 0.05 : -0.05;
+      }
+
+      let newPrice = +(oldPrice + delta).toFixed(2);
+      if (newPrice < 1) newPrice = 1.00;
+      info.currentPrice = newPrice;
+
+      if (newPrice > info.high) info.high = newPrice;
+      if (newPrice < info.low) info.low = newPrice;
+
+      const isUp = newPrice >= oldPrice;
+      const symChar = isLocalCurrency ? '₹' : info.symChar;
+      const priceStr = symChar + ' ' + newPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      
+      const pctChg = ((newPrice - info.openPrice) / info.openPrice) * 100;
+      const sign = pctChg >= 0 ? '+' : '';
+      const chgStr = `${sign}${pctChg.toFixed(2)}%`;
+
+      // Update Watchlist Table Row for this symbol
+      const rows = document.querySelectorAll('#watchlist-body tr');
+      rows.forEach(tr => {
+        const rowSym = tr.querySelector('.row-ticker')?.textContent.trim();
+        if (rowSym === sym) {
+          const priceCell = tr.cells[2];
+          const chgCell = tr.cells[3];
+          const rttCell = tr.cells[4];
+          const busCell = tr.cells[5];
+
+          if (priceCell) {
+            priceCell.textContent = priceStr;
+            priceCell.classList.remove('price-flash-up', 'price-flash-down');
+            void priceCell.offsetWidth;
+            priceCell.classList.add(isUp ? 'price-flash-up' : 'price-flash-down');
+          }
+          if (chgCell) {
+            chgCell.textContent = chgStr;
+            chgCell.className = 'mono ' + (pctChg >= 0 ? 'val-green' : 'val-red');
+            chgCell.style.textAlign = 'right';
+          }
+          if (rttCell && Math.random() < 0.3) {
+            rttCell.textContent = (74 + Math.random() * 18).toFixed(1) + ' ms';
+          }
+          if (busCell && Math.random() < 0.3) {
+            busCell.textContent = (0.70 + Math.random() * 0.22).toFixed(2) + ' µs';
+          }
+        }
+      });
+
+      // If active symbol, update header HUD and TradingView chart series
+      if (isActive) {
+        const activePriceEl = document.getElementById('active-price-val');
+        if (activePriceEl) {
+          activePriceEl.textContent = priceStr;
+          activePriceEl.classList.remove('price-flash-up', 'price-flash-down');
+          void activePriceEl.offsetWidth;
+          activePriceEl.classList.add(isUp ? 'price-flash-up' : 'price-flash-down');
+        }
+
+        const activeChgEl = document.getElementById('active-change-val');
+        if (activeChgEl) {
+          activeChgEl.textContent = chgStr;
+          activeChgEl.className = 'active-symbol-change mono ' + (pctChg >= 0 ? 'val-green' : 'val-red');
+        }
+
+        // Push live tick update to TradingView series
+        if (tvAreaSeries) {
+          const nowSec = Math.floor(Date.now() / 1000);
+          const currentSec = Math.max(nowSec, lastChartTime);
+          lastChartTime = currentSec;
+          tvAreaSeries.update({ time: currentSec, value: newPrice });
+        }
+
+        // Update real-time HUD pills if crosshair is idle
+        if (!isCrosshairActive) {
+          const pointEl = document.getElementById('hud-stat-point');
+          if (pointEl) pointEl.textContent = priceStr;
+          const highEl = document.getElementById('hud-stat-high');
+          if (highEl) highEl.textContent = symChar + ' ' + Number(info.high).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          const lowEl = document.getElementById('hud-stat-low');
+          if (lowEl) lowEl.textContent = symChar + ' ' + Number(info.low).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+          const hudChgEl = document.getElementById('hud-stat-chg');
+          if (hudChgEl) {
+            hudChgEl.textContent = chgStr;
+            hudChgEl.className = 'mono ' + (pctChg >= 0 ? 'val-green' : 'val-red');
+          }
+          const timeEl = document.getElementById('hud-stat-time');
+          if (timeEl) {
+            const d = new Date();
+            timeEl.textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+          }
+        }
+      }
+    }
+
+    function triggerMicroTick() {
+      // 1. Tick the active symbol
+      updateSymbolTick(currentSymbol, true);
+
+      // 2. Also tick another random watchlist symbol
+      const symbols = Object.keys(SYMBOL_DATA);
+      const otherSymbols = symbols.filter(s => s !== currentSymbol);
+      if (Math.random() < 0.65 && otherSymbols.length > 0) {
+        const randomSym = otherSymbols[Math.floor(Math.random() * otherSymbols.length)];
+        updateSymbolTick(randomSym, false);
+      }
+
+      // 3. Increment engine HUD counters
+      ticksProcessed++;
+      const ticksEl = document.getElementById('desk-ticks-val');
+      if (ticksEl) ticksEl.textContent = ticksProcessed.toLocaleString();
+
+      const busEl = document.getElementById('desk-bus-val');
+      if (busEl && Math.random() < 0.4) busEl.textContent = (0.72 + (Math.random() * 0.18)).toFixed(2) + ' µs';
+
+      const ingestEl = document.getElementById('desk-ingest-val');
+      if (ingestEl && Math.random() < 0.4) ingestEl.textContent = (76.0 + (Math.random() * 8.5)).toFixed(1) + ' ms';
+    }
+
+    function startFastTickUpdates() {
+      if (tickTimer) clearInterval(tickTimer);
+      tickTimer = setInterval(triggerMicroTick, 400);
     }
 
     function toggleDemoTz() {
@@ -1760,7 +2030,7 @@
         badge.className = 'toggle-badge';
       }
       switchSymbol(currentSymbol, document.getElementById('active-company-name').textContent, 
-        SYMBOL_DATA[currentSymbol]?.basePrice || 4124, 
+        SYMBOL_DATA[currentSymbol]?.currentPrice || SYMBOL_DATA[currentSymbol]?.basePrice || 4124, 
         document.getElementById('active-change-val').textContent, 
         document.getElementById('active-isin').textContent, 
         document.getElementById('active-sedol').textContent, 
@@ -1787,6 +2057,7 @@
     window.addEventListener('DOMContentLoaded', () => {
       initTradingViewPreview();
       resetHudSummary();
+      startFastTickUpdates();
     });
   </script>
 </body>
