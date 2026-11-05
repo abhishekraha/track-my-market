@@ -334,28 +334,44 @@
 
     /* Chart Timeframe Bar & Metrics HUD */
     .chart-toolbar-row {
-      padding: 0.65rem 1.25rem;
+      padding: 0.5rem 1.25rem;
       background-color: rgba(15, 23, 42, 0.7);
       border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 1rem;
-      flex-wrap: wrap;
+      gap: 0.75rem;
+      flex-wrap: nowrap !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+      min-height: 48px;
+      max-height: 48px;
+      height: 48px;
+      box-sizing: border-box;
+      scrollbar-width: thin;
+    }
+    .chart-toolbar-row::-webkit-scrollbar {
+      height: 3px;
+    }
+    .chart-toolbar-row::-webkit-scrollbar-thumb {
+      background: var(--border-medium);
+      border-radius: 3px;
     }
 
     .timeframe-group {
       display: flex;
       align-items: center;
       gap: 0.3rem;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
     }
 
     .display-toggles-group {
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
     }
 
     .btn-toggle-switch {
@@ -374,6 +390,8 @@
       cursor: pointer;
       transition: all 0.2s ease;
       user-select: none;
+      flex-shrink: 0;
+      white-space: nowrap;
     }
 
     .btn-toggle-switch:hover {
@@ -444,7 +462,8 @@
       display: flex;
       align-items: center;
       gap: 0.65rem;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
     }
 
     .hud-stat-pill {
@@ -456,6 +475,9 @@
       align-items: center;
       gap: 0.35rem;
       font-size: 0.75rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
     }
 
     .hud-stat-lbl {
@@ -463,12 +485,24 @@
       font-size: 0.68rem;
       font-weight: 700;
       text-transform: uppercase;
+      user-select: none;
     }
 
     .hud-stat-pill strong {
       color: var(--text-main);
       font-size: 0.78rem;
+      display: inline-block;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
+
+    #hud-stat-tf { min-width: 26px; }
+    #hud-stat-point { min-width: 95px; }
+    #hud-stat-time { min-width: 82px; }
+    #hud-stat-high { min-width: 95px; }
+    #hud-stat-low { min-width: 95px; }
+    #hud-stat-chg { min-width: 68px; }
 
     .text-green { color: #34d399 !important; }
     .text-red { color: #fb7185 !important; }
@@ -585,6 +619,9 @@
     .chart-container-box {
       width: 100%;
       height: 380px;
+      min-height: 380px;
+      max-height: 380px;
+      box-sizing: border-box;
       position: relative;
       background-color: var(--bg-panel);
       overflow: hidden;
@@ -1990,14 +2027,29 @@
       applyCurrencyChange();
     }
 
+    function parseTimestampToDate(time) {
+      if (typeof time === 'number') {
+        return new Date(time * 1000);
+      }
+      if (time && typeof time === 'object') {
+        if (time.year != null && time.month != null && time.day != null) {
+          return new Date(Date.UTC(time.year, time.month - 1, time.day));
+        }
+        if (time.timestamp != null) {
+          return new Date(time.timestamp * 1000);
+        }
+      }
+      return new Date(time);
+    }
+
     function getChartLocalizationOptions(symbol) {
       const activeCurr = getActiveCurrency(symbol);
       const symChar = CURRENCY_SYMBOLS[activeCurr] || (activeCurr + ' ');
       return {
         priceFormatter: price => symChar + ' ' + Number(price).toFixed(2),
         timeFormatter: (time) => {
-          const ts = (typeof time === 'number') ? time : (time.timestamp || (new Date(time).getTime() / 1000));
-          const d = new Date(ts * 1000);
+          const d = parseTimestampToDate(time);
+          if (isNaN(d.getTime())) return '';
           const tz = getEffectiveTimezone(symbol);
           const isIntraday = ['1h', '3h', '6h', '12h', '1d'].includes(state.selectedTimeframe.toLowerCase());
           if (isIntraday) {
@@ -2014,8 +2066,8 @@
         timeVisible: isIntraday,
         secondsVisible: false,
         tickMarkFormatter: (time, tickMarkType, locale) => {
-          const ts = (typeof time === 'number') ? time : (time.timestamp || (new Date(time).getTime() / 1000));
-          const d = new Date(ts * 1000);
+          const d = parseTimestampToDate(time);
+          if (isNaN(d.getTime())) return '';
           const tz = getEffectiveTimezone(symbol);
           if (isIntraday) {
             return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: tz, hour12: false });
@@ -2028,15 +2080,10 @@
     function applyTimezoneToChart() {
       if (tvChart) {
         try {
-          const container = dom.tradingviewChart;
-          const width = container.clientWidth || 800;
-          const height = container.clientHeight || 380;
           const isIntraday = ['1h', '3h', '6h', '12h', '1d'].includes(state.selectedTimeframe.toLowerCase());
 
-          // 1. Maintain fixed width/height so chart canvas never collapses or jumps
+          // 1. Update localization without disturbing container sizing
           tvChart.applyOptions({
-            width: width,
-            height: height,
             localization: getChartLocalizationOptions(state.activeSymbol)
           });
 
@@ -2171,11 +2218,19 @@
             }
           });
 
+          let lastChartW = 0;
+          let lastChartH = 0;
           const resizeObserver = new ResizeObserver(entries => {
             if (!entries || entries.length === 0 || !entries[0].contentRect) return;
             const { width, height } = entries[0].contentRect;
-            if (width > 0 && height > 0) {
-              tvChart.applyOptions({ width, height });
+            const rw = Math.round(width);
+            const rh = Math.round(height);
+            if (rw > 0 && rh > 0) {
+              if (Math.abs(rw - lastChartW) >= 4 || Math.abs(rh - lastChartH) >= 4) {
+                lastChartW = rw;
+                lastChartH = rh;
+                tvChart.applyOptions({ width: rw, height: rh });
+              }
             }
           });
           resizeObserver.observe(container);
@@ -2218,7 +2273,8 @@
         const pt = history[idx];
         if (pt) {
           canvasHoverPoint = { ...pt, x: mouseX, idx };
-          updateChartMetricsCrosshair(pt.time, pt.value);
+          const convertedVal = convertPrice(pt.value, state.activeSymbol);
+          updateChartMetricsCrosshair(pt.time, convertedVal);
         }
         renderFallbackCanvas();
       });
@@ -2609,7 +2665,7 @@
       });
       
       const isIntraday = ['1H', '3H', '6H', '12H', '1D'].includes(state.selectedTimeframe.toUpperCase());
-      const d = new Date(timeSec * 1000);
+      const d = parseTimestampToDate(timeSec);
       const effectiveTz = getEffectiveTimezone(state.activeSymbol);
       dom.hudStatTime.textContent = isIntraday 
         ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: effectiveTz, hour12: false })
@@ -2632,14 +2688,14 @@
       const effectiveTz = getEffectiveTimezone(state.activeSymbol);
 
       if (dom.hudStatTf) dom.hudStatTf.textContent = s.tf;
-      if (dom.hudStatPoint) dom.hudStatPoint.textContent = symChar + ' ' + Number(s.last).toFixed(2);
-      if (dom.hudStatHigh) dom.hudStatHigh.textContent = symChar + ' ' + Number(s.high).toFixed(2);
-      if (dom.hudStatLow) dom.hudStatLow.textContent = symChar + ' ' + Number(s.low).toFixed(2);
+      if (dom.hudStatPoint) dom.hudStatPoint.textContent = symChar + ' ' + Number(s.last).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (dom.hudStatHigh) dom.hudStatHigh.textContent = symChar + ' ' + Number(s.high).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (dom.hudStatLow) dom.hudStatLow.textContent = symChar + ' ' + Number(s.low).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
       if (dom.hudStatTime) {
         const isIntraday = ['1H', '3H', '6H', '12H', '1D'].includes(s.tf);
-        const d = new Date((s.lastTime || Date.now() / 1000) * 1000);
+        const d = parseTimestampToDate(s.lastTime || Date.now() / 1000);
         dom.hudStatTime.textContent = isIntraday 
-          ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: effectiveTz, hour12: false })
+          ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: effectiveTz, hour12: false })
           : d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric', timeZone: effectiveTz });
       }
       if (dom.hudStatChg) {
