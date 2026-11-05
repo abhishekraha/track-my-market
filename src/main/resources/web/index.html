@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track My Market &mdash; Real-Time Financial Terminal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+
+  <style>
+    :root {
+      --bg-base: #0b0f19;
+      --bg-panel: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-hover: #263349;
+      --border-subtle: #1e293b;
+      --border-medium: #334155;
+      --border-focus: #38bdf8;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --green-up: #10b981;
+      --red-down: #f43f5e;
+      --accent-blue: #38bdf8;
+      --accent-indigo: #6366f1;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Roboto Mono', SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    .mono-num {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+
+    header {
+      background-color: var(--bg-panel);
+      border-bottom: 1px solid var(--border-medium);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-icon {
+      width: 2.25rem;
+      height: 2.25rem;
+      border-radius: 0.5rem;
+      background: linear-gradient(135deg, #0284c7, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+    }
+
+    .brand-icon svg {
+      width: 1.25rem;
+      height: 1.25rem;
+      fill: none;
+      stroke: #ffffff;
+      stroke-width: 2.5;
+    }
+
+    .brand-title-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      background: linear-gradient(to right, #ffffff, #cbd5e1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-subtitle {
+      font-size: 0.65rem;
+      font-family: var(--font-mono);
+      letter-spacing: 0.08em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      background-color: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border-medium);
+      transition: all 0.3s ease;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--text-dim);
+      transition: background-color 0.3s ease;
+    }
+
+    .status-badge.connected {
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      background-color: rgba(6, 78, 59, 0.25);
+    }
+    .status-badge.connected .status-dot {
+      background-color: var(--green-up);
+      box-shadow: 0 0 8px var(--green-up);
+      animation: pulse-green 2s infinite;
+    }
+
+    .status-badge.disconnected {
+      border-color: rgba(244, 63, 94, 0.4);
+      color: #fb7185;
+      background-color: rgba(76, 5, 25, 0.25);
+    }
+    .status-badge.disconnected .status-dot {
+      background-color: var(--red-down);
+      box-shadow: 0 0 8px var(--red-down);
+      animation: pulse-red 1.5s infinite;
+    }
+
+    @keyframes pulse-green {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+    @keyframes pulse-red {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(0.85); }
+    }
+
+    .hud-chips {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .hud-chip {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 0.5rem;
+      padding: 0.35rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      min-width: 110px;
+    }
+
+    .hud-chip-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .hud-chip-val {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+    }
+
+    .hud-chip-val.highlight-cyan {
+      color: #38bdf8;
+    }
+    .hud-chip-val.highlight-emerald {
+      color: #34d399;
+    }
+
+    main {
+      flex: 1;
+      padding: 1.25rem 1.5rem;
+      max-width: 1750px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .chart-card {
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-medium);
+      border-radius: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .chart-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-medium);
+      background-color: rgba(30, 41, 59, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .active-symbol-info {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .active-symbol-name {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #ffffff;
+      font-family: var(--font-mono);
+      letter-spacing: -0.02em;
+    }
+
+    .active-symbol-price {
+      font-size: 1.8rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--text-main);
+      transition: color 0.3s ease;
+    }
+
+    .active-symbol-change {
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 0.2rem 0.6rem;
+      border-radius: 0.375rem;
+      font-family: var(--font-mono);
+    }
+
+    .change-up {
+      background-color: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .change-down {
+      background-color: rgba(244, 63, 94, 0.15);
+      color: #fb7185;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
+    .change-flat {
+      background-color: rgba(100, 116, 139, 0.15);
+      color: var(--text-muted);
+      border: 1px solid rgba(100, 116, 139, 0.3);
+    }
+
+    .active-symbol-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .meta-tag {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.25rem;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--text-muted);
+    }
+    .meta-tag span {
+      color: var(--text-dim);
+      margin-right: 0.25rem;
+    }
+
+    .chart-container-box {
+      width: 100%;
+      height: 380px;
+      position: relative;
+      background-color: var(--bg-panel);
+    }
+
+    #tradingview-chart {
+      width: 100%;
+      height: 100%;
+    }
+
+    #fallback-canvas {
+      display: none;
+      width: 100%;
+      height: 100%;
+    }
+
+    .chart-empty-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(2px);
+      z-index: 10;
+      color: var(--text-muted);
+      gap: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .watchlist-panel {
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-medium);
+      border-radius: 0.75rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .watchlist-toolbar {
+      padding: 1.1rem 1.25rem;
+      border-bottom: 1px solid var(--border-medium);
+      background-color: rgba(30, 41, 59, 0.35);
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .toolbar-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .panel-heading {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .panel-heading-badge {
+      font-size: 0.75rem;
+      padding: 0.15rem 0.55rem;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 9999px;
+      color: var(--accent-blue);
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    .add-stock-form {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 280px;
+    }
+
+    .search-input-icon {
+      position: absolute;
+      left: 0.85rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      padding: 0.65rem 0.85rem 0.65rem 2.4rem;
+      border-radius: 0.5rem;
+      outline: none;
+      text-transform: uppercase;
+      transition: all 0.2s ease;
+    }
+
+    .search-input::placeholder {
+      text-transform: none;
+      color: var(--text-dim);
+      font-family: var(--font-sans);
+    }
+
+    .search-input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+      background-color: #172033;
+    }
+
+    .btn-add {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #ffffff;
+      border: none;
+      padding: 0.65rem 1.35rem;
+      border-radius: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-add:hover {
+      background: linear-gradient(135deg, #0369a1, #1d4ed8);
+      box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-add:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .quick-chips-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .quick-chip-label {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      font-weight: 600;
+    }
+
+    .preset-chip {
+      background-color: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--border-medium);
+      color: var(--text-muted);
+      border-radius: 0.375rem;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .preset-chip:hover {
+      background-color: var(--bg-card);
+      border-color: var(--accent-blue);
+      color: #ffffff;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      max-height: 520px;
+      overflow-y: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    thead {
+      background-color: rgba(15, 23, 42, 0.95);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    th {
+      padding: 0.8rem 1rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border-medium);
+      white-space: nowrap;
+    }
+
+    th.num, td.num {
+      text-align: right;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    tbody tr:hover {
+      background-color: var(--bg-card-hover);
+    }
+
+    tbody tr.active-row {
+      background-color: rgba(56, 189, 248, 0.08);
+      border-left: 3px solid var(--accent-blue);
+    }
+
+    td {
+      padding: 0.85rem 1rem;
+      font-size: 0.875rem;
+      color: var(--text-main);
+      white-space: nowrap;
+    }
+
+    .col-symbol {
+      font-weight: 700;
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .active-indicator {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: var(--accent-blue);
+      display: inline-block;
+      box-shadow: 0 0 6px var(--accent-blue);
+    }
+
+    .col-price {
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 0.25rem;
+      transition: background-color 0.3s ease;
+    }
+
+    .col-change {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .col-mono {
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .col-latency {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+    }
+
+    .bus-speed {
+      color: #38bdf8;
+      font-weight: 600;
+    }
+
+    .network-speed {
+      color: #a78bfa;
+    }
+
+    @keyframes flashGreenAnim {
+      0% {
+        background-color: rgba(16, 185, 129, 0.45);
+        color: #34d399;
+      }
+      100% {
+        background-color: transparent;
+      }
+    }
+
+    @keyframes flashRedAnim {
+      0% {
+        background-color: rgba(244, 63, 94, 0.45);
+        color: #fb7185;
+      }
+      100% {
+        background-color: transparent;
+      }
+    }
+
+    .flash-up {
+      animation: flashGreenAnim 1.2s ease-out forwards;
+    }
+
+    .flash-down {
+      animation: flashRedAnim 1.2s ease-out forwards;
+    }
+
+    .btn-action-remove {
+      background: transparent;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+      color: #fb7185;
+      padding: 0.3rem 0.65rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-action-remove:hover {
+      background-color: rgba(244, 63, 94, 0.2);
+      border-color: #f43f5e;
+      color: #ffffff;
+    }
+
+    .empty-state {
+      padding: 3rem 1rem;
+      text-align: center;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+    }
+
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .toast {
+      pointer-events: auto;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--text-main);
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+      min-width: 260px;
+      max-width: 420px;
+      animation: slide-in 0.25s ease-out;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .toast.success {
+      border-left: 4px solid var(--green-up);
+    }
+
+    .toast.error {
+      border-left: 4px solid var(--red-down);
+    }
+
+    .toast.info {
+      border-left: 4px solid var(--accent-blue);
+    }
+
+    @keyframes slide-in {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border-medium);
+      background-color: var(--bg-panel);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .footer-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+    }
+
+    @media (max-width: 768px) {
+      header {
+        padding: 0.75rem 1rem;
+      }
+      main {
+        padding: 1rem;
+      }
+      .hud-chips {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .hud-chip {
+        flex: 1;
+        min-width: 80px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header>
+    <div class="brand-section">
+      <div class="brand-logo">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <div class="brand-title-wrap">
+          <span class="brand-title">TRACK MY MARKET</span>
+          <span class="brand-subtitle">Ultra Low Latency SBE / Aeron Terminal</span>
+        </div>
+      </div>
+      <div id="connection-status" class="status-badge disconnected">
+        <div class="status-dot"></div>
+        <span id="connection-status-text">CONNECTING...</span>
+      </div>
+    </div>
+
+    <!-- Latency HUD Badges -->
+    <div class="hud-chips">
+      <div class="hud-chip">
+        <span class="hud-chip-label">Ingestion RTT</span>
+        <span id="hud-fetch-latency" class="hud-chip-val mono-num">-- ms</span>
+      </div>
+      <div class="hud-chip">
+        <span class="hud-chip-label">Aeron Bus Latency</span>
+        <span id="hud-bus-latency" class="hud-chip-val highlight-cyan mono-num">-- &mu;s</span>
+      </div>
+      <div class="hud-chip">
+        <span class="hud-chip-label">Ticks Processed</span>
+        <span id="hud-ticks-count" class="hud-chip-val highlight-emerald mono-num">0</span>
+      </div>
+      <div class="hud-chip">
+        <span class="hud-chip-label">Subscribed</span>
+        <span id="hud-symbols-count" class="hud-chip-val mono-num">0 symbols</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Trading Desk -->
+  <main>
+    <!-- Interactive Live Price Chart Card -->
+    <section class="chart-card">
+      <div class="chart-header">
+        <div class="active-symbol-info">
+          <span id="chart-symbol-name" class="active-symbol-name">--</span>
+          <span id="chart-symbol-price" class="active-symbol-price mono-num">--</span>
+          <span id="chart-symbol-change" class="active-symbol-change change-flat mono-num">0.00%</span>
+        </div>
+        <div class="active-symbol-meta">
+          <div class="meta-tag"><span>ISIN:</span><strong id="chart-isin" class="mono-num">--</strong></div>
+          <div class="meta-tag"><span>SEDOL:</span><strong id="chart-sedol" class="mono-num">--</strong></div>
+          <div class="meta-tag"><span>RIC:</span><strong id="chart-ric" class="mono-num">--</strong></div>
+          <div class="meta-tag"><span>PROVIDER:</span><strong id="chart-provider">--</strong></div>
+          <div class="meta-tag"><span>LAST TICK:</span><strong id="chart-last-time" class="mono-num">--</strong></div>
+        </div>
+      </div>
+      <div class="chart-container-box">
+        <div id="chart-empty-msg" class="chart-empty-overlay">
+          <span>Streaming live ticks from Aeron message bus...</span>
+        </div>
+        <div id="tradingview-chart"></div>
+        <canvas id="fallback-canvas"></canvas>
+      </div>
+    </section>
+
+    <!-- Watchlist Panel with Dynamic Add Bar -->
+    <section class="watchlist-panel">
+      <div class="watchlist-toolbar">
+        <div class="toolbar-title-row">
+          <div class="panel-heading">
+            <span>Dynamic Stock Watchlist</span>
+            <span id="watchlist-count-badge" class="panel-heading-badge">0 Monitored</span>
+          </div>
+        </div>
+
+        <!-- Add Stock Search Bar -->
+        <form id="add-stock-form" class="add-stock-form" autocomplete="off">
+          <div class="search-input-wrap">
+            <svg class="search-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+              type="text" 
+              id="symbol-input" 
+              class="search-input" 
+              placeholder="Enter stock symbol (e.g. BAJFINANCE.NS, WIPRO.NS)" 
+              required
+              spellcheck="false"
+            />
+          </div>
+          <button type="submit" id="btn-add-stock" class="btn-add">
+            <span>+ Add Stock</span>
+          </button>
+        </form>
+
+        <!-- Quick Presets -->
+        <div class="quick-chips-wrap">
+          <span class="quick-chip-label">Quick Presets:</span>
+          <button type="button" class="preset-chip" onclick="quickAdd('RELIANCE.NS')">+ RELIANCE.NS</button>
+          <button type="button" class="preset-chip" onclick="quickAdd('TCS.NS')">+ TCS.NS</button>
+          <button type="button" class="preset-chip" onclick="quickAdd('INFY.NS')">+ INFY.NS</button>
+          <button type="button" class="preset-chip" onclick="quickAdd('HDFCBANK.NS')">+ HDFCBANK.NS</button>
+          <button type="button" class="preset-chip" onclick="quickAdd('BAJFINANCE.NS')">+ BAJFINANCE.NS</button>
+          <button type="button" class="preset-chip" onclick="quickAdd('TATAMOTORS.NS')">+ TATAMOTORS.NS</button>
+        </div>
+      </div>
+
+      <!-- Live Quote Watchlist Table -->
+      <div class="table-container">
+        <table id="watchlist-table">
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th class="num">Price</th>
+              <th class="num">Change %</th>
+              <th>ISIN</th>
+              <th>SEDOL</th>
+              <th>RIC</th>
+              <th class="num">Network Fetch</th>
+              <th class="num">Bus Latency</th>
+              <th style="text-align: center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="watchlist-tbody">
+            <tr>
+              <td colspan="9">
+                <div class="empty-state">
+                  <span>Waiting for initial market snapshot...</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Status Footer -->
+  <footer>
+    <div class="footer-left">
+      <span>IPC Transport: <strong>Real Logic Aeron (Stream ID: 1001)</strong></span>
+      <span>&bull;</span>
+      <span>Encoding: <strong>Simple Binary Encoding (SBE v1)</strong></span>
+    </div>
+    <div class="footer-right">
+      <span>Auto-reconnecting SSE Client &bull; Relative API Endpoints</span>
+    </div>
+  </footer>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Terminal Client Logic -->
+  <script>
+    // --- Application State ---
+    const state = {
+      activeSymbol: null,
+      quotes: new Map(),           // symbol -> { price, prevPrice, initialPrice, isin, sedol, ric, quoteTime, fetchDurationMs, busLatencyUs, provider }
+      subscribedSymbols: new Set(),
+      chartHistory: new Map(),     // symbol -> Array of { time, value }
+      totalTicks: 0,
+      lastChartTimestampSec: 0,
+      eventSource: null,
+      useCanvasFallback: false
+    };
+
+    // --- DOM Elements ---
+    const dom = {
+      connectionStatus: document.getElementById('connection-status'),
+      connectionStatusText: document.getElementById('connection-status-text'),
+      hudFetchLatency: document.getElementById('hud-fetch-latency'),
+      hudBusLatency: document.getElementById('hud-bus-latency'),
+      hudTicksCount: document.getElementById('hud-ticks-count'),
+      hudSymbolsCount: document.getElementById('hud-symbols-count'),
+      chartSymbolName: document.getElementById('chart-symbol-name'),
+      chartSymbolPrice: document.getElementById('chart-symbol-price'),
+      chartSymbolChange: document.getElementById('chart-symbol-change'),
+      chartIsin: document.getElementById('chart-isin'),
+      chartSedol: document.getElementById('chart-sedol'),
+      chartRic: document.getElementById('chart-ric'),
+      chartProvider: document.getElementById('chart-provider'),
+      chartLastTime: document.getElementById('chart-last-time'),
+      chartEmptyMsg: document.getElementById('chart-empty-msg'),
+      watchlistTbody: document.getElementById('watchlist-tbody'),
+      watchlistCountBadge: document.getElementById('watchlist-count-badge'),
+      addStockForm: document.getElementById('add-stock-form'),
+      symbolInput: document.getElementById('symbol-input'),
+      btnAddStock: document.getElementById('btn-add-stock'),
+      toastContainer: document.getElementById('toast-container'),
+      tradingviewChart: document.getElementById('tradingview-chart'),
+      fallbackCanvas: document.getElementById('fallback-canvas')
+    };
+
+    // --- Chart Controller ---
+    let tvChart = null;
+    let tvAreaSeries = null;
+    let canvasContext = null;
+
+    function initChart() {
+      const container = dom.tradingviewChart;
+      if (window.LightweightCharts) {
+        try {
+          tvChart = LightweightCharts.createChart(container, {
+            width: container.clientWidth || 800,
+            height: container.clientHeight || 380,
+            layout: {
+              background: { color: '#0f172a' },
+              textColor: '#94a3b8'
+            },
+            grid: {
+              vertLines: { color: '#1e293b' },
+              horzLines: { color: '#1e293b' }
+            },
+            crosshair: {
+              mode: LightweightCharts.CrosshairMode.Normal
+            },
+            rightPriceScale: {
+              borderColor: '#334155'
+            },
+            timeScale: {
+              borderColor: '#334155',
+              timeVisible: true,
+              secondsVisible: true
+            }
+          });
+
+          tvAreaSeries = tvChart.addAreaSeries({
+            topColor: 'rgba(56, 189, 248, 0.45)',
+            bottomColor: 'rgba(56, 189, 248, 0.02)',
+            lineColor: '#38bdf8',
+            lineWidth: 2
+          });
+
+          const resizeObserver = new ResizeObserver(entries => {
+            if (!entries || entries.length === 0 || !entries[0].contentRect) return;
+            const { width, height } = entries[0].contentRect;
+            if (width > 0 && height > 0) {
+              tvChart.applyOptions({ width, height });
+            }
+          });
+          resizeObserver.observe(container);
+          return;
+        } catch (e) {
+          console.warn('Failed to initialize TradingView Lightweight Charts, falling back to Canvas:', e);
+        }
+      }
+
+      // Fallback HTML5 Canvas
+      state.useCanvasFallback = true;
+      dom.tradingviewChart.style.display = 'none';
+      dom.fallbackCanvas.style.display = 'block';
+      canvasContext = dom.fallbackCanvas.getContext('2d');
+      resizeFallbackCanvas();
+      window.addEventListener('resize', resizeFallbackCanvas);
+    }
+
+    function resizeFallbackCanvas() {
+      if (!state.useCanvasFallback) return;
+      const box = dom.fallbackCanvas.parentElement.getBoundingClientRect();
+      dom.fallbackCanvas.width = box.width;
+      dom.fallbackCanvas.height = box.height;
+      renderFallbackCanvas();
+    }
+
+    function renderFallbackCanvas() {
+      if (!state.useCanvasFallback || !canvasContext) return;
+      const ctx = canvasContext;
+      const width = dom.fallbackCanvas.width;
+      const height = dom.fallbackCanvas.height;
+      ctx.clearRect(0, 0, width, height);
+
+      const history = state.chartHistory.get(state.activeSymbol) || [];
+      if (history.length < 2) return;
+
+      const prices = history.map(h => h.value);
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      const range = (maxPrice - minPrice) || 1;
+      const padding = 30;
+
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let y = padding; y < height - padding; y += 50) {
+        ctx.moveTo(padding, y);
+        ctx.lineTo(width - padding, y);
+      }
+      ctx.stroke();
+
+      ctx.beginPath();
+      history.forEach((pt, idx) => {
+        const x = padding + (idx / (history.length - 1)) * (width - padding * 2);
+        const y = height - padding - ((pt.value - minPrice) / range) * (height - padding * 2);
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.lineTo(width - padding, height - padding);
+      ctx.lineTo(padding, height - padding);
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(0, padding, 0, height - padding);
+      grad.addColorStop(0, 'rgba(56, 189, 248, 0.35)');
+      grad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+
+    function pushTickToChart(symbol, price, quoteTimeMs) {
+      if (!symbol || price == null) return;
+
+      let history = state.chartHistory.get(symbol);
+      if (!history) {
+        history = [];
+        state.chartHistory.set(symbol, history);
+      }
+
+      let timeSec = Math.floor((quoteTimeMs || Date.now()) / 1000);
+      if (timeSec <= state.lastChartTimestampSec) {
+        timeSec = state.lastChartTimestampSec + 1;
+      }
+      state.lastChartTimestampSec = timeSec;
+
+      const pt = { time: timeSec, value: Number(price) };
+      history.push(pt);
+      if (history.length > 500) history.shift();
+
+      if (symbol === state.activeSymbol) {
+        dom.chartEmptyMsg.style.display = 'none';
+        if (tvAreaSeries) {
+          try {
+            tvAreaSeries.update(pt);
+          } catch (e) {
+            tvAreaSeries.setData(history);
+          }
+        } else if (state.useCanvasFallback) {
+          renderFallbackCanvas();
+        }
+      }
+    }
+
+    function selectActiveSymbol(symbol) {
+      if (!symbol || symbol === state.activeSymbol) return;
+      state.activeSymbol = symbol;
+
+      const quote = state.quotes.get(symbol);
+      renderActiveSymbolHero(quote || { symbol, price: null });
+
+      document.querySelectorAll('#watchlist-tbody tr').forEach(tr => {
+        if (tr.dataset.symbol === symbol) {
+          tr.classList.add('active-row');
+        } else {
+          tr.classList.remove('active-row');
+        }
+      });
+
+      const history = state.chartHistory.get(symbol) || [];
+      if (history.length > 0) {
+        dom.chartEmptyMsg.style.display = 'none';
+        state.lastChartTimestampSec = history[history.length - 1].time;
+        if (tvAreaSeries) {
+          tvAreaSeries.setData(history);
+          tvChart.timeScale().fitContent();
+        } else if (state.useCanvasFallback) {
+          renderFallbackCanvas();
+        }
+      } else {
+        dom.chartEmptyMsg.style.display = 'flex';
+        if (tvAreaSeries) tvAreaSeries.setData([]);
+        if (state.useCanvasFallback && canvasContext) {
+          canvasContext.clearRect(0, 0, dom.fallbackCanvas.width, dom.fallbackCanvas.height);
+        }
+      }
+    }
+
+    function renderActiveSymbolHero(q) {
+      dom.chartSymbolName.textContent = q.symbol || '--';
+      if (q.price != null) {
+        dom.chartSymbolPrice.textContent = formatCurrency(q.price);
+        
+        const initial = q.initialPrice || q.price;
+        const changePct = initial > 0 ? ((q.price - initial) / initial) * 100 : 0.0;
+        const sign = changePct > 0 ? '+' : '';
+        dom.chartSymbolChange.textContent = `${sign}${changePct.toFixed(2)}%`;
+
+        dom.chartSymbolChange.className = 'active-symbol-change mono-num ' + 
+          (changePct > 0 ? 'change-up' : changePct < 0 ? 'change-down' : 'change-flat');
+      } else {
+        dom.chartSymbolPrice.textContent = '--';
+        dom.chartSymbolChange.textContent = '0.00%';
+        dom.chartSymbolChange.className = 'active-symbol-change change-flat mono-num';
+      }
+
+      dom.chartIsin.textContent = q.isin || '--';
+      dom.chartSedol.textContent = q.sedol || '--';
+      dom.chartRic.textContent = q.ric || '--';
+      dom.chartProvider.textContent = q.provider || '--';
+      dom.chartLastTime.textContent = q.quoteTime ? new Date(q.quoteTime).toLocaleTimeString() : '--';
+    }
+
+    // --- Table & Quote Management ---
+    function updateOrAddQuote(tick) {
+      if (!tick || !tick.symbol) return;
+      const symbol = tick.symbol;
+
+      const existing = state.quotes.get(symbol);
+      const oldPrice = existing ? existing.price : null;
+      const initialPrice = existing ? (existing.initialPrice || tick.price) : tick.price;
+
+      const quote = {
+        symbol: symbol,
+        price: Number(tick.price),
+        prevPrice: oldPrice,
+        initialPrice: initialPrice,
+        isin: tick.isin || (existing ? existing.isin : ''),
+        sedol: tick.sedol || (existing ? existing.sedol : ''),
+        ric: tick.ric || (existing ? existing.ric : ''),
+        quoteTime: tick.quoteTime || (tick.quoteTimestampNs ? Math.floor(tick.quoteTimestampNs / 1000000) : Date.now()),
+        fetchDurationMs: tick.fetchDurationMs != null ? Number(tick.fetchDurationMs) : (existing ? existing.fetchDurationMs : 0),
+        busLatencyUs: tick.busLatencyUs != null ? Number(tick.busLatencyUs) : (existing ? existing.busLatencyUs : 0),
+        provider: tick.provider || (existing ? existing.provider : 'YAHOO')
+      };
+
+      state.quotes.set(symbol, quote);
+      state.subscribedSymbols.add(symbol);
+
+      pushTickToChart(symbol, quote.price, quote.quoteTime);
+      renderRow(quote, oldPrice);
+
+      if (state.activeSymbol === symbol) {
+        renderActiveSymbolHero(quote);
+      } else if (!state.activeSymbol) {
+        selectActiveSymbol(symbol);
+      }
+
+      updateWatchlistBadges();
+    }
+
+    function renderRow(q, oldPrice) {
+      let tr = document.querySelector(`tr[data-symbol="${q.symbol}"]`);
+      const isCreate = !tr;
+
+      if (isCreate) {
+        const emptyState = dom.watchlistTbody.querySelector('.empty-state');
+        if (emptyState) {
+          dom.watchlistTbody.innerHTML = '';
+        }
+
+        tr = document.createElement('tr');
+        tr.dataset.symbol = q.symbol;
+        tr.addEventListener('click', (e) => {
+          if (e.target.closest('.btn-action-remove')) return;
+          selectActiveSymbol(q.symbol);
+        });
+        dom.watchlistTbody.appendChild(tr);
+      }
+
+      if (state.activeSymbol === q.symbol) {
+        tr.classList.add('active-row');
+      } else {
+        tr.classList.remove('active-row');
+      }
+
+      const initial = q.initialPrice || q.price;
+      const changePct = initial > 0 ? ((q.price - initial) / initial) * 100 : 0.0;
+      const sign = changePct > 0 ? '+' : '';
+      const changeClass = changePct > 0 ? 'change-up' : changePct < 0 ? 'change-down' : 'change-flat';
+      const isActive = state.activeSymbol === q.symbol;
+
+      tr.innerHTML = `
+        <td class="col-symbol">
+          ${isActive ? '<span class="active-indicator"></span>' : ''}
+          <span>${q.symbol}</span>
+        </td>
+        <td class="col-price num" id="price-cell-${q.symbol}">
+          ${formatCurrency(q.price)}
+        </td>
+        <td class="col-change num">
+          <span class="active-symbol-change ${changeClass} mono-num">${sign}${changePct.toFixed(2)}%</span>
+        </td>
+        <td class="col-mono">${q.isin || '--'}</td>
+        <td class="col-mono">${q.sedol || '--'}</td>
+        <td class="col-mono">${q.ric || '--'}</td>
+        <td class="col-latency network-speed num">${q.fetchDurationMs ? q.fetchDurationMs.toFixed(1) + ' ms' : '--'}</td>
+        <td class="col-latency bus-speed num">${q.busLatencyUs ? q.busLatencyUs.toFixed(1) + ' &mu;s' : '--'}</td>
+        <td style="text-align: center;">
+          <button type="button" class="btn-action-remove" title="Remove ${q.symbol}" onclick="removeSymbol('${q.symbol}')">
+            &times; Remove
+          </button>
+        </td>
+      `;
+
+      if (oldPrice != null && oldPrice !== q.price) {
+        const cell = tr.querySelector(`#price-cell-${q.symbol}`);
+        if (cell) {
+          cell.classList.remove('flash-up', 'flash-down');
+          void cell.offsetWidth;
+          cell.classList.add(q.price > oldPrice ? 'flash-up' : 'flash-down');
+        }
+      }
+    }
+
+    function removeRowFromDom(symbol) {
+      const tr = document.querySelector(`tr[data-symbol="${symbol}"]`);
+      if (tr) tr.remove();
+
+      state.quotes.delete(symbol);
+      state.subscribedSymbols.delete(symbol);
+      state.chartHistory.delete(symbol);
+
+      if (state.activeSymbol === symbol) {
+        const remaining = Array.from(state.quotes.keys());
+        if (remaining.length > 0) {
+          selectActiveSymbol(remaining[0]);
+        } else {
+          state.activeSymbol = null;
+          renderActiveSymbolHero({ symbol: '--', price: null });
+          dom.chartEmptyMsg.style.display = 'flex';
+          if (tvAreaSeries) tvAreaSeries.setData([]);
+        }
+      }
+
+      if (state.quotes.size === 0) {
+        dom.watchlistTbody.innerHTML = `
+          <tr>
+            <td colspan="9">
+              <div class="empty-state">
+                <span>No symbols currently monitored. Add one above to begin live streaming.</span>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+
+      updateWatchlistBadges();
+    }
+
+    function updateWatchlistBadges() {
+      const count = state.subscribedSymbols.size;
+      dom.watchlistCountBadge.textContent = `${count} Monitored`;
+      dom.hudSymbolsCount.textContent = `${count} symbol${count === 1 ? '' : 's'}`;
+    }
+
+    function updateHudMetrics(tick) {
+      state.totalTicks++;
+      dom.hudTicksCount.textContent = state.totalTicks.toLocaleString();
+
+      if (tick.fetchDurationMs != null) {
+        dom.hudFetchLatency.textContent = `${Number(tick.fetchDurationMs).toFixed(1)} ms`;
+      }
+      if (tick.busLatencyUs != null) {
+        dom.hudBusLatency.textContent = `${Number(tick.busLatencyUs).toFixed(1)} µs`;
+      }
+    }
+
+    // --- Dynamic Symbols API (Watchlist Add / Remove) ---
+    async function loadSymbols() {
+      try {
+        const res = await fetch('./api/symbols');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const symbols = await res.json();
+        if (Array.isArray(symbols)) {
+          symbols.forEach(s => state.subscribedSymbols.add(s));
+          updateWatchlistBadges();
+        }
+      } catch (err) {
+        console.warn('Could not fetch symbol list from ./api/symbols:', err);
+      }
+    }
+
+    async function addSymbol(symbol) {
+      if (!symbol) return;
+      const clean = symbol.trim().toUpperCase();
+      if (!clean) return;
+
+      dom.btnAddStock.disabled = true;
+      dom.btnAddStock.innerHTML = `<span>Adding...</span>`;
+
+      try {
+        const res = await fetch('./api/symbols', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ symbol: clean })
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(errText || `Failed to add symbol (${res.status})`);
+        }
+
+        const updatedList = await res.json();
+        state.subscribedSymbols.add(clean);
+        updateWatchlistBadges();
+
+        if (!state.quotes.has(clean)) {
+          updateOrAddQuote({ symbol: clean, price: null });
+        }
+        selectActiveSymbol(clean);
+
+        showToast(`Subscribed to ${clean}`, 'success');
+        dom.symbolInput.value = '';
+      } catch (err) {
+        showToast(err.message || 'Error subscribing to symbol', 'error');
+      } finally {
+        dom.btnAddStock.disabled = false;
+        dom.btnAddStock.innerHTML = `<span>+ Add Stock</span>`;
+      }
+    }
+
+    async function removeSymbol(symbol) {
+      if (!symbol) return;
+      try {
+        const res = await fetch(`./api/symbols/${encodeURIComponent(symbol)}`, {
+          method: 'DELETE'
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(errText || `Failed to remove symbol (${res.status})`);
+        }
+
+        removeRowFromDom(symbol);
+        showToast(`Unsubscribed from ${symbol}`, 'info');
+      } catch (err) {
+        showToast(err.message || 'Error removing symbol', 'error');
+      }
+    }
+
+    function quickAdd(symbol) {
+      addSymbol(symbol);
+    }
+
+    // --- SSE Streaming Connection ---
+    function connectSse() {
+      if (state.eventSource) {
+        try { state.eventSource.close(); } catch (e) {}
+      }
+
+      setConnectionStatus('connecting');
+
+      const sseUrl = './api/stream';
+      const es = new EventSource(sseUrl);
+      state.eventSource = es;
+
+      es.onopen = () => {
+        setConnectionStatus('connected');
+      };
+
+      es.onerror = () => {
+        setConnectionStatus('disconnected');
+      };
+
+      es.addEventListener('initial-snapshot', (e) => {
+        try {
+          const snapshot = JSON.parse(e.data);
+          if (Array.isArray(snapshot)) {
+            snapshot.forEach(tick => {
+              updateOrAddQuote(tick);
+            });
+            if (snapshot.length > 0 && !state.activeSymbol) {
+              selectActiveSymbol(snapshot[0].symbol);
+            }
+          }
+        } catch (err) {
+          console.error('Error parsing initial-snapshot SSE:', err, e.data);
+        }
+      });
+
+      es.addEventListener('tick', (e) => {
+        try {
+          const tick = JSON.parse(e.data);
+          updateOrAddQuote(tick);
+          updateHudMetrics(tick);
+        } catch (err) {
+          console.error('Error parsing tick SSE:', err, e.data);
+        }
+      });
+
+      es.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          if (Array.isArray(data)) {
+            data.forEach(updateOrAddQuote);
+          } else if (data && data.symbol) {
+            updateOrAddQuote(data);
+            updateHudMetrics(data);
+          }
+        } catch (err) {}
+      };
+    }
+
+    function setConnectionStatus(status) {
+      if (status === 'connected') {
+        dom.connectionStatus.className = 'status-badge connected';
+        dom.connectionStatusText.textContent = 'CONNECTED';
+      } else if (status === 'connecting') {
+        dom.connectionStatus.className = 'status-badge disconnected';
+        dom.connectionStatusText.textContent = 'RECONNECTING...';
+      } else {
+        dom.connectionStatus.className = 'status-badge disconnected';
+        dom.connectionStatusText.textContent = 'DISCONNECTED';
+      }
+    }
+
+    function formatCurrency(val) {
+      if (val == null || isNaN(val)) return '--';
+      return '\u20B9 ' + Number(val).toLocaleString('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function showToast(msg, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<span>${msg}</span>`;
+      dom.toastContainer.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(10px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    dom.addStockForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      addSymbol(dom.symbolInput.value);
+    });
+
+    dom.symbolInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.toUpperCase();
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initChart();
+      loadSymbols();
+      connectSse();
+    });
+  </script>
+</body>
+</html>
