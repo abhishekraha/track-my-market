@@ -66,6 +66,13 @@ tasks.named("compileJava") {
 tasks.test {
     useJUnitPlatform()
     jvmArgs("--add-opens=java.base/sun.nio.ch=ALL-UNNAMED", "--enable-native-access=ALL-UNNAMED")
+    testLogging {
+        events("passed", "skipped", "failed", "standardOut", "standardError")
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
 }
 
 application {
