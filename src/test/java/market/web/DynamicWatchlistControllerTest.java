@@ -79,6 +79,20 @@ class DynamicWatchlistControllerTest {
     }
 
     @Test
+    void shouldReturnSymbolStatusesWithErrors() {
+        YahooFinanceProvider provider = new YahooFinanceProvider();
+        provider.subscribe(List.of("RELIANCE.NS", "TATAMOTORS.NS"));
+        provider.handleSymbolErrorResponse("TATAMOTORS.NS", "delisted");
+
+        DynamicWatchlistController controller = new DynamicWatchlistController(provider);
+        String statusJson = controller.handleGetSymbolStatusJson();
+
+        assertThat(statusJson).contains("\"RELIANCE.NS\":{\"status\":\"OK\"}");
+        assertThat(statusJson).contains("\"TATAMOTORS.NS\":{\"status\":\"ERROR\"");
+        assertThat(statusJson).contains("TMPV.NS");
+    }
+
+    @Test
     void shouldRejectNullProvider() {
         assertThatThrownBy(() -> new DynamicWatchlistController(null))
             .isInstanceOf(NullPointerException.class);

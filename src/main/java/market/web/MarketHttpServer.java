@@ -171,6 +171,11 @@ public class MarketHttpServer {
         try {
             switch (method) {
                 case "GET" -> {
+                    if (path.equals(symbolsBase + "/status") || path.equals(symbolsBase + "/status/")) {
+                        String json = watchlistController.handleGetSymbolStatusJson();
+                        sendJson(exchange, 200, json);
+                        return;
+                    }
                     if (!path.equals(symbolsBase) && !path.equals(symbolsBase + "/")) {
                         sendError(exchange, 404, "Not Found");
                         return;

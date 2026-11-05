@@ -119,6 +119,22 @@ class MarketStreamBroadcasterTest {
     }
 
     @Test
+    @DisplayName("Should broadcast symbol status event to active SSE clients")
+    void shouldBroadcastSymbolStatusEvent() {
+        MarketStreamBroadcaster broadcaster = new MarketStreamBroadcaster();
+        ByteArrayOutputStream clientOut = new ByteArrayOutputStream();
+        broadcaster.registerClient(clientOut);
+
+        broadcaster.broadcastSymbolStatus("TATAMOTORS.NS", "ERROR", "Delisted: try TMPV.NS");
+
+        String output = clientOut.toString();
+        assertThat(output).contains("event: symbol-status\n");
+        assertThat(output).contains("\"symbol\":\"TATAMOTORS.NS\"");
+        assertThat(output).contains("\"status\":\"ERROR\"");
+        assertThat(output).contains("TMPV.NS");
+    }
+
+    @Test
     @DisplayName("Should ignore fragments with unknown templateId or malformed buffer")
     void shouldIgnoreUnknownTemplateIdOrMalformedBuffer() {
         MarketStreamBroadcaster broadcaster = new MarketStreamBroadcaster();

@@ -143,12 +143,18 @@ public class MarketStreamBroadcaster implements FragmentHandler {
         broadcastTick(json);
     }
 
-    private void broadcastTick(String json) {
+    public void broadcastSymbolStatus(String symbol, String status, String message) {
+        String json = String.format("{\"symbol\":\"%s\",\"status\":\"%s\",\"message\":\"%s\"}",
+            escapeJson(symbol), escapeJson(status), escapeJson(message));
+        broadcastEvent("symbol-status", json);
+    }
+
+    public void broadcastEvent(String eventName, String dataJson) {
         if (clients.isEmpty()) {
             return;
         }
 
-        byte[] payload = ("event: tick\ndata: " + json + "\n\n").getBytes(StandardCharsets.UTF_8);
+        byte[] payload = ("event: " + eventName + "\ndata: " + dataJson + "\n\n").getBytes(StandardCharsets.UTF_8);
 
         for (OutputStream client : clients) {
             try {
@@ -164,6 +170,10 @@ public class MarketStreamBroadcaster implements FragmentHandler {
                 }
             }
         }
+    }
+
+    private void broadcastTick(String json) {
+        broadcastEvent("tick", json);
     }
 
     private static String formatQuoteJson(

@@ -321,4 +321,31 @@ class YahooFinanceProviderTest {
         assertThat(results.get(1).symbol()).isEqualTo("TATASTEEL.NS");
         assertThat(results.get(1).name()).isEqualTo("Tata Steel Limited");
     }
+
+    @Test
+    void shouldRegisterTmpvAndTmcvIdentifierMappings() {
+        YahooFinanceProvider provider = new YahooFinanceProvider();
+        var tmpv = provider.getIdentifiers("TMPV.NS");
+        assertThat(tmpv.isin()).isEqualTo("INE155A01022");
+        assertThat(tmpv.ric()).isEqualTo("TMPV.NS");
+
+        var tmcv = provider.getIdentifiers("TMCV.NS");
+        assertThat(tmcv.isin()).isEqualTo("INE155A01022");
+        assertThat(tmcv.ric()).isEqualTo("TMCV.NS");
+    }
+
+    @Test
+    void shouldNotifyErrorListenerWhenSymbolDelisted() {
+        YahooFinanceProvider provider = new YahooFinanceProvider();
+        List<String> errors = new ArrayList<>();
+        provider.registerErrorListener((sym, err) -> errors.add(sym + ": " + err));
+
+        String delistedJson = "{\"chart\":{\"result\":null,\"error\":{\"code\":\"Not Found\",\"description\":\"No data found, symbol may be delisted\"}}}";
+        provider.handleSymbolErrorResponse("TATAMOTORS.NS", delistedJson);
+
+        assertThat(errors).hasSize(1);
+        assertThat(errors.get(0)).contains("TATAMOTORS.NS");
+        assertThat(errors.get(0)).contains("TMPV.NS");
+        assertThat(provider.getSymbolErrors()).containsKey("TATAMOTORS.NS");
+    }
 }

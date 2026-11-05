@@ -130,6 +130,9 @@ public class MarketApp {
             eventBus.subscribe(DEFAULT_STREAM_ID, displayConsumer);
 
             if (enableUi && broadcaster != null) {
+                MarketStreamBroadcaster sseBroadcaster = broadcaster;
+                provider.registerErrorListener((sym, reason) ->
+                    sseBroadcaster.broadcastSymbolStatus(sym, "ERROR", reason));
                 eventBus.subscribe(DEFAULT_STREAM_ID, broadcaster);
                 webServer.start();
             }

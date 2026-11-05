@@ -35,6 +35,39 @@ public class DynamicWatchlistController {
     }
 
     /**
+     * Returns a JSON map of current symbol statuses and error messages if any.
+     *
+     * @return JSON object string mapping symbol to status details
+     */
+    public String handleGetSymbolStatusJson() {
+        List<String> symbols = provider.getSubscribedSymbols();
+        java.util.Map<String, String> errors = java.util.Collections.emptyMap();
+        if (provider instanceof market.provider.yahoo.YahooFinanceProvider yahoo) {
+            errors = yahoo.getSymbolErrors();
+        }
+
+        StringBuilder sb = new StringBuilder("{");
+        boolean first = true;
+        for (String sym : symbols) {
+            if (!first) {
+                sb.append(",");
+            }
+            first = false;
+            String err = errors.get(sym);
+            sb.append("\"").append(escapeJson(sym)).append("\":{");
+            if (err != null) {
+                sb.append("\"status\":\"ERROR\",")
+                  .append("\"message\":\"").append(escapeJson(err)).append("\"");
+            } else {
+                sb.append("\"status\":\"OK\"");
+            }
+            sb.append("}");
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
+    /**
      * Parses the symbol from the request body JSON, normalizes it, subscribes to it,
      * and returns the updated symbol list.
      *

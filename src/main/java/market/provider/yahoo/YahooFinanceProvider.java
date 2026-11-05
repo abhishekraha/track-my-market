@@ -49,6 +49,11 @@ public class YahooFinanceProvider implements MarketDataProvider {
     public record SymbolIdentifiers(String isin, String sedol, String ric) {}
     public record SearchResult(String symbol, String name, String exchange, String type) {}
 
+    @FunctionalInterface
+    public interface SymbolErrorListener {
+        void onSymbolError(String symbol, String errorReason);
+    }
+
     private static final Pattern QUOTE_OBJECT_PATTERN =
         Pattern.compile("\\{[^{}]*\"symbol\"\\s*:\\s*\"[^\"]+\"[^{}]*\\}");
     private static final Pattern SYMBOL_PATTERN = Pattern.compile("\"symbol\"\\s*:\\s*\"([^\"]+)\"");
@@ -70,6 +75,8 @@ public class YahooFinanceProvider implements MarketDataProvider {
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final Set<String> subscribedSymbols = ConcurrentHashMap.newKeySet();
     private final List<Consumer<RawMarketQuote>> listeners = new CopyOnWriteArrayList<>();
+    private final List<SymbolErrorListener> errorListeners = new CopyOnWriteArrayList<>();
+    private final Map<String, String> symbolErrors = new ConcurrentHashMap<>();
 
     private final Map<String, Long> lastQuoteTimes = new ConcurrentHashMap<>();
     private final Map<String, Double> lastPrices = new ConcurrentHashMap<>();
@@ -138,6 +145,8 @@ public class YahooFinanceProvider implements MarketDataProvider {
         registerIdentifierMapping("RELIANCE.NS", "INE002A01018", "6714072", "RELI.NS");
         registerIdentifierMapping("TCS.NS", "INE467B01029", "6873587", "TCS.NS");
         registerIdentifierMapping("INFY.NS", "INE009A01021", "6459397", "INFY.NS");
+        registerIdentifierMapping("TMPV.NS", "INE155A01022", "BP0VJ24", "TMPV.NS");
+        registerIdentifierMapping("TMCV.NS", "INE155A01022", "BP0VJ24", "TMCV.NS");
     }
 
     public void registerIdentifierMapping(String symbol, String isin, String sedol, String ric) {
@@ -194,6 +203,7 @@ public class YahooFinanceProvider implements MarketDataProvider {
             subscribedSymbols.remove(trimmed);
             lastQuoteTimes.remove(trimmed);
             lastPrices.remove(trimmed);
+            symbolErrors.remove(trimmed);
         }
     }
 
@@ -202,6 +212,16 @@ public class YahooFinanceProvider implements MarketDataProvider {
         if (listener != null) {
             listeners.add(listener);
         }
+    }
+
+    public void registerErrorListener(SymbolErrorListener listener) {
+        if (listener != null) {
+            errorListeners.add(listener);
+        }
+    }
+
+    public Map<String, String> getSymbolErrors() {
+        return Collections.unmodifiableMap(symbolErrors);
     }
 
     @Override
@@ -288,7 +308,12 @@ public class YahooFinanceProvider implements MarketDataProvider {
                     return;
                 }
                 if (response.statusCode() == 200) {
-                    parseAndEmit(symbol, response.body(), durationNs);
+                    boolean parsed = parseAndEmit(symbol, response.body(), durationNs);
+                    if (!parsed && response.body() != null && response.body().contains("\"error\":") && !response.body().contains("\"error\":null")) {
+                        handleSymbolErrorResponse(symbol, response.body());
+                    }
+                } else {
+                    handleSymbolErrorResponse(symbol, response.body());
                 }
             })
             .exceptionally(ex -> null);
@@ -302,6 +327,23 @@ public class YahooFinanceProvider implements MarketDataProvider {
         return baseUrl + "/v8/finance/chart/" + encoded;
     }
 
+    public void handleSymbolErrorResponse(String symbol, String body) {
+        String reason = "No data found";
+        if (body != null && body.contains("delisted")) {
+            reason = "Symbol may be delisted";
+        }
+        if (symbol != null && (symbol.equalsIgnoreCase("TATAMOTORS.NS") || symbol.equalsIgnoreCase("TATAMOTORS"))) {
+            reason = "Delisted: Tata Motors demerged into TMPV.NS (Passenger) and TMCV.NS (Commercial)";
+        }
+        symbolErrors.put(symbol, reason);
+        for (SymbolErrorListener listener : errorListeners) {
+            try {
+                listener.onSymbolError(symbol, reason);
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
     /**
      * Parses regularMarketPrice and regularMarketTime from Yahoo Finance chart JSON response
      * and emits a {@link RawMarketQuote} to registered listeners unless suppressed by deduplication.
@@ -309,17 +351,18 @@ public class YahooFinanceProvider implements MarketDataProvider {
      * @param symbol ticker symbol
      * @param jsonResponse response payload from Yahoo Finance
      * @param fetchDurationNs round-trip network duration in nanoseconds
+     * @return true if tick was successfully parsed and processed
      */
-    public void parseAndEmit(String symbol, String jsonResponse, long fetchDurationNs) {
+    public boolean parseAndEmit(String symbol, String jsonResponse, long fetchDurationNs) {
         if (symbol == null || jsonResponse == null || jsonResponse.isBlank()) {
-            return;
+            return false;
         }
 
         Matcher priceMatcher = REGULAR_MARKET_PRICE_PATTERN.matcher(jsonResponse);
         Matcher timeMatcher = REGULAR_MARKET_TIME_PATTERN.matcher(jsonResponse);
 
         if (!priceMatcher.find() || !timeMatcher.find()) {
-            return;
+            return false;
         }
 
         double price;
@@ -328,8 +371,10 @@ public class YahooFinanceProvider implements MarketDataProvider {
             price = Double.parseDouble(priceMatcher.group(1));
             rawTime = Long.parseLong(timeMatcher.group(1));
         } catch (NumberFormatException e) {
-            return;
+            return false;
         }
+
+        symbolErrors.remove(symbol);
 
         // Convert seconds to epoch nanoseconds (Yahoo Finance returns epoch seconds ~10 digits)
         long quoteTimestampEpochNs;
@@ -346,7 +391,7 @@ public class YahooFinanceProvider implements MarketDataProvider {
         Double lastPrice = lastPrices.get(symbol);
         if (lastTime != null && lastTime == quoteTimestampEpochNs
                 && lastPrice != null && Double.compare(lastPrice, price) == 0) {
-            return;
+            return true;
         }
 
         lastQuoteTimes.put(symbol, quoteTimestampEpochNs);
@@ -369,6 +414,7 @@ public class YahooFinanceProvider implements MarketDataProvider {
             } catch (Throwable ignored) {
             }
         }
+        return true;
     }
 
     public void clearDeduplicationCache() {
@@ -450,10 +496,20 @@ public class YahooFinanceProvider implements MarketDataProvider {
 
         return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
             .thenApply(response -> {
+                List<SearchResult> results = new ArrayList<>();
                 if (response.statusCode() == 200) {
-                    return parseSearchResults(response.body());
+                    results.addAll(parseSearchResults(response.body()));
                 }
-                return Collections.<SearchResult>emptyList();
+                String upper = cleanQuery.toUpperCase();
+                if (upper.contains("TATAMOTOR") || upper.equals("TATA")) {
+                    if (results.stream().noneMatch(r -> r.symbol().equalsIgnoreCase("TMPV.NS"))) {
+                        results.add(new SearchResult("TMPV.NS", "Tata Motors Passenger Vehicles Limited", "NSE", "EQUITY"));
+                    }
+                    if (results.stream().noneMatch(r -> r.symbol().equalsIgnoreCase("TMCV.NS"))) {
+                        results.add(new SearchResult("TMCV.NS", "Tata Motors Limited (Commercial Vehicles)", "NSE", "EQUITY"));
+                    }
+                }
+                return results;
             })
             .exceptionally(ex -> Collections.emptyList());
     }
