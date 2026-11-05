@@ -1,6 +1,7 @@
 package market.web;
 
 import market.provider.MarketDataProvider;
+import market.provider.yahoo.YahooFinanceProvider;
 
 import java.util.List;
 import java.util.Objects;
@@ -61,17 +62,23 @@ public class DynamicWatchlistController {
             String companyName = (yahoo != null) ? yahoo.getCompanyName(sym) : sym;
             boolean isTradable = (yahoo != null) && !isError && yahoo.isMarketOpen(sym);
             String marketState = isError ? "DELISTED" : (isTradable ? "OPEN" : "CLOSED");
+            String hoursDesc = (yahoo != null) ? yahoo.getTradingHoursDescription(sym)
+                : YahooFinanceProvider.getTradingHoursDescription(sym);
             String message = isError ? (errReason != null ? errReason : "Symbol error or delisted")
-                                     : (isTradable ? "Market Open (Trading hours: Mon-Fri 09:15-15:30 IST)"
-                                                   : "Market Closed (Trading hours: Mon-Fri 09:15-15:30 IST)");
+                                     : (isTradable ? ("Market Open (" + hoursDesc + ")")
+                                                   : ("Market Closed (" + hoursDesc + ")"));
+            Double prevClose = (yahoo != null) ? yahoo.getPreviousClose(sym) : null;
 
             sb.append("\"").append(escapeJson(sym)).append("\":{")
               .append("\"status\":\"").append(isError ? "ERROR" : "OK").append("\",")
               .append("\"companyName\":\"").append(escapeJson(companyName)).append("\",")
               .append("\"isTradable\":").append(isTradable).append(",")
               .append("\"marketState\":\"").append(marketState).append("\",")
-              .append("\"message\":\"").append(escapeJson(message)).append("\"")
-              .append("}");
+              .append("\"message\":\"").append(escapeJson(message)).append("\"");
+            if (prevClose != null) {
+                sb.append(",\"previousClose\":").append(prevClose);
+            }
+            sb.append("}");
         }
         sb.append("}");
         return sb.toString();

@@ -104,6 +104,7 @@ public class YahooFinanceProvider implements MarketDataProvider {
 
     private final Map<String, Long> lastQuoteTimes = new ConcurrentHashMap<>();
     private final Map<String, Double> lastPrices = new ConcurrentHashMap<>();
+    private final Map<String, Double> previousCloses = new ConcurrentHashMap<>();
     private final Map<String, SymbolIdentifiers> identifierMap = new ConcurrentHashMap<>();
     private final Map<String, String> companyNames = new ConcurrentHashMap<>();
 
@@ -411,6 +412,12 @@ public class YahooFinanceProvider implements MarketDataProvider {
 
         Matcher priceMatcher = REGULAR_MARKET_PRICE_PATTERN.matcher(jsonResponse);
         Matcher timeMatcher = REGULAR_MARKET_TIME_PATTERN.matcher(jsonResponse);
+        Matcher prevM = PREV_CLOSE_PATTERN.matcher(jsonResponse);
+        if (prevM.find()) {
+            try {
+                registerPreviousClose(symbol, Double.parseDouble(prevM.group(1)));
+            } catch (NumberFormatException ignored) {}
+        }
 
         if (!priceMatcher.find() || !timeMatcher.find()) {
             return false;
@@ -588,9 +595,74 @@ public class YahooFinanceProvider implements MarketDataProvider {
         };
     }
 
+    public Double getPreviousClose(String symbol) {
+        return (symbol != null) ? previousCloses.get(symbol.trim().toUpperCase()) : null;
+    }
+
+    public void registerPreviousClose(String symbol, double price) {
+        if (symbol != null) {
+            previousCloses.put(symbol.trim().toUpperCase(), price);
+        }
+    }
+
+    public static ZoneId getExchangeZone(String symbol) {
+        if (symbol == null) return ZoneId.of("America/New_York");
+        String s = symbol.toUpperCase();
+        if (s.endsWith(".NS") || s.endsWith(".BO") || s.endsWith(".IN")) {
+            return ZoneId.of("Asia/Kolkata");
+        } else if (s.endsWith(".L") || s.endsWith(".LON")) {
+            return ZoneId.of("Europe/London");
+        } else if (s.endsWith(".TO") || s.endsWith(".V")) {
+            return ZoneId.of("America/Toronto");
+        }
+        return ZoneId.of("America/New_York");
+    }
+
+    public static LocalTime getMarketOpenTime(String symbol) {
+        if (symbol != null) {
+            String s = symbol.toUpperCase();
+            if (s.endsWith(".NS") || s.endsWith(".BO") || s.endsWith(".IN")) {
+                return LocalTime.of(9, 15);
+            }
+            if (s.endsWith(".L") || s.endsWith(".LON")) {
+                return LocalTime.of(8, 0);
+            }
+        }
+        return LocalTime.of(9, 30); // US standard 09:30 ET
+    }
+
+    public static LocalTime getMarketCloseTime(String symbol) {
+        if (symbol != null) {
+            String s = symbol.toUpperCase();
+            if (s.endsWith(".NS") || s.endsWith(".BO") || s.endsWith(".IN")) {
+                return LocalTime.of(15, 30);
+            }
+            if (s.endsWith(".L") || s.endsWith(".LON")) {
+                return LocalTime.of(16, 30);
+            }
+        }
+        return LocalTime.of(16, 0); // US standard 16:00 ET
+    }
+
+    public static String getTradingHoursDescription(String symbol) {
+        if (symbol != null) {
+            String s = symbol.toUpperCase();
+            if (s.endsWith(".NS") || s.endsWith(".BO") || s.endsWith(".IN")) {
+                return "Trading hours: Mon-Fri 09:15-15:30 IST (NSE/BSE)";
+            }
+            if (s.endsWith(".L") || s.endsWith(".LON")) {
+                return "Trading hours: Mon-Fri 08:00-16:30 GMT (LSE)";
+            }
+            if (s.endsWith(".TO") || s.endsWith(".V")) {
+                return "Trading hours: Mon-Fri 09:30-16:00 ET (TSX)";
+            }
+        }
+        return "Trading hours: Mon-Fri 09:30-16:00 ET (NASDAQ/NYSE)";
+    }
+
     public static boolean isMarketOpenForSymbol(String symbol, ZoneId zone, Instant now) {
         if (zone == null) {
-            zone = ZoneId.of("Asia/Kolkata");
+            zone = getExchangeZone(symbol);
         }
         if (now == null) {
             now = Instant.now();
@@ -601,13 +673,17 @@ public class YahooFinanceProvider implements MarketDataProvider {
             return false;
         }
         LocalTime time = zdt.toLocalTime();
-        LocalTime open = LocalTime.of(9, 15);
-        LocalTime close = LocalTime.of(15, 30);
+        LocalTime open = (symbol != null && (symbol.toUpperCase().endsWith(".NS") || symbol.toUpperCase().endsWith(".BO")))
+            ? LocalTime.of(9, 15)
+            : (zone.getId().equals("Asia/Kolkata") ? LocalTime.of(9, 15) : getMarketOpenTime(symbol));
+        LocalTime close = (symbol != null && (symbol.toUpperCase().endsWith(".NS") || symbol.toUpperCase().endsWith(".BO")))
+            ? LocalTime.of(15, 30)
+            : (zone.getId().equals("Asia/Kolkata") ? LocalTime.of(15, 30) : getMarketCloseTime(symbol));
         return !time.isBefore(open) && !time.isAfter(close);
     }
 
     public boolean isMarketOpen(String symbol) {
-        return isMarketOpenForSymbol(symbol, ZoneId.of("Asia/Kolkata"), Instant.now());
+        return isMarketOpenForSymbol(symbol, getExchangeZone(symbol), Instant.now());
     }
 
     public CompletableFuture<String> fetchChartHistoryJson(String symbol, String timeframe) {
@@ -702,15 +778,17 @@ public class YahooFinanceProvider implements MarketDataProvider {
         Double maxHigh = null;
 
         int len = Math.min(timestamps.size(), closes.size());
+        long lastT = -1;
         for (int i = 0; i < len; i++) {
             Long t = timestamps.get(i);
             Double c = closes.get(i);
-            if (t == null || c == null) {
+            if (t == null || c == null || t <= lastT) {
                 continue;
             }
             if (cutoff > 0 && t < cutoff) {
                 continue;
             }
+            lastT = t;
 
             Double h = (i < highs.size()) ? highs.get(i) : null;
             Double l = (i < lows.size()) ? lows.get(i) : null;

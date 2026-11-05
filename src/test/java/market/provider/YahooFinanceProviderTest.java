@@ -391,6 +391,22 @@ class YahooFinanceProviderTest {
     }
 
     @Test
+    void shouldDetermineTradingHoursForUsEquities() {
+        java.time.ZoneId et = java.time.ZoneId.of("America/New_York");
+        // Mon 10:30 AM ET -> Open
+        java.time.Instant monTrading = java.time.ZonedDateTime.of(2026, 11, 2, 10, 30, 0, 0, et).toInstant();
+        assertThat(YahooFinanceProvider.isMarketOpenForSymbol("AAPL", null, monTrading)).isTrue();
+
+        // Mon 08:30 AM ET -> Closed (Pre-market)
+        java.time.Instant monPre = java.time.ZonedDateTime.of(2026, 11, 2, 8, 30, 0, 0, et).toInstant();
+        assertThat(YahooFinanceProvider.isMarketOpenForSymbol("AAPL", null, monPre)).isFalse();
+
+        // Mon 04:30 PM ET -> Closed (After-hours)
+        java.time.Instant monPost = java.time.ZonedDateTime.of(2026, 11, 2, 16, 30, 0, 0, et).toInstant();
+        assertThat(YahooFinanceProvider.isMarketOpenForSymbol("AAPL", null, monPost)).isFalse();
+    }
+
+    @Test
     void shouldProvideCompanyNames() {
         YahooFinanceProvider provider = new YahooFinanceProvider();
         assertThat(provider.getCompanyName("RELIANCE.NS")).isEqualTo("Reliance Industries Limited");

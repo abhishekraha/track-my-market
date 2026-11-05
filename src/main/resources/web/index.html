@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="https://unpkg.com/lightweight-charts@4.2.1/dist/lightweight-charts.standalone.production.js"></script>
 
   <style>
     :root {
@@ -526,6 +526,33 @@
       background-color: var(--bg-panel);
     }
 
+    .chart-axis-label {
+      position: absolute;
+      z-index: 5;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      font-family: var(--font-mono);
+      padding: 0.18rem 0.5rem;
+      border-radius: 0.25rem;
+      background: rgba(15, 23, 42, 0.88);
+      border: 1px solid var(--border-medium);
+      color: var(--accent-blue);
+      pointer-events: none;
+      user-select: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+
+    .chart-axis-label.y-axis-label {
+      top: 10px;
+      right: 14px;
+    }
+
+    .chart-axis-label.x-axis-label {
+      bottom: 8px;
+      left: 14px;
+    }
+
     #tradingview-chart {
       width: 100%;
       height: 100%;
@@ -575,6 +602,243 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-stats-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 0.5rem;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: var(--accent-blue);
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-stats-toggle:hover {
+      background: rgba(56, 189, 248, 0.22);
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .market-pill-table {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.2rem 0.55rem;
+      border-radius: 9999px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      font-family: var(--font-mono);
+      user-select: none;
+    }
+    .market-pill-table.pill-open {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+    }
+    .market-pill-table.pill-closed {
+      background: rgba(100, 116, 139, 0.15);
+      border: 1px solid rgba(100, 116, 139, 0.4);
+      color: #94a3b8;
+    }
+    .market-pill-table.pill-delisted {
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.4);
+      color: #fb7185;
+    }
+    .market-pill-table .marker-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    .market-pill-table.pill-open .marker-dot {
+      background: #10b981;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
+    }
+    .market-pill-table.pill-closed .marker-dot {
+      background: #64748b;
+    }
+    .market-pill-table.pill-delisted .marker-dot {
+      background: #f43f5e;
+    }
+
+    /* Stats Modal Dialog */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 15, 25, 0.85);
+      backdrop-filter: blur(5px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      opacity: 1;
+      transition: opacity 0.2s ease;
+    }
+    .modal-overlay.hidden {
+      display: none;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .modal-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-medium);
+      border-radius: 0.85rem;
+      width: 100%;
+      max-width: 680px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.65);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      animation: modalScaleIn 0.2s ease-out;
+    }
+    @keyframes modalScaleIn {
+      from { transform: scale(0.96); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-header {
+      padding: 1.15rem 1.4rem;
+      border-bottom: 1px solid var(--border-medium);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(30, 41, 59, 0.45);
+    }
+    .modal-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .modal-title-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 0.5rem;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-blue);
+    }
+    .modal-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .modal-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+    .btn-modal-close {
+      background: transparent;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      line-height: 1;
+      padding: 0.25rem;
+      transition: color 0.2s;
+    }
+    .btn-modal-close:hover {
+      color: #ffffff;
+    }
+    .modal-body {
+      padding: 1.25rem 1.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      max-height: 65vh;
+      overflow-y: auto;
+    }
+    .stats-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.75rem;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 0.5rem;
+      padding: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+    .stat-lbl {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .stat-val {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .stat-sub {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+    }
+    .stats-detail-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+    .stats-detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      font-family: var(--font-mono);
+    }
+    .stats-detail-table th {
+      padding: 0.5rem 0.75rem;
+      text-align: left;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      border-bottom: 1px solid var(--border-medium);
+    }
+    .stats-detail-table td {
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+      color: var(--text-main);
+    }
+    .modal-footer {
+      padding: 0.9rem 1.4rem;
+      border-top: 1px solid var(--border-medium);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(30, 41, 59, 0.35);
+      gap: 1rem;
+    }
+    .modal-footer-note {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+    .btn-modal-dismiss {
+      padding: 0.45rem 1.1rem;
+      border-radius: 0.4rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--text-main);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .btn-modal-dismiss:hover {
+      background: var(--border-medium);
     }
 
     .panel-heading {
@@ -1152,6 +1416,8 @@
         <div id="chart-empty-msg" class="chart-empty-overlay">
           <span>Streaming live ticks from Aeron message bus...</span>
         </div>
+        <div class="chart-axis-label y-axis-label" title="Y-Axis: Rupee Price (₹ / INR)">PRICE (₹)</div>
+        <div class="chart-axis-label x-axis-label" title="X-Axis: Time (IST)">TIME (IST)</div>
         <div id="tradingview-chart"></div>
         <canvas id="fallback-canvas"></canvas>
       </div>
@@ -1165,6 +1431,12 @@
             <span>Dynamic Stock Watchlist</span>
             <span id="watchlist-count-badge" class="panel-heading-badge">0 Monitored</span>
           </div>
+          <button type="button" class="btn-stats-toggle" id="btn-open-stats" onclick="openStatsModal()" title="View Aeron Bus & Ingestion Latency Telemetry">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            <span>⚡ Engine Latency & Stats</span>
+          </button>
         </div>
 
         <!-- Add Stock Search Bar -->
@@ -1209,19 +1481,18 @@
           <thead>
             <tr>
               <th>Symbol</th>
-              <th class="num">Price</th>
-              <th class="num">Change %</th>
+              <th style="text-align: center;">Exchange Status</th>
+              <th class="num">Live Price</th>
+              <th class="num">Session Chg %</th>
+              <th class="num">Today's Chg %</th>
               <th>ISIN</th>
-              <th>SEDOL</th>
               <th>RIC</th>
-              <th class="num">Network Fetch</th>
-              <th class="num">Bus Latency</th>
               <th style="text-align: center;">Actions</th>
             </tr>
           </thead>
           <tbody id="watchlist-tbody">
             <tr>
-              <td colspan="9">
+              <td colspan="8">
                 <div class="empty-state">
                   <span>Waiting for initial market snapshot...</span>
                 </div>
@@ -1244,6 +1515,77 @@
       <span>Auto-reconnecting SSE Client &bull; Relative API Endpoints</span>
     </div>
   </footer>
+
+  <!-- Engine Performance & Latency Statistics Modal -->
+  <div id="stats-modal" class="modal-overlay hidden" onclick="if(event.target === this) closeStatsModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-title-icon">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" fill="none" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <div>
+            <h3 class="modal-title">Real Logic Aeron & IPC Engine Statistics</h3>
+            <p class="modal-subtitle">Ultra Low Latency Simple Binary Encoding (SBE v1) Metrics</p>
+          </div>
+        </div>
+        <button type="button" class="btn-modal-close" onclick="closeStatsModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="stats-summary-grid">
+          <div class="stat-card">
+            <span class="stat-lbl">Ingestion Network RTT</span>
+            <span id="modal-fetch-latency" class="stat-val mono-num">-- ms</span>
+            <span class="stat-sub">External market provider</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-lbl">Aeron Bus Latency</span>
+            <span id="modal-bus-latency" class="stat-val highlight-cyan mono-num">-- µs</span>
+            <span class="stat-sub">Shared memory ring buffer</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-lbl">Processed Ticks</span>
+            <span id="modal-ticks-count" class="stat-val highlight-emerald mono-num">0</span>
+            <span class="stat-sub">Zero-allocation SBE decode</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-lbl">IPC Channel & Stream</span>
+            <span class="stat-val mono-num" style="font-size: 1rem;">aeron:ipc (1001)</span>
+            <span class="stat-sub">Lock-free off-heap transport</span>
+          </div>
+        </div>
+
+        <div class="stats-detail-wrap">
+          <h4 class="stats-detail-title">Per-Symbol Latency & Transport Breakdown</h4>
+          <table class="stats-detail-table">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th class="num">Network Fetch</th>
+                <th class="num">Bus Latency</th>
+                <th>Provider</th>
+                <th>Last Tick</th>
+              </tr>
+            </thead>
+            <tbody id="stats-detail-tbody">
+              <tr>
+                <td colspan="5" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">
+                  No live quote latency records yet.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <span class="modal-footer-note">Telemetry sampled from Agrona DirectBuffer & Aeron Publication counters</span>
+        <button type="button" class="btn-modal-dismiss" onclick="closeStatsModal()">Close</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container"></div>
@@ -1269,12 +1611,14 @@
       quotes: new Map(),           // symbol -> { price, prevPrice, initialPrice, isin, sedol, ric, quoteTime, fetchDurationMs, busLatencyUs, provider }
       subscribedSymbols: new Set(),
       symbolStatuses: new Map(),   // symbol -> { status: 'OK'|'ERROR', message: string, isTradable: boolean, marketState: string, companyName: string }
+      previousCloses: new Map(),   // symbol -> previous close price
       companyNames: new Map(),
       chartHistory: new Map(),     // symbol -> Array of { time, value }
       totalTicks: 0,
       lastChartTimestampSec: 0,
       eventSource: null,
-      useCanvasFallback: false
+      useCanvasFallback: false,
+      statsModalOpen: false
     };
 
     // --- DOM Elements ---
@@ -1310,13 +1654,21 @@
       btnAddStock: document.getElementById('btn-add-stock'),
       toastContainer: document.getElementById('toast-container'),
       tradingviewChart: document.getElementById('tradingview-chart'),
-      fallbackCanvas: document.getElementById('fallback-canvas')
+      fallbackCanvas: document.getElementById('fallback-canvas'),
+      statsModal: document.getElementById('stats-modal'),
+      modalFetchLatency: document.getElementById('modal-fetch-latency'),
+      modalBusLatency: document.getElementById('modal-bus-latency'),
+      modalTicksCount: document.getElementById('modal-ticks-count'),
+      statsDetailTbody: document.getElementById('stats-detail-tbody'),
+      yAxisLabel: document.querySelector('.chart-axis-label.y-axis-label'),
+      xAxisLabel: document.querySelector('.chart-axis-label.x-axis-label')
     };
 
     // --- Chart Controller ---
     let tvChart = null;
     let tvAreaSeries = null;
     let canvasContext = null;
+    let canvasHoverPoint = null;
 
     function initChart() {
       const container = dom.tradingviewChart;
@@ -1327,52 +1679,91 @@
             height: container.clientHeight || 380,
             layout: {
               background: { color: '#0f172a' },
-              textColor: '#94a3b8'
+              textColor: '#94a3b8',
+              fontSize: 12,
+              fontFamily: "'JetBrains Mono', 'Roboto Mono', Consolas, monospace"
             },
             grid: {
-              vertLines: { color: '#1e293b' },
-              horzLines: { color: '#1e293b' }
+              vertLines: { color: 'rgba(30, 41, 59, 0.7)' },
+              horzLines: { color: 'rgba(30, 41, 59, 0.7)' }
             },
             crosshair: {
-              mode: LightweightCharts.CrosshairMode.Normal,
+              mode: (LightweightCharts.CrosshairMode && LightweightCharts.CrosshairMode.Normal != null)
+                ? LightweightCharts.CrosshairMode.Normal : 0,
               vertLine: {
+                visible: true,
                 labelVisible: true,
                 color: '#38bdf8',
                 width: 1,
-                style: 2
+                style: 2,
+                labelBackgroundColor: '#0369a1'
               },
               horzLine: {
+                visible: true,
                 labelVisible: true,
                 color: '#38bdf8',
                 width: 1,
-                style: 2
+                style: 2,
+                labelBackgroundColor: '#0369a1'
               }
             },
             rightPriceScale: {
-              borderColor: '#334155'
+              visible: true,
+              borderColor: '#334155',
+              textColor: '#94a3b8',
+              scaleMargins: {
+                top: 0.1,
+                bottom: 0.15
+              }
             },
             timeScale: {
+              visible: true,
               borderColor: '#334155',
+              textColor: '#94a3b8',
               timeVisible: true,
-              secondsVisible: false
+              secondsVisible: false,
+              rightOffset: 12,
+              barSpacing: 6
+            },
+            localization: {
+              priceFormatter: price => '₹ ' + Number(price).toFixed(2)
             }
           });
 
-          tvAreaSeries = tvChart.addAreaSeries({
+          const seriesOpts = {
             topColor: 'rgba(56, 189, 248, 0.45)',
             bottomColor: 'rgba(56, 189, 248, 0.02)',
             lineColor: '#38bdf8',
-            lineWidth: 2
-          });
+            lineWidth: 2,
+            priceFormat: {
+              type: 'custom',
+              formatter: price => '₹ ' + Number(price).toFixed(2),
+              minMove: 0.05
+            }
+          };
+
+          if (typeof tvChart.addAreaSeries === 'function') {
+            tvAreaSeries = tvChart.addAreaSeries(seriesOpts);
+          } else if (typeof tvChart.addSeries === 'function' && LightweightCharts.AreaSeries) {
+            tvAreaSeries = tvChart.addSeries(LightweightCharts.AreaSeries, seriesOpts);
+          }
 
           tvChart.subscribeCrosshairMove(param => {
             if (!param || !param.point || !param.time) {
               renderChartSummaryHud();
               return;
             }
-            const price = param.seriesData.get(tvAreaSeries);
-            if (price != null && price.value != null) {
-              updateChartMetricsCrosshair(param.time, price.value);
+            let price = null;
+            if (param.seriesData && param.seriesData.get) {
+              const val = param.seriesData.get(tvAreaSeries);
+              if (val != null) {
+                price = (typeof val === 'object' && val.value != null) ? val.value : val;
+              }
+            } else if (param.seriesPrices && param.seriesPrices.get) {
+              price = param.seriesPrices.get(tvAreaSeries);
+            }
+            if (price != null && !isNaN(price)) {
+              updateChartMetricsCrosshair(param.time, Number(price));
             }
           });
 
@@ -1386,15 +1777,54 @@
           resizeObserver.observe(container);
           return;
         } catch (e) {
-          console.warn('Failed to initialize TradingView Lightweight Charts, falling back to Canvas:', e);
+          console.warn('Lightweight Charts init warning, falling back to Canvas:', e);
         }
       }
 
-      // Fallback HTML5 Canvas
+      setupCanvasFallback();
+    }
+
+    function setupCanvasFallback() {
       state.useCanvasFallback = true;
       dom.tradingviewChart.style.display = 'none';
       dom.fallbackCanvas.style.display = 'block';
       canvasContext = dom.fallbackCanvas.getContext('2d');
+
+      const canvas = dom.fallbackCanvas;
+      canvas.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        const history = state.chartHistory.get(state.activeSymbol) || [];
+        if (history.length < 2) return;
+
+        const padLeft = 20;
+        const padRight = 85;
+        const plotWidth = rect.width - padLeft - padRight;
+        if (mouseX < padLeft || mouseX > rect.width - padRight) {
+          canvasHoverPoint = null;
+          renderFallbackCanvas();
+          renderChartSummaryHud();
+          return;
+        }
+
+        const frac = (mouseX - padLeft) / plotWidth;
+        const idx = Math.min(history.length - 1, Math.max(0, Math.round(frac * (history.length - 1))));
+        const pt = history[idx];
+        if (pt) {
+          canvasHoverPoint = { ...pt, x: mouseX, idx };
+          updateChartMetricsCrosshair(pt.time, pt.value);
+        }
+        renderFallbackCanvas();
+      });
+
+      canvas.addEventListener('mouseleave', () => {
+        canvasHoverPoint = null;
+        renderFallbackCanvas();
+        renderChartSummaryHud();
+      });
+
       resizeFallbackCanvas();
       window.addEventListener('resize', resizeFallbackCanvas);
     }
@@ -1402,40 +1832,109 @@
     function resizeFallbackCanvas() {
       if (!state.useCanvasFallback) return;
       const box = dom.fallbackCanvas.parentElement.getBoundingClientRect();
-      dom.fallbackCanvas.width = box.width;
-      dom.fallbackCanvas.height = box.height;
+      const dpr = window.devicePixelRatio || 1;
+      dom.fallbackCanvas.width = box.width * dpr;
+      dom.fallbackCanvas.height = box.height * dpr;
+      dom.fallbackCanvas.style.width = box.width + 'px';
+      dom.fallbackCanvas.style.height = box.height + 'px';
+      if (canvasContext) {
+        canvasContext.scale(dpr, dpr);
+      }
       renderFallbackCanvas();
     }
 
     function renderFallbackCanvas() {
       if (!state.useCanvasFallback || !canvasContext) return;
       const ctx = canvasContext;
-      const width = dom.fallbackCanvas.width;
-      const height = dom.fallbackCanvas.height;
+      const rect = dom.fallbackCanvas.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
       ctx.clearRect(0, 0, width, height);
 
       const history = state.chartHistory.get(state.activeSymbol) || [];
       if (history.length < 2) return;
 
+      const padLeft = 20;
+      const padRight = 85;
+      const padTop = 30;
+      const padBottom = 35;
+      const plotWidth = width - padLeft - padRight;
+      const plotHeight = height - padTop - padBottom;
+
       const prices = history.map(h => h.value);
-      const minPrice = Math.min(...prices);
-      const maxPrice = Math.max(...prices);
-      const range = (maxPrice - minPrice) || 1;
-      const padding = 30;
+      const rawMin = Math.min(...prices);
+      const rawMax = Math.max(...prices);
+      const spread = (rawMax - rawMin) || (rawMin * 0.01) || 1;
+      const minPrice = rawMin - (spread * 0.05);
+      const maxPrice = rawMax + (spread * 0.05);
+      const range = maxPrice - minPrice;
 
-      ctx.strokeStyle = '#1e293b';
+      // Draw Grid & Price Scale on Right
+      const yTicks = 5;
+      ctx.strokeStyle = 'rgba(30, 41, 59, 0.8)';
       ctx.lineWidth = 1;
-      ctx.beginPath();
-      for (let y = padding; y < height - padding; y += 50) {
-        ctx.moveTo(padding, y);
-        ctx.lineTo(width - padding, y);
-      }
-      ctx.stroke();
+      ctx.setLineDash([4, 4]);
 
+      for (let i = 0; i < yTicks; i++) {
+        const y = padTop + (i / (yTicks - 1)) * plotHeight;
+        const tickPrice = maxPrice - (i / (yTicks - 1)) * range;
+
+        // Horz grid line
+        ctx.beginPath();
+        ctx.moveTo(padLeft, y);
+        ctx.lineTo(width - padRight, y);
+        ctx.stroke();
+
+        // Price Axis Label on Right
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '11px "JetBrains Mono", Consolas, monospace';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('₹ ' + tickPrice.toFixed(2), width - 8, y);
+        ctx.setLineDash([4, 4]);
+      }
+      ctx.setLineDash([]);
+
+      // Vertical Grid & Time Scale at Bottom
+      const xTicks = 5;
+      const isIntraday = ['1H', '3H', '6H', '12H', '1D'].includes(state.selectedTimeframe.toUpperCase());
+      ctx.strokeStyle = 'rgba(30, 41, 59, 0.8)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+
+      for (let j = 0; j < xTicks; j++) {
+        const idx = Math.min(history.length - 1, Math.round((j / (xTicks - 1)) * (history.length - 1)));
+        const pt = history[idx];
+        const x = padLeft + (idx / (history.length - 1)) * plotWidth;
+
+        ctx.beginPath();
+        ctx.moveTo(x, padTop);
+        ctx.lineTo(x, height - padBottom);
+        ctx.stroke();
+
+        if (pt) {
+          ctx.setLineDash([]);
+          const d = new Date(pt.time * 1000);
+          const timeStr = isIntraday
+            ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+          ctx.fillStyle = '#94a3b8';
+          ctx.font = '11px "JetBrains Mono", Consolas, monospace';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'top';
+          ctx.fillText(timeStr, x, height - padBottom + 8);
+          ctx.setLineDash([4, 4]);
+        }
+      }
+      ctx.setLineDash([]);
+
+      // Draw Main Price Curve
       ctx.beginPath();
       history.forEach((pt, idx) => {
-        const x = padding + (idx / (history.length - 1)) * (width - padding * 2);
-        const y = height - padding - ((pt.value - minPrice) / range) * (height - padding * 2);
+        const x = padLeft + (idx / (history.length - 1)) * plotWidth;
+        const y = padTop + ((maxPrice - pt.value) / range) * plotHeight;
         if (idx === 0) ctx.moveTo(x, y);
         else ctx.lineTo(x, y);
       });
@@ -1443,14 +1942,72 @@
       ctx.lineWidth = 2;
       ctx.stroke();
 
-      ctx.lineTo(width - padding, height - padding);
-      ctx.lineTo(padding, height - padding);
+      // Area gradient under curve
+      ctx.lineTo(padLeft + plotWidth, height - padBottom);
+      ctx.lineTo(padLeft, height - padBottom);
       ctx.closePath();
-      const grad = ctx.createLinearGradient(0, padding, 0, height - padding);
+      const grad = ctx.createLinearGradient(0, padTop, 0, height - padBottom);
       grad.addColorStop(0, 'rgba(56, 189, 248, 0.35)');
-      grad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+      grad.addColorStop(1, 'rgba(56, 189, 248, 0.01)');
       ctx.fillStyle = grad;
       ctx.fill();
+
+      // Crosshair & Hover Annotations
+      if (canvasHoverPoint) {
+        const hp = canvasHoverPoint;
+        const hx = padLeft + (hp.idx / (history.length - 1)) * plotWidth;
+        const hy = padTop + ((maxPrice - hp.value) / range) * plotHeight;
+
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
+
+        // Vert line
+        ctx.beginPath();
+        ctx.moveTo(hx, padTop);
+        ctx.lineTo(hx, height - padBottom);
+        ctx.stroke();
+
+        // Horz line
+        ctx.beginPath();
+        ctx.moveTo(padLeft, hy);
+        ctx.lineTo(width - padRight, hy);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Glow Point
+        ctx.beginPath();
+        ctx.arc(hx, hy, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#ffffff';
+        ctx.stroke();
+
+        // Price badge on Y-axis
+        const priceText = '₹ ' + hp.value.toFixed(2);
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(width - padRight + 2, hy - 11, padRight - 6, 22);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 11px "JetBrains Mono", Consolas, monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(priceText, width - padRight + (padRight / 2), hy);
+
+        // Time badge on X-axis
+        const d = new Date(hp.time * 1000);
+        const timeText = isIntraday
+          ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+          : d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+        ctx.font = 'bold 11px "JetBrains Mono", Consolas, monospace';
+        const tWidth = ctx.measureText(timeText).width + 12;
+        ctx.fillStyle = '#0284c7';
+        ctx.fillRect(hx - tWidth / 2, height - padBottom + 4, tWidth, 20);
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(timeText, hx, height - padBottom + 14);
+      }
     }
 
     function pushTickToChart(symbol, price, quoteTimeMs) {
@@ -1529,7 +2086,26 @@
           state.symbolStatuses.set(symbol, st);
         }
 
-        const pts = data.points || [];
+        if (data.previousClose != null) {
+          state.previousCloses.set(symbol, Number(data.previousClose));
+          const quote = state.quotes.get(symbol);
+          if (quote) renderRow(quote);
+        }
+
+        const rawPts = data.points || [];
+        const pts = [];
+        let lastTs = -1;
+        rawPts.sort((a, b) => (Number(a.time) || 0) - (Number(b.time) || 0));
+        for (const p of rawPts) {
+          if (p && p.time != null && p.value != null && !isNaN(p.value)) {
+            const t = Number(p.time);
+            const v = Number(p.value);
+            if (t > lastTs) {
+              pts.push({ time: t, value: v });
+              lastTs = t;
+            }
+          }
+        }
         if (pts.length > 0) {
           dom.chartEmptyMsg.style.display = 'none';
           state.chartHistory.set(symbol, pts);
@@ -1646,23 +2222,35 @@
         dom.chartCompanySubtitle.title = companyName || '';
       }
 
+      const isUs = q.symbol && (!q.symbol.includes('.') || q.symbol.endsWith('.US'));
+      const isUk = q.symbol && q.symbol.endsWith('.L');
+      const exchLabel = isUs ? 'NASDAQ/NYSE' : isUk ? 'LSE' : 'NSE/BSE';
+
+      if (dom.yAxisLabel) {
+        dom.yAxisLabel.textContent = isUs ? 'PRICE ($)' : isUk ? 'PRICE (£)' : 'PRICE (₹)';
+      }
+      if (dom.xAxisLabel) {
+        dom.xAxisLabel.textContent = isUs ? 'TIME (ET)' : isUk ? 'TIME (GMT)' : 'TIME (IST)';
+      }
+
       const statusInfo = state.symbolStatuses.get(q.symbol);
       const isError = statusInfo && statusInfo.status === 'ERROR';
       const isTradable = statusInfo ? statusInfo.isTradable : false;
+      const statusMsg = (statusInfo && statusInfo.message) ? statusInfo.message : '';
 
       if (dom.chartTradableBadge && dom.chartTradableText) {
         if (isError) {
           dom.chartTradableBadge.className = 'market-status-pill delisted';
           dom.chartTradableText.textContent = 'DELISTED / INACTIVE';
-          dom.chartTradableBadge.title = statusInfo.message || 'Symbol error or delisted';
+          dom.chartTradableBadge.title = statusMsg || 'Symbol error or delisted';
         } else if (isTradable) {
           dom.chartTradableBadge.className = 'market-status-pill open';
-          dom.chartTradableText.textContent = 'NSE/BSE: OPEN (TRADABLE)';
-          dom.chartTradableBadge.title = 'Market is OPEN (Trading hours: Mon-Fri 09:15-15:30 IST)';
+          dom.chartTradableText.textContent = `${exchLabel}: OPEN (TRADABLE)`;
+          dom.chartTradableBadge.title = statusMsg || `Market is OPEN on ${exchLabel}`;
         } else {
           dom.chartTradableBadge.className = 'market-status-pill closed';
-          dom.chartTradableText.textContent = 'EXCHANGE CLOSED';
-          dom.chartTradableBadge.title = (statusInfo && statusInfo.message) ? statusInfo.message : 'Market is CLOSED (Trading hours: Mon-Fri 09:15-15:30 IST)';
+          dom.chartTradableText.textContent = `${exchLabel}: CLOSED`;
+          dom.chartTradableBadge.title = statusMsg || `Market is CLOSED on ${exchLabel}`;
         }
       }
 
@@ -1671,7 +2259,7 @@
         dom.chartSymbolChange.textContent = 'NO DATA';
         dom.chartSymbolChange.className = 'active-symbol-change change-down mono-num';
       } else if (q.price != null) {
-        dom.chartSymbolPrice.textContent = formatCurrency(q.price);
+        dom.chartSymbolPrice.textContent = formatCurrency(q.price, q.symbol);
         
         const initial = q.initialPrice || q.price;
         const changePct = initial > 0 ? ((q.price - initial) / initial) * 100 : 0.0;
@@ -1729,6 +2317,9 @@
       }
 
       updateWatchlistBadges();
+      if (state.statsModalOpen) {
+        renderStatsModal();
+      }
     }
 
     function renderRow(q, oldPrice) {
@@ -1763,22 +2354,44 @@
       const isActive = state.activeSymbol === q.symbol;
       const statusInfo = state.symbolStatuses.get(q.symbol);
       const isError = statusInfo && statusInfo.status === 'ERROR';
+      const isTradable = statusInfo ? statusInfo.isTradable : false;
+      const companyName = state.companyNames.get(q.symbol) || (statusInfo ? statusInfo.companyName : '') || q.symbol;
 
-      let priceHtml = formatCurrency(q.price);
-      let changeHtml = `<span class="active-symbol-change ${changeClass} mono-num">${sign}${changePct.toFixed(2)}%</span>`;
+      let priceHtml = formatCurrency(q.price, q.symbol);
+      let sessionChangeHtml = `<span class="active-symbol-change ${changeClass} mono-num">${sign}${changePct.toFixed(2)}%</span>`;
+
+      // Status Badge
+      let statusBadgeHtml = '';
+      if (isError) {
+        statusBadgeHtml = `<span class="market-pill-table pill-delisted" title="${escapeHtml(statusInfo ? statusInfo.message : 'Delisted')}"><span class="marker-dot"></span> DELISTED</span>`;
+      } else if (isTradable) {
+        statusBadgeHtml = `<span class="market-pill-table pill-open" title="${escapeHtml(statusInfo ? statusInfo.message : 'Market is Open')}"><span class="marker-dot"></span> OPEN</span>`;
+      } else {
+        statusBadgeHtml = `<span class="market-pill-table pill-closed" title="${escapeHtml(statusInfo ? statusInfo.message : 'Market is Closed')}"><span class="marker-dot"></span> CLOSED</span>`;
+      }
+
+      // Today's Change % (since open/previous close)
+      let todayChangeHtml = '--';
+      const prevClose = state.previousCloses.get(q.symbol) || (statusInfo ? statusInfo.previousClose : null);
+      if (isError) {
+        todayChangeHtml = `<span class="active-symbol-change change-down mono-num">NO DATA</span>`;
+      } else if (prevClose != null && prevClose > 0 && q.price != null) {
+        const todayPct = ((q.price - prevClose) / prevClose) * 100;
+        const tSign = todayPct >= 0 ? '+' : '';
+        const tClass = todayPct >= 0 ? 'change-up' : 'change-down';
+        todayChangeHtml = `<span class="active-symbol-change ${tClass} mono-num">${tSign}${todayPct.toFixed(2)}%</span>`;
+      } else if (q.price != null) {
+        todayChangeHtml = sessionChangeHtml;
+      }
 
       if (isError) {
         priceHtml = `<span class="badge-error" title="${escapeHtml(statusInfo.message)}">⚠️ Delisted</span>`;
         if (q.symbol && q.symbol.toUpperCase().includes('TATA')) {
-          changeHtml = `<button type="button" class="preset-chip" onclick="quickAdd('TMPV.NS')" title="Add Tata Motors PV">+ TMPV.NS</button>`;
+          sessionChangeHtml = `<button type="button" class="preset-chip" onclick="quickAdd('TMPV.NS')" title="Add Tata Motors PV">+ TMPV.NS</button>`;
         } else {
-          changeHtml = `<span class="active-symbol-change change-down mono-num">NO DATA</span>`;
+          sessionChangeHtml = `<span class="active-symbol-change change-down mono-num">NO DATA</span>`;
         }
       }
-
-      const companyName = state.companyNames.get(q.symbol) || (statusInfo ? statusInfo.companyName : '') || q.symbol;
-      const isTradable = statusInfo ? statusInfo.isTradable : false;
-      const tradableTitle = isError ? 'Delisted from exchange' : (isTradable ? 'Exchange is OPEN & Tradable' : 'Exchange is CLOSED (Non-tradable outside 09:15-15:30 IST)');
 
       tr.innerHTML = `
         <td class="col-symbol">
@@ -1786,22 +2399,24 @@
           <div class="symbol-cell-stack">
             <div class="symbol-name-row">
               <span class="symbol-name-text" title="${escapeHtml(companyName)}">${escapeHtml(q.symbol)}</span>
-              <span class="tradable-dot ${isTradable ? 'dot-open' : 'dot-closed'}" title="${tradableTitle}"></span>
             </div>
             <span class="company-name-sub" title="${escapeHtml(companyName)}">${escapeHtml(companyName)}</span>
           </div>
+        </td>
+        <td style="text-align: center;">
+          ${statusBadgeHtml}
         </td>
         <td class="col-price num" id="price-cell-${q.symbol}">
           ${priceHtml}
         </td>
         <td class="col-change num">
-          ${changeHtml}
+          ${sessionChangeHtml}
+        </td>
+        <td class="col-change num">
+          ${todayChangeHtml}
         </td>
         <td class="col-mono">${escapeHtml(q.isin || '--')}</td>
-        <td class="col-mono">${escapeHtml(q.sedol || '--')}</td>
         <td class="col-mono">${escapeHtml(q.ric || '--')}</td>
-        <td class="col-latency network-speed num">${!isError && q.fetchDurationMs ? q.fetchDurationMs.toFixed(1) + ' ms' : '--'}</td>
-        <td class="col-latency bus-speed num">${!isError && q.busLatencyUs ? q.busLatencyUs.toFixed(1) + ' &mu;s' : '--'}</td>
         <td style="text-align: center;">
           <button type="button" class="btn-action-remove" title="Remove ${q.symbol}" onclick="removeSymbol('${q.symbol}')">
             &times; Remove
@@ -1842,7 +2457,7 @@
       if (state.quotes.size === 0) {
         dom.watchlistTbody.innerHTML = `
           <tr>
-            <td colspan="9">
+            <td colspan="8">
               <div class="empty-state">
                 <span>No symbols currently monitored. Add one above to begin live streaming.</span>
               </div>
@@ -1852,6 +2467,9 @@
       }
 
       updateWatchlistBadges();
+      if (state.statsModalOpen) {
+        renderStatsModal();
+      }
     }
 
     function updateWatchlistBadges() {
@@ -1865,10 +2483,60 @@
       dom.hudTicksCount.textContent = state.totalTicks.toLocaleString();
 
       if (tick.fetchDurationMs != null) {
-        dom.hudFetchLatency.textContent = `${Number(tick.fetchDurationMs).toFixed(1)} ms`;
+        const val = `${Number(tick.fetchDurationMs).toFixed(1)} ms`;
+        dom.hudFetchLatency.textContent = val;
+        if (dom.modalFetchLatency) dom.modalFetchLatency.textContent = val;
       }
       if (tick.busLatencyUs != null) {
-        dom.hudBusLatency.textContent = `${Number(tick.busLatencyUs).toFixed(1)} µs`;
+        const val = `${Number(tick.busLatencyUs).toFixed(1)} µs`;
+        dom.hudBusLatency.textContent = val;
+        if (dom.modalBusLatency) dom.modalBusLatency.textContent = val;
+      }
+      if (state.statsModalOpen) {
+        renderStatsModal();
+      }
+    }
+
+    function openStatsModal() {
+      state.statsModalOpen = true;
+      if (dom.statsModal) {
+        dom.statsModal.classList.remove('hidden');
+        renderStatsModal();
+      }
+    }
+
+    function closeStatsModal() {
+      state.statsModalOpen = false;
+      if (dom.statsModal) {
+        dom.statsModal.classList.add('hidden');
+      }
+    }
+
+    function renderStatsModal() {
+      if (!dom.statsModal || !state.statsModalOpen) return;
+      if (dom.modalTicksCount) dom.modalTicksCount.textContent = state.totalTicks.toLocaleString();
+      
+      const rows = [];
+      state.quotes.forEach(q => {
+        rows.push(`
+          <tr>
+            <td style="font-weight: 600; color: var(--accent-blue);">${escapeHtml(q.symbol)}</td>
+            <td class="num">${q.fetchDurationMs ? q.fetchDurationMs.toFixed(1) + ' ms' : '--'}</td>
+            <td class="num" style="color: var(--accent-blue);">${q.busLatencyUs ? q.busLatencyUs.toFixed(1) + ' µs' : '--'}</td>
+            <td>${escapeHtml(q.provider || 'YAHOO')}</td>
+            <td style="color: var(--text-dim);">${q.quoteTime ? new Date(q.quoteTime).toLocaleTimeString() : '--'}</td>
+          </tr>
+        `);
+      });
+
+      if (dom.statsDetailTbody) {
+        dom.statsDetailTbody.innerHTML = rows.length > 0 ? rows.join('') : `
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-dim); padding: 1.5rem;">
+              Waiting for live ticks from Aeron bus...
+            </td>
+          </tr>
+        `;
       }
     }
 
@@ -1882,6 +2550,9 @@
           state.symbolStatuses.set(sym, info);
           if (info.companyName) {
             state.companyNames.set(sym, info.companyName);
+          }
+          if (info.previousClose != null) {
+            state.previousCloses.set(sym, Number(info.previousClose));
           }
           if (state.quotes.has(sym)) {
             renderRow(state.quotes.get(sym));
@@ -1903,6 +2574,10 @@
         if (Array.isArray(symbols)) {
           symbols.forEach(s => state.subscribedSymbols.add(s));
           updateWatchlistBadges();
+          if (!state.activeSymbol && symbols.length > 0) {
+            const preferred = symbols.includes('RELIANCE.NS') ? 'RELIANCE.NS' : symbols[0];
+            selectActiveSymbol(preferred);
+          }
         }
       } catch (err) {
         console.warn('Could not fetch symbol list from ./api/symbols:', err);
@@ -2065,9 +2740,14 @@
       }
     }
 
-    function formatCurrency(val) {
+    function formatCurrency(val, symbol) {
       if (val == null || isNaN(val)) return '--';
-      return '\u20B9 ' + Number(val).toLocaleString('en-IN', {
+      const sym = symbol || state.activeSymbol || '';
+      const isUs = sym && (!sym.includes('.') || sym.endsWith('.US'));
+      const isUk = sym && sym.endsWith('.L');
+      const prefix = isUs ? '$ ' : isUk ? '£ ' : '₹ ';
+      const locale = isUs ? 'en-US' : isUk ? 'en-GB' : 'en-IN';
+      return prefix + Number(val).toLocaleString(locale, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       });
