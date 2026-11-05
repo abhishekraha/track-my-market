@@ -348,4 +348,97 @@ class YahooFinanceProviderTest {
         assertThat(errors.get(0)).contains("TMPV.NS");
         assertThat(provider.getSymbolErrors()).containsKey("TATAMOTORS.NS");
     }
+
+    @Test
+    void shouldResolveAllTimeframeSpecs() {
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("1h").maxAgeSeconds()).isEqualTo(3600);
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("3h").maxAgeSeconds()).isEqualTo(10800);
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("6h").maxAgeSeconds()).isEqualTo(21600);
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("12h").maxAgeSeconds()).isEqualTo(43200);
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("1d").range()).isEqualTo("1d");
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("1d").interval()).isEqualTo("1m");
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("3d").range()).isEqualTo("5d");
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("3d").interval()).isEqualTo("5m");
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("1w").range()).isEqualTo("5d");
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("1w").interval()).isEqualTo("15m");
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("1m").range()).isEqualTo("1mo");
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("1m").interval()).isEqualTo("1d");
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("6m").range()).isEqualTo("6mo");
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("1y").range()).isEqualTo("1y");
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("3y").range()).isEqualTo("5y");
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("5y").range()).isEqualTo("5y");
+        assertThat(YahooFinanceProvider.resolveTimeframeSpec("max").range()).isEqualTo("max");
+    }
+
+    @Test
+    void shouldDetermineTradingHoursForIndianEquities() {
+        java.time.ZoneId ist = java.time.ZoneId.of("Asia/Kolkata");
+        // Mon 11:30 AM IST -> Open
+        java.time.Instant monTrading = java.time.ZonedDateTime.of(2026, 11, 2, 11, 30, 0, 0, ist).toInstant();
+        assertThat(YahooFinanceProvider.isMarketOpenForSymbol("RELIANCE.NS", ist, monTrading)).isTrue();
+
+        // Mon 08:30 AM IST -> Closed
+        java.time.Instant monEarly = java.time.ZonedDateTime.of(2026, 11, 2, 8, 30, 0, 0, ist).toInstant();
+        assertThat(YahooFinanceProvider.isMarketOpenForSymbol("RELIANCE.NS", ist, monEarly)).isFalse();
+
+        // Mon 04:00 PM IST -> Closed
+        java.time.Instant monPost = java.time.ZonedDateTime.of(2026, 11, 2, 16, 0, 0, 0, ist).toInstant();
+        assertThat(YahooFinanceProvider.isMarketOpenForSymbol("RELIANCE.NS", ist, monPost)).isFalse();
+
+        // Sun 11:30 AM IST -> Closed (Weekend)
+        java.time.Instant sunWeekend = java.time.ZonedDateTime.of(2026, 11, 1, 11, 30, 0, 0, ist).toInstant();
+        assertThat(YahooFinanceProvider.isMarketOpenForSymbol("RELIANCE.NS", ist, sunWeekend)).isFalse();
+    }
+
+    @Test
+    void shouldProvideCompanyNames() {
+        YahooFinanceProvider provider = new YahooFinanceProvider();
+        assertThat(provider.getCompanyName("RELIANCE.NS")).isEqualTo("Reliance Industries Limited");
+        assertThat(provider.getCompanyName("TCS.NS")).isEqualTo("Tata Consultancy Services Limited");
+        assertThat(provider.getCompanyName("TMPV.NS")).isEqualTo("Tata Motors Passenger Vehicles Limited");
+        assertThat(provider.getCompanyName("UNKNOWN_TICKER")).isEqualTo("UNKNOWN_TICKER");
+    }
+
+    @Test
+    void shouldParseChartJsonIntoCompactJson() {
+        String mockChartJson = """
+        {
+          "chart": {
+            "result": [{
+              "meta": {
+                "currency": "INR",
+                "symbol": "RELIANCE.NS",
+                "previousClose": 1300.0,
+                "longName": "Reliance Industries Limited"
+              },
+              "timestamp": [1730000000, 1730000060, 1730000120],
+              "indicators": {
+                "quote": [{
+                  "open": [1310.0, 1312.0, 1315.0],
+                  "high": [1315.0, 1316.0, 1320.0],
+                  "low": [1308.0, 1310.0, 1314.0],
+                  "close": [1312.0, null, 1318.0],
+                  "volume": [1000, 2000, 3000]
+                }]
+              }
+            }]
+          }
+        }
+        """;
+
+        YahooFinanceProvider provider = new YahooFinanceProvider();
+        var spec = YahooFinanceProvider.resolveTimeframeSpec("1d");
+        String compactJson = provider.parseChartJsonToCompactJson("RELIANCE.NS", "1d", spec, mockChartJson);
+
+        assertThat(compactJson).contains("\"symbol\":\"RELIANCE.NS\"");
+        assertThat(compactJson).contains("\"timeframe\":\"1d\"");
+        assertThat(compactJson).contains("\"currency\":\"INR\"");
+        assertThat(compactJson).contains("\"previousClose\":1300.0");
+        assertThat(compactJson).contains("\"highPrice\":1320.0");
+        assertThat(compactJson).contains("\"lowPrice\":1308.0");
+        assertThat(compactJson).contains("\"points\":[");
+        // Null point should have been skipped, so 2 points
+        assertThat(compactJson).contains("1730000000");
+        assertThat(compactJson).contains("1730000120");
+    }
 }

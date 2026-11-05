@@ -9,7 +9,12 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.DayOfWeek;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,11 +53,30 @@ public class YahooFinanceProvider implements MarketDataProvider {
 
     public record SymbolIdentifiers(String isin, String sedol, String ric) {}
     public record SearchResult(String symbol, String name, String exchange, String type) {}
+    public record ChartPoint(long time, double value, Double open, Double high, Double low, Double close, Long volume) {}
+    public record TimeframeSpec(String range, String interval, long maxAgeSeconds) {}
 
     @FunctionalInterface
     public interface SymbolErrorListener {
         void onSymbolError(String symbol, String errorReason);
     }
+
+    private static final Pattern TIMESTAMPS_PATTERN =
+        Pattern.compile("\"timestamp\"\\s*:\\s*\\[([^\\]]*)\\]");
+    private static final Pattern CLOSE_ARRAY_PATTERN =
+        Pattern.compile("\"close\"\\s*:\\s*\\[([^\\]]*)\\]");
+    private static final Pattern OPEN_ARRAY_PATTERN =
+        Pattern.compile("\"open\"\\s*:\\s*\\[([^\\]]*)\\]");
+    private static final Pattern HIGH_ARRAY_PATTERN =
+        Pattern.compile("\"high\"\\s*:\\s*\\[([^\\]]*)\\]");
+    private static final Pattern LOW_ARRAY_PATTERN =
+        Pattern.compile("\"low\"\\s*:\\s*\\[([^\\]]*)\\]");
+    private static final Pattern VOLUME_ARRAY_PATTERN =
+        Pattern.compile("\"volume\"\\s*:\\s*\\[([^\\]]*)\\]");
+    private static final Pattern PREV_CLOSE_PATTERN =
+        Pattern.compile("\"(?:chartPreviousClose|previousClose)\"\\s*:\\s*([0-9]+(?:\\.[0-9]+)?)");
+    private static final Pattern CURRENCY_PATTERN =
+        Pattern.compile("\"currency\"\\s*:\\s*\"([^\"]+)\"");
 
     private static final Pattern QUOTE_OBJECT_PATTERN =
         Pattern.compile("\\{[^{}]*\"symbol\"\\s*:\\s*\"[^\"]+\"[^{}]*\\}");
@@ -81,6 +105,7 @@ public class YahooFinanceProvider implements MarketDataProvider {
     private final Map<String, Long> lastQuoteTimes = new ConcurrentHashMap<>();
     private final Map<String, Double> lastPrices = new ConcurrentHashMap<>();
     private final Map<String, SymbolIdentifiers> identifierMap = new ConcurrentHashMap<>();
+    private final Map<String, String> companyNames = new ConcurrentHashMap<>();
 
     public YahooFinanceProvider() {
         this(null, null, null, null);
@@ -105,6 +130,7 @@ public class YahooFinanceProvider implements MarketDataProvider {
         this.scheduler = scheduler;
 
         initDefaultIdentifierMappings();
+        initDefaultCompanyNames();
     }
 
     private static String resolveBaseUrl(String explicit) {
@@ -147,6 +173,31 @@ public class YahooFinanceProvider implements MarketDataProvider {
         registerIdentifierMapping("INFY.NS", "INE009A01021", "6459397", "INFY.NS");
         registerIdentifierMapping("TMPV.NS", "INE155A01022", "BP0VJ24", "TMPV.NS");
         registerIdentifierMapping("TMCV.NS", "INE155A01022", "BP0VJ24", "TMCV.NS");
+    }
+
+    private void initDefaultCompanyNames() {
+        companyNames.put("RELIANCE.NS", "Reliance Industries Limited");
+        companyNames.put("TCS.NS", "Tata Consultancy Services Limited");
+        companyNames.put("INFY.NS", "Infosys Limited");
+        companyNames.put("HDFCBANK.NS", "HDFC Bank Limited");
+        companyNames.put("BAJFINANCE.NS", "Bajaj Finance Limited");
+        companyNames.put("TMPV.NS", "Tata Motors Passenger Vehicles Limited");
+        companyNames.put("TMCV.NS", "Tata Motors Limited (Commercial Vehicles)");
+        companyNames.put("TATAMOTORS.NS", "Tata Motors Limited (Demerged legacy ticker)");
+    }
+
+    public void registerCompanyName(String symbol, String name) {
+        if (symbol != null && name != null && !name.isBlank()) {
+            companyNames.put(symbol.trim().toUpperCase(), name.trim());
+        }
+    }
+
+    public String getCompanyName(String symbol) {
+        if (symbol == null) {
+            return "";
+        }
+        String clean = symbol.trim().toUpperCase();
+        return companyNames.getOrDefault(clean, symbol);
     }
 
     public void registerIdentifierMapping(String symbol, String isin, String sedol, String ric) {
@@ -472,6 +523,7 @@ public class YahooFinanceProvider implements MarketDataProvider {
                 type = typeM.group(1);
             }
 
+            registerCompanyName(symbol, name);
             results.add(new SearchResult(symbol, name, exchange, type));
         }
         return results;
@@ -512,5 +564,258 @@ public class YahooFinanceProvider implements MarketDataProvider {
                 return results;
             })
             .exceptionally(ex -> Collections.emptyList());
+    }
+
+    public static TimeframeSpec resolveTimeframeSpec(String tf) {
+        if (tf == null) {
+            return new TimeframeSpec("1d", "1m", 0);
+        }
+        return switch (tf.trim().toLowerCase()) {
+            case "1h" -> new TimeframeSpec("1d", "1m", 3600);
+            case "3h" -> new TimeframeSpec("1d", "1m", 10800);
+            case "6h" -> new TimeframeSpec("1d", "1m", 21600);
+            case "12h" -> new TimeframeSpec("1d", "1m", 43200);
+            case "1d" -> new TimeframeSpec("1d", "1m", 0);
+            case "3d" -> new TimeframeSpec("5d", "5m", 3 * 86400);
+            case "1w" -> new TimeframeSpec("5d", "15m", 0);
+            case "1m" -> new TimeframeSpec("1mo", "1d", 0);
+            case "6m" -> new TimeframeSpec("6mo", "1d", 0);
+            case "1y" -> new TimeframeSpec("1y", "1d", 0);
+            case "3y" -> new TimeframeSpec("5y", "1wk", 3 * 365 * 86400L);
+            case "5y" -> new TimeframeSpec("5y", "1wk", 0);
+            case "max", "all" -> new TimeframeSpec("max", "1mo", 0);
+            default -> new TimeframeSpec("1d", "1m", 0);
+        };
+    }
+
+    public static boolean isMarketOpenForSymbol(String symbol, ZoneId zone, Instant now) {
+        if (zone == null) {
+            zone = ZoneId.of("Asia/Kolkata");
+        }
+        if (now == null) {
+            now = Instant.now();
+        }
+        ZonedDateTime zdt = now.atZone(zone);
+        DayOfWeek day = zdt.getDayOfWeek();
+        if (day == DayOfWeek.SATURDAY || day == DayOfWeek.SUNDAY) {
+            return false;
+        }
+        LocalTime time = zdt.toLocalTime();
+        LocalTime open = LocalTime.of(9, 15);
+        LocalTime close = LocalTime.of(15, 30);
+        return !time.isBefore(open) && !time.isAfter(close);
+    }
+
+    public boolean isMarketOpen(String symbol) {
+        return isMarketOpenForSymbol(symbol, ZoneId.of("Asia/Kolkata"), Instant.now());
+    }
+
+    public CompletableFuture<String> fetchChartHistoryJson(String symbol, String timeframe) {
+        if (symbol == null || symbol.isBlank()) {
+            return CompletableFuture.completedFuture("{\"error\":\"Invalid symbol\"}");
+        }
+        String cleanSymbol = symbol.trim().toUpperCase();
+        TimeframeSpec spec = resolveTimeframeSpec(timeframe);
+        String encoded = URLEncoder.encode(cleanSymbol, StandardCharsets.UTF_8);
+        String url = baseUrl + "/v8/finance/chart/" + encoded + "?range=" + spec.range() + "&interval=" + spec.interval();
+
+        HttpClient client = (this.httpClient != null) ? this.httpClient : HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) track-my-market/1.0")
+            .header("Accept", "application/json")
+            .timeout(Duration.ofSeconds(10))
+            .GET()
+            .build();
+
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+            .thenApply(resp -> {
+                if (resp.statusCode() == 200) {
+                    return parseChartJsonToCompactJson(cleanSymbol, timeframe, spec, resp.body());
+                } else {
+                    return "{\"symbol\":\"" + escapeJson(cleanSymbol) + "\",\"timeframe\":\"" + escapeJson(timeframe)
+                        + "\",\"isTradable\":false,\"marketState\":\"DELISTED\",\"points\":[]}";
+                }
+            })
+            .exceptionally(ex -> "{\"error\":\"" + escapeJson(ex.getMessage()) + "\"}");
+    }
+
+    public String parseChartJsonToCompactJson(String symbol, String timeframe, TimeframeSpec spec, String rawJson) {
+        if (rawJson == null || rawJson.isBlank()) {
+            return "{\"symbol\":\"" + escapeJson(symbol) + "\",\"timeframe\":\"" + escapeJson(timeframe) + "\",\"points\":[]}";
+        }
+
+        String currency = "INR";
+        Matcher currM = CURRENCY_PATTERN.matcher(rawJson);
+        if (currM.find()) {
+            currency = currM.group(1);
+        }
+
+        Matcher longM = LONGNAME_PATTERN.matcher(rawJson);
+        if (longM.find()) {
+            registerCompanyName(symbol, longM.group(1));
+        }
+
+        Double previousClose = null;
+        Matcher prevM = PREV_CLOSE_PATTERN.matcher(rawJson);
+        if (prevM.find()) {
+            try {
+                previousClose = Double.parseDouble(prevM.group(1));
+            } catch (NumberFormatException ignored) {}
+        }
+
+        List<Long> timestamps = Collections.emptyList();
+        Matcher timeM = TIMESTAMPS_PATTERN.matcher(rawJson);
+        if (timeM.find()) {
+            timestamps = parseLongCsv(timeM.group(1));
+        }
+
+        List<Double> closes = Collections.emptyList();
+        Matcher closeM = CLOSE_ARRAY_PATTERN.matcher(rawJson);
+        if (closeM.find()) {
+            closes = parseDoubleCsv(closeM.group(1));
+        }
+
+        List<Double> highs = Collections.emptyList();
+        Matcher highM = HIGH_ARRAY_PATTERN.matcher(rawJson);
+        if (highM.find()) {
+            highs = parseDoubleCsv(highM.group(1));
+        }
+
+        List<Double> lows = Collections.emptyList();
+        Matcher lowM = LOW_ARRAY_PATTERN.matcher(rawJson);
+        if (lowM.find()) {
+            lows = parseDoubleCsv(lowM.group(1));
+        }
+
+        long maxTs = 0;
+        for (Long t : timestamps) {
+            if (t != null && t > maxTs) {
+                maxTs = t;
+            }
+        }
+        long cutoff = (spec != null && spec.maxAgeSeconds() > 0 && maxTs > 0)
+            ? (maxTs - spec.maxAgeSeconds()) : 0;
+
+        List<ChartPoint> points = new ArrayList<>();
+        Double minLow = null;
+        Double maxHigh = null;
+
+        int len = Math.min(timestamps.size(), closes.size());
+        for (int i = 0; i < len; i++) {
+            Long t = timestamps.get(i);
+            Double c = closes.get(i);
+            if (t == null || c == null) {
+                continue;
+            }
+            if (cutoff > 0 && t < cutoff) {
+                continue;
+            }
+
+            Double h = (i < highs.size()) ? highs.get(i) : null;
+            Double l = (i < lows.size()) ? lows.get(i) : null;
+
+            double pointHigh = (h != null) ? h : c;
+            double pointLow = (l != null) ? l : c;
+
+            if (maxHigh == null || pointHigh > maxHigh) {
+                maxHigh = pointHigh;
+            }
+            if (minLow == null || pointLow < minLow) {
+                minLow = pointLow;
+            }
+
+            points.add(new ChartPoint(t, c, null, h, l, c, null));
+        }
+
+        Double firstPrice = points.isEmpty() ? null : points.get(0).value();
+        Double lastPrice = points.isEmpty() ? null : points.get(points.size() - 1).value();
+
+        if (maxHigh == null && !points.isEmpty()) {
+            maxHigh = points.stream().mapToDouble(ChartPoint::value).max().orElse(0.0);
+        }
+        if (minLow == null && !points.isEmpty()) {
+            minLow = points.stream().mapToDouble(ChartPoint::value).min().orElse(0.0);
+        }
+
+        boolean isError = symbolErrors.containsKey(symbol);
+        boolean isTradable = !isError && isMarketOpen(symbol);
+        String marketState = isError ? "DELISTED" : (isTradable ? "OPEN" : "CLOSED");
+        String companyName = getCompanyName(symbol);
+
+        StringBuilder sb = new StringBuilder("{");
+        sb.append("\"symbol\":\"").append(escapeJson(symbol)).append("\",");
+        sb.append("\"companyName\":\"").append(escapeJson(companyName)).append("\",");
+        sb.append("\"timeframe\":\"").append(escapeJson(timeframe != null ? timeframe : "1d")).append("\",");
+        sb.append("\"range\":\"").append(escapeJson(spec != null ? spec.range() : "1d")).append("\",");
+        sb.append("\"interval\":\"").append(escapeJson(spec != null ? spec.interval() : "1m")).append("\",");
+        sb.append("\"currency\":\"").append(escapeJson(currency)).append("\",");
+        sb.append("\"isTradable\":").append(isTradable).append(",");
+        sb.append("\"marketState\":\"").append(marketState).append("\",");
+        if (previousClose != null) {
+            sb.append("\"previousClose\":").append(previousClose).append(",");
+        }
+        if (firstPrice != null) {
+            sb.append("\"firstPrice\":").append(firstPrice).append(",");
+        }
+        if (lastPrice != null) {
+            sb.append("\"lastPrice\":").append(lastPrice).append(",");
+        }
+        if (maxHigh != null) {
+            sb.append("\"highPrice\":").append(maxHigh).append(",");
+        }
+        if (minLow != null) {
+            sb.append("\"lowPrice\":").append(minLow).append(",");
+        }
+
+        sb.append("\"points\":[");
+        for (int i = 0; i < points.size(); i++) {
+            if (i > 0) sb.append(",");
+            ChartPoint p = points.get(i);
+            sb.append("{\"time\":").append(p.time()).append(",\"value\":").append(p.value()).append("}");
+        }
+        sb.append("]}");
+        return sb.toString();
+    }
+
+    private static List<Long> parseLongCsv(String csv) {
+        if (csv == null || csv.isBlank()) return Collections.emptyList();
+        List<Long> list = new ArrayList<>();
+        for (String part : csv.split(",")) {
+            String trimmed = part.trim();
+            if (trimmed.isEmpty() || trimmed.equalsIgnoreCase("null")) {
+                list.add(null);
+            } else {
+                try {
+                    list.add(Long.parseLong(trimmed));
+                } catch (NumberFormatException e) {
+                    list.add(null);
+                }
+            }
+        }
+        return list;
+    }
+
+    private static List<Double> parseDoubleCsv(String csv) {
+        if (csv == null || csv.isBlank()) return Collections.emptyList();
+        List<Double> list = new ArrayList<>();
+        for (String part : csv.split(",")) {
+            String trimmed = part.trim();
+            if (trimmed.isEmpty() || trimmed.equalsIgnoreCase("null")) {
+                list.add(null);
+            } else {
+                try {
+                    list.add(Double.parseDouble(trimmed));
+                } catch (NumberFormatException e) {
+                    list.add(null);
+                }
+            }
+        }
+        return list;
+    }
+
+    private static String escapeJson(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 }

@@ -253,6 +253,211 @@
       flex-wrap: wrap;
     }
 
+    .active-symbol-info {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .symbol-header-flex {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .symbol-title-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .active-company-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 320px;
+    }
+
+    .market-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.2rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      letter-spacing: 0.03em;
+      border: 1px solid var(--border-medium);
+      transition: all 0.3s ease;
+    }
+
+    .market-status-pill.open {
+      background-color: rgba(6, 78, 59, 0.3);
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #34d399;
+    }
+
+    .market-status-pill.closed {
+      background-color: rgba(30, 41, 59, 0.6);
+      border-color: rgba(100, 116, 139, 0.4);
+      color: #94a3b8;
+    }
+
+    .market-status-pill.delisted {
+      background-color: rgba(76, 5, 25, 0.3);
+      border-color: rgba(244, 63, 94, 0.4);
+      color: #fb7185;
+    }
+
+    .status-marker-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: currentColor;
+    }
+
+    .market-status-pill.open .status-marker-dot {
+      background-color: var(--green-up);
+      box-shadow: 0 0 6px var(--green-up);
+      animation: pulse-green 2s infinite;
+    }
+
+    .market-status-pill.closed .status-marker-dot {
+      background-color: #64748b;
+    }
+
+    /* Chart Timeframe Bar & Metrics HUD */
+    .chart-toolbar-row {
+      padding: 0.65rem 1.25rem;
+      background-color: rgba(15, 23, 42, 0.7);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .timeframe-group {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-tf {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--text-muted);
+      padding: 0.25rem 0.65rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-tf:hover {
+      background-color: var(--bg-card-hover);
+      border-color: var(--accent-blue);
+      color: #ffffff;
+    }
+
+    .btn-tf.active {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      border-color: #38bdf8;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+    }
+
+    .chart-metrics-hud {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .hud-stat-pill {
+      background-color: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--border-subtle);
+      padding: 0.2rem 0.55rem;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+    }
+
+    .hud-stat-lbl {
+      color: var(--text-dim);
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .hud-stat-pill strong {
+      color: var(--text-main);
+      font-size: 0.78rem;
+    }
+
+    .text-green { color: #34d399 !important; }
+    .text-red { color: #fb7185 !important; }
+
+    /* Watchlist symbol cell enhancement */
+    .symbol-cell-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .symbol-name-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .symbol-name-text {
+      font-weight: 700;
+      color: #ffffff;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .company-name-sub {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      font-family: var(--font-sans);
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tradable-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .tradable-dot.dot-open {
+      background-color: var(--green-up);
+      box-shadow: 0 0 6px var(--green-up);
+    }
+
+    .tradable-dot.dot-closed {
+      background-color: #64748b;
+      opacity: 0.6;
+    }
+
     .active-symbol-name {
       font-size: 1.6rem;
       font-weight: 800;
@@ -876,7 +1081,16 @@
     <section class="chart-card">
       <div class="chart-header">
         <div class="active-symbol-info">
-          <span id="chart-symbol-name" class="active-symbol-name">--</span>
+          <div class="symbol-header-flex">
+            <div class="symbol-title-row">
+              <span id="chart-symbol-name" class="active-symbol-name" title="Hover for full company name">--</span>
+              <span id="chart-tradable-badge" class="market-status-pill closed" title="Trading window: Mon-Fri 09:15-15:30 IST">
+                <span class="status-marker-dot"></span>
+                <span id="chart-tradable-text">EXCHANGE CLOSED</span>
+              </span>
+            </div>
+            <span id="chart-company-subtitle" class="active-company-subtitle">--</span>
+          </div>
           <span id="chart-symbol-price" class="active-symbol-price mono-num">--</span>
           <span id="chart-symbol-change" class="active-symbol-change change-flat mono-num">0.00%</span>
         </div>
@@ -888,6 +1102,52 @@
           <div class="meta-tag"><span>LAST TICK:</span><strong id="chart-last-time" class="mono-num">--</strong></div>
         </div>
       </div>
+      <!-- Chart Toolbar: Timeframe Selector & Real-Time Metrics HUD -->
+      <div class="chart-toolbar-row">
+        <div class="timeframe-group" id="timeframe-selector">
+          <button type="button" class="btn-tf" data-tf="1h" onclick="selectTimeframe('1h')">1H</button>
+          <button type="button" class="btn-tf" data-tf="3h" onclick="selectTimeframe('3h')">3H</button>
+          <button type="button" class="btn-tf" data-tf="6h" onclick="selectTimeframe('6h')">6H</button>
+          <button type="button" class="btn-tf" data-tf="12h" onclick="selectTimeframe('12h')">12H</button>
+          <button type="button" class="btn-tf active" data-tf="1d" onclick="selectTimeframe('1d')">1D</button>
+          <button type="button" class="btn-tf" data-tf="3d" onclick="selectTimeframe('3d')">3D</button>
+          <button type="button" class="btn-tf" data-tf="1w" onclick="selectTimeframe('1w')">1W</button>
+          <button type="button" class="btn-tf" data-tf="1m" onclick="selectTimeframe('1m')">1M</button>
+          <button type="button" class="btn-tf" data-tf="6m" onclick="selectTimeframe('6m')">6M</button>
+          <button type="button" class="btn-tf" data-tf="1y" onclick="selectTimeframe('1y')">1Y</button>
+          <button type="button" class="btn-tf" data-tf="3y" onclick="selectTimeframe('3y')">3Y</button>
+          <button type="button" class="btn-tf" data-tf="5y" onclick="selectTimeframe('5y')">5Y</button>
+          <button type="button" class="btn-tf" data-tf="max" onclick="selectTimeframe('max')">ALL</button>
+        </div>
+
+        <div class="chart-metrics-hud" id="chart-metrics-hud">
+          <div class="hud-stat-pill">
+            <span class="hud-stat-lbl">TF:</span>
+            <strong id="hud-stat-tf" class="mono-num">1D</strong>
+          </div>
+          <div class="hud-stat-pill">
+            <span class="hud-stat-lbl">POINT:</span>
+            <strong id="hud-stat-point" class="mono-num">--</strong>
+          </div>
+          <div class="hud-stat-pill">
+            <span class="hud-stat-lbl">TIME:</span>
+            <strong id="hud-stat-time" class="mono-num">--</strong>
+          </div>
+          <div class="hud-stat-pill">
+            <span class="hud-stat-lbl">HIGH:</span>
+            <strong id="hud-stat-high" class="mono-num">--</strong>
+          </div>
+          <div class="hud-stat-pill">
+            <span class="hud-stat-lbl">LOW:</span>
+            <strong id="hud-stat-low" class="mono-num">--</strong>
+          </div>
+          <div class="hud-stat-pill">
+            <span class="hud-stat-lbl">PERIOD CHG:</span>
+            <strong id="hud-stat-chg" class="mono-num">0.00%</strong>
+          </div>
+        </div>
+      </div>
+
       <div class="chart-container-box">
         <div id="chart-empty-msg" class="chart-empty-overlay">
           <span>Streaming live ticks from Aeron message bus...</span>
@@ -1004,9 +1264,12 @@
 
     const state = {
       activeSymbol: null,
+      selectedTimeframe: '1d',
+      chartSummary: null,
       quotes: new Map(),           // symbol -> { price, prevPrice, initialPrice, isin, sedol, ric, quoteTime, fetchDurationMs, busLatencyUs, provider }
       subscribedSymbols: new Set(),
-      symbolStatuses: new Map(),   // symbol -> { status: 'OK'|'ERROR', message: string }
+      symbolStatuses: new Map(),   // symbol -> { status: 'OK'|'ERROR', message: string, isTradable: boolean, marketState: string, companyName: string }
+      companyNames: new Map(),
       chartHistory: new Map(),     // symbol -> Array of { time, value }
       totalTicks: 0,
       lastChartTimestampSec: 0,
@@ -1023,6 +1286,9 @@
       hudTicksCount: document.getElementById('hud-ticks-count'),
       hudSymbolsCount: document.getElementById('hud-symbols-count'),
       chartSymbolName: document.getElementById('chart-symbol-name'),
+      chartCompanySubtitle: document.getElementById('chart-company-subtitle'),
+      chartTradableBadge: document.getElementById('chart-tradable-badge'),
+      chartTradableText: document.getElementById('chart-tradable-text'),
       chartSymbolPrice: document.getElementById('chart-symbol-price'),
       chartSymbolChange: document.getElementById('chart-symbol-change'),
       chartIsin: document.getElementById('chart-isin'),
@@ -1031,6 +1297,12 @@
       chartProvider: document.getElementById('chart-provider'),
       chartLastTime: document.getElementById('chart-last-time'),
       chartEmptyMsg: document.getElementById('chart-empty-msg'),
+      hudStatTf: document.getElementById('hud-stat-tf'),
+      hudStatPoint: document.getElementById('hud-stat-point'),
+      hudStatTime: document.getElementById('hud-stat-time'),
+      hudStatHigh: document.getElementById('hud-stat-high'),
+      hudStatLow: document.getElementById('hud-stat-low'),
+      hudStatChg: document.getElementById('hud-stat-chg'),
       watchlistTbody: document.getElementById('watchlist-tbody'),
       watchlistCountBadge: document.getElementById('watchlist-count-badge'),
       addStockForm: document.getElementById('add-stock-form'),
@@ -1062,7 +1334,19 @@
               horzLines: { color: '#1e293b' }
             },
             crosshair: {
-              mode: LightweightCharts.CrosshairMode.Normal
+              mode: LightweightCharts.CrosshairMode.Normal,
+              vertLine: {
+                labelVisible: true,
+                color: '#38bdf8',
+                width: 1,
+                style: 2
+              },
+              horzLine: {
+                labelVisible: true,
+                color: '#38bdf8',
+                width: 1,
+                style: 2
+              }
             },
             rightPriceScale: {
               borderColor: '#334155'
@@ -1070,7 +1354,7 @@
             timeScale: {
               borderColor: '#334155',
               timeVisible: true,
-              secondsVisible: true
+              secondsVisible: false
             }
           });
 
@@ -1079,6 +1363,17 @@
             bottomColor: 'rgba(56, 189, 248, 0.02)',
             lineColor: '#38bdf8',
             lineWidth: 2
+          });
+
+          tvChart.subscribeCrosshairMove(param => {
+            if (!param || !param.point || !param.time) {
+              renderChartSummaryHud();
+              return;
+            }
+            const price = param.seriesData.get(tvAreaSeries);
+            if (price != null && price.value != null) {
+              updateChartMetricsCrosshair(param.time, price.value);
+            }
           });
 
           const resizeObserver = new ResizeObserver(entries => {
@@ -1191,6 +1486,138 @@
       }
     }
 
+    function selectTimeframe(tf) {
+      if (!tf) return;
+      const cleanTf = tf.toLowerCase();
+      state.selectedTimeframe = cleanTf;
+      document.querySelectorAll('#timeframe-selector .btn-tf').forEach(btn => {
+        if (btn.dataset.tf === cleanTf) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      if (dom.hudStatTf) {
+        dom.hudStatTf.textContent = cleanTf.toUpperCase();
+      }
+      if (state.activeSymbol) {
+        loadChartHistory(state.activeSymbol, cleanTf);
+      }
+    }
+
+    async function loadChartHistory(symbol, tf) {
+      if (!symbol) return;
+      const cleanTf = tf || state.selectedTimeframe || '1d';
+      state.selectedTimeframe = cleanTf;
+
+      try {
+        const res = await fetch(`./api/chart?symbol=${encodeURIComponent(symbol)}&timeframe=${encodeURIComponent(cleanTf)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        if (data.companyName) {
+          state.companyNames.set(symbol, data.companyName);
+          const quote = state.quotes.get(symbol);
+          if (quote) renderRow(quote);
+        }
+
+        if (data.isTradable !== undefined || data.marketState) {
+          const st = state.symbolStatuses.get(symbol) || {};
+          st.isTradable = data.isTradable;
+          st.marketState = data.marketState;
+          state.symbolStatuses.set(symbol, st);
+        }
+
+        const pts = data.points || [];
+        if (pts.length > 0) {
+          dom.chartEmptyMsg.style.display = 'none';
+          state.chartHistory.set(symbol, pts);
+          state.lastChartTimestampSec = pts[pts.length - 1].time;
+
+          const isIntraday = ['1h', '3h', '6h', '12h', '1d'].includes(cleanTf);
+          if (tvChart) {
+            tvChart.timeScale().applyOptions({
+              timeVisible: isIntraday,
+              secondsVisible: false
+            });
+          }
+
+          if (tvAreaSeries) {
+            tvAreaSeries.setData(pts);
+            tvChart.timeScale().fitContent();
+          } else if (state.useCanvasFallback) {
+            renderFallbackCanvas();
+          }
+
+          const first = data.firstPrice != null ? data.firstPrice : pts[0].value;
+          const last = data.lastPrice != null ? data.lastPrice : pts[pts.length - 1].value;
+          const high = data.highPrice != null ? data.highPrice : Math.max(...pts.map(p => p.value));
+          const low = data.lowPrice != null ? data.lowPrice : Math.min(...pts.map(p => p.value));
+          const chgPct = (first > 0) ? ((last - first) / first) * 100 : 0;
+
+          state.chartSummary = {
+            tf: cleanTf.toUpperCase(),
+            first,
+            last,
+            high,
+            low,
+            chgPct,
+            lastTime: pts[pts.length - 1].time
+          };
+          renderChartSummaryHud();
+        } else {
+          dom.chartEmptyMsg.style.display = 'flex';
+          if (tvAreaSeries) tvAreaSeries.setData([]);
+        }
+      } catch (err) {
+        console.warn(`Chart fetch failed for ${symbol} (${cleanTf}):`, err);
+      }
+
+      const q = state.quotes.get(symbol) || { symbol };
+      renderActiveSymbolHero(q);
+    }
+
+    function updateChartMetricsCrosshair(timeSec, price) {
+      if (!dom.hudStatPoint || !dom.hudStatTime) return;
+      dom.hudStatPoint.textContent = formatCurrency(price);
+      
+      const isIntraday = ['1H', '3H', '6H', '12H', '1D'].includes(state.selectedTimeframe.toUpperCase());
+      const d = new Date(timeSec * 1000);
+      dom.hudStatTime.textContent = isIntraday 
+        ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        : d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+
+      if (state.chartSummary && state.chartSummary.first) {
+        const diff = price - state.chartSummary.first;
+        const pct = (diff / state.chartSummary.first) * 100;
+        const sign = pct >= 0 ? '+' : '';
+        dom.hudStatChg.textContent = `${sign}${pct.toFixed(2)}%`;
+        dom.hudStatChg.className = 'mono-num ' + (pct >= 0 ? 'text-green' : 'text-red');
+      }
+    }
+
+    function renderChartSummaryHud() {
+      if (!state.chartSummary) return;
+      const s = state.chartSummary;
+      if (dom.hudStatTf) dom.hudStatTf.textContent = s.tf;
+      if (dom.hudStatPoint) dom.hudStatPoint.textContent = formatCurrency(s.last);
+      if (dom.hudStatHigh) dom.hudStatHigh.textContent = formatCurrency(s.high);
+      if (dom.hudStatLow) dom.hudStatLow.textContent = formatCurrency(s.low);
+      if (dom.hudStatTime) {
+        const isIntraday = ['1H', '3H', '6H', '12H', '1D'].includes(s.tf);
+        const d = new Date((s.lastTime || Date.now() / 1000) * 1000);
+        dom.hudStatTime.textContent = isIntraday 
+          ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+      if (dom.hudStatChg) {
+        const sign = s.chgPct >= 0 ? '+' : '';
+        dom.hudStatChg.textContent = `${sign}${s.chgPct.toFixed(2)}%`;
+        dom.hudStatChg.className = 'mono-num ' + (s.chgPct >= 0 ? 'text-green' : 'text-red');
+      }
+    }
+
     function selectActiveSymbol(symbol) {
       if (!symbol || symbol === state.activeSymbol) return;
       state.activeSymbol = symbol;
@@ -1206,49 +1633,40 @@
         }
       });
 
-      const history = state.chartHistory.get(symbol) || [];
-      if (history.length > 0) {
-        dom.chartEmptyMsg.style.display = 'none';
-        state.lastChartTimestampSec = history[history.length - 1].time;
-        if (tvAreaSeries) {
-          tvAreaSeries.setData(history);
-          tvChart.timeScale().fitContent();
-        } else if (state.useCanvasFallback) {
-          renderFallbackCanvas();
-        }
-      } else {
-        const statusInfo = state.symbolStatuses.get(symbol);
-        if (statusInfo && statusInfo.status === 'ERROR') {
-          dom.chartEmptyMsg.innerHTML = `
-            <div style="text-align: center; max-width: 480px; padding: 1.5rem;">
-              <div style="font-size: 1.1rem; font-weight: 700; color: #fb7185; margin-bottom: 0.5rem;">
-                ⚠️ No Market Data for ${escapeHtml(symbol)}
-              </div>
-              <div style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 1rem; line-height: 1.4;">
-                ${escapeHtml(statusInfo.message)}
-              </div>
-              <div style="display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;">
-                <span style="font-size: 0.8rem; color: #cbd5e1; align-self: center;">Try active replacement:</span>
-                <button type="button" class="preset-chip" onclick="quickAdd('TMPV.NS')">+ TMPV.NS (Tata PV)</button>
-                <button type="button" class="preset-chip" onclick="quickAdd('TMCV.NS')">+ TMCV.NS (Tata CV)</button>
-              </div>
-            </div>
-          `;
-        } else {
-          dom.chartEmptyMsg.innerHTML = '<span>Streaming live ticks from Aeron message bus...</span>';
-        }
-        dom.chartEmptyMsg.style.display = 'flex';
-        if (tvAreaSeries) tvAreaSeries.setData([]);
-        if (state.useCanvasFallback && canvasContext) {
-          canvasContext.clearRect(0, 0, dom.fallbackCanvas.width, dom.fallbackCanvas.height);
-        }
-      }
+      loadChartHistory(symbol, state.selectedTimeframe);
     }
 
     function renderActiveSymbolHero(q) {
       dom.chartSymbolName.textContent = q.symbol || '--';
+      
+      const companyName = state.companyNames.get(q.symbol) || q.symbol || '';
+      dom.chartSymbolName.title = companyName ? `${q.symbol} — ${companyName}` : q.symbol;
+      if (dom.chartCompanySubtitle) {
+        dom.chartCompanySubtitle.textContent = companyName || '';
+        dom.chartCompanySubtitle.title = companyName || '';
+      }
+
       const statusInfo = state.symbolStatuses.get(q.symbol);
-      if (statusInfo && statusInfo.status === 'ERROR') {
+      const isError = statusInfo && statusInfo.status === 'ERROR';
+      const isTradable = statusInfo ? statusInfo.isTradable : false;
+
+      if (dom.chartTradableBadge && dom.chartTradableText) {
+        if (isError) {
+          dom.chartTradableBadge.className = 'market-status-pill delisted';
+          dom.chartTradableText.textContent = 'DELISTED / INACTIVE';
+          dom.chartTradableBadge.title = statusInfo.message || 'Symbol error or delisted';
+        } else if (isTradable) {
+          dom.chartTradableBadge.className = 'market-status-pill open';
+          dom.chartTradableText.textContent = 'NSE/BSE: OPEN (TRADABLE)';
+          dom.chartTradableBadge.title = 'Market is OPEN (Trading hours: Mon-Fri 09:15-15:30 IST)';
+        } else {
+          dom.chartTradableBadge.className = 'market-status-pill closed';
+          dom.chartTradableText.textContent = 'EXCHANGE CLOSED';
+          dom.chartTradableBadge.title = (statusInfo && statusInfo.message) ? statusInfo.message : 'Market is CLOSED (Trading hours: Mon-Fri 09:15-15:30 IST)';
+        }
+      }
+
+      if (isError) {
         dom.chartSymbolPrice.innerHTML = '<span style="font-size: 1.15rem; color: #fb7185; font-weight: 700;">⚠️ DELISTED / NO DATA</span>';
         dom.chartSymbolChange.textContent = 'NO DATA';
         dom.chartSymbolChange.className = 'active-symbol-change change-down mono-num';
@@ -1358,10 +1776,20 @@
         }
       }
 
+      const companyName = state.companyNames.get(q.symbol) || (statusInfo ? statusInfo.companyName : '') || q.symbol;
+      const isTradable = statusInfo ? statusInfo.isTradable : false;
+      const tradableTitle = isError ? 'Delisted from exchange' : (isTradable ? 'Exchange is OPEN & Tradable' : 'Exchange is CLOSED (Non-tradable outside 09:15-15:30 IST)');
+
       tr.innerHTML = `
         <td class="col-symbol">
           ${isActive ? '<span class="active-indicator"></span>' : ''}
-          <span>${escapeHtml(q.symbol)}</span>
+          <div class="symbol-cell-stack">
+            <div class="symbol-name-row">
+              <span class="symbol-name-text" title="${escapeHtml(companyName)}">${escapeHtml(q.symbol)}</span>
+              <span class="tradable-dot ${isTradable ? 'dot-open' : 'dot-closed'}" title="${tradableTitle}"></span>
+            </div>
+            <span class="company-name-sub" title="${escapeHtml(companyName)}">${escapeHtml(companyName)}</span>
+          </div>
         </td>
         <td class="col-price num" id="price-cell-${q.symbol}">
           ${priceHtml}
@@ -1452,11 +1880,14 @@
         const statuses = await res.json();
         for (const [sym, info] of Object.entries(statuses)) {
           state.symbolStatuses.set(sym, info);
+          if (info.companyName) {
+            state.companyNames.set(sym, info.companyName);
+          }
           if (state.quotes.has(sym)) {
             renderRow(state.quotes.get(sym));
           }
         }
-        if (state.activeSymbol && state.symbolStatuses.has(state.activeSymbol)) {
+        if (state.activeSymbol) {
           renderActiveSymbolHero(state.quotes.get(state.activeSymbol) || { symbol: state.activeSymbol });
         }
       } catch (e) {
@@ -1763,6 +2194,9 @@
 
     function selectSearchResult(item) {
       hideSearchDropdown();
+      if (item && item.name) {
+        state.companyNames.set(item.symbol, item.name);
+      }
       dom.symbolInput.value = item.symbol;
       addSymbol(item.symbol);
     }

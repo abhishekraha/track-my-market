@@ -42,8 +42,10 @@ public class DynamicWatchlistController {
     public String handleGetSymbolStatusJson() {
         List<String> symbols = provider.getSubscribedSymbols();
         java.util.Map<String, String> errors = java.util.Collections.emptyMap();
-        if (provider instanceof market.provider.yahoo.YahooFinanceProvider yahoo) {
-            errors = yahoo.getSymbolErrors();
+        market.provider.yahoo.YahooFinanceProvider yahoo = null;
+        if (provider instanceof market.provider.yahoo.YahooFinanceProvider y) {
+            yahoo = y;
+            errors = y.getSymbolErrors();
         }
 
         StringBuilder sb = new StringBuilder("{");
@@ -53,18 +55,50 @@ public class DynamicWatchlistController {
                 sb.append(",");
             }
             first = false;
-            String err = errors.get(sym);
-            sb.append("\"").append(escapeJson(sym)).append("\":{");
-            if (err != null) {
-                sb.append("\"status\":\"ERROR\",")
-                  .append("\"message\":\"").append(escapeJson(err)).append("\"");
-            } else {
-                sb.append("\"status\":\"OK\"");
-            }
-            sb.append("}");
+
+            boolean isError = errors.containsKey(sym);
+            String errReason = errors.get(sym);
+            String companyName = (yahoo != null) ? yahoo.getCompanyName(sym) : sym;
+            boolean isTradable = (yahoo != null) && !isError && yahoo.isMarketOpen(sym);
+            String marketState = isError ? "DELISTED" : (isTradable ? "OPEN" : "CLOSED");
+            String message = isError ? (errReason != null ? errReason : "Symbol error or delisted")
+                                     : (isTradable ? "Market Open (Trading hours: Mon-Fri 09:15-15:30 IST)"
+                                                   : "Market Closed (Trading hours: Mon-Fri 09:15-15:30 IST)");
+
+            sb.append("\"").append(escapeJson(sym)).append("\":{")
+              .append("\"status\":\"").append(isError ? "ERROR" : "OK").append("\",")
+              .append("\"companyName\":\"").append(escapeJson(companyName)).append("\",")
+              .append("\"isTradable\":").append(isTradable).append(",")
+              .append("\"marketState\":\"").append(marketState).append("\",")
+              .append("\"message\":\"").append(escapeJson(message)).append("\"")
+              .append("}");
         }
         sb.append("}");
         return sb.toString();
+    }
+
+    /**
+     * Retrieves historical chart points for the specified symbol and timeframe.
+     *
+     * @param symbol symbol to query
+     * @param timeframe timeframe string (e.g. 1h, 1d, 1m, 1y, max)
+     * @return compact JSON string with chart points
+     */
+    public String handleGetChartJson(String symbol, String timeframe) {
+        if (symbol == null || symbol.trim().isEmpty()) {
+            return "{\"error\":\"Symbol parameter is required\"}";
+        }
+        String cleanSymbol = normalizeSymbol(symbol);
+        String cleanTf = (timeframe == null || timeframe.trim().isEmpty()) ? "1d" : timeframe.trim().toLowerCase();
+
+        if (provider instanceof market.provider.yahoo.YahooFinanceProvider yahoo) {
+            try {
+                return yahoo.fetchChartHistoryJson(cleanSymbol, cleanTf).get(10, java.util.concurrent.TimeUnit.SECONDS);
+            } catch (Exception e) {
+                return "{\"error\":\"Failed to fetch chart data: " + escapeJson(e.getMessage()) + "\"}";
+            }
+        }
+        return "{\"error\":\"Provider does not support chart history\"}";
     }
 
     /**

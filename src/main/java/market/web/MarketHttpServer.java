@@ -86,6 +86,7 @@ public class MarketHttpServer {
         server.createContext(fullPath("/api/stream"), this::handleStream);
         server.createContext(fullPath("/api/symbols"), this::handleSymbols);
         server.createContext(fullPath("/api/search"), this::handleSearch);
+        server.createContext(fullPath("/api/chart"), this::handleChart);
         server.createContext(baseContext, this::handleStatic);
     }
 
@@ -244,6 +245,40 @@ public class MarketHttpServer {
         }
 
         String json = watchlistController.handleSearchJson(searchTerm);
+        sendJson(exchange, 200, json);
+    }
+
+    private void handleChart(HttpExchange exchange) throws IOException {
+        String method = exchange.getRequestMethod().toUpperCase();
+        if (!"GET".equals(method)) {
+            sendError(exchange, 405, "Method Not Allowed");
+            return;
+        }
+
+        String path = exchange.getRequestURI().getPath();
+        String chartBase = fullPath("/api/chart");
+        if (!path.equals(chartBase) && !path.equals(chartBase + "/")) {
+            sendError(exchange, 404, "Not Found");
+            return;
+        }
+
+        String query = exchange.getRequestURI().getQuery();
+        String symbol = "";
+        String timeframe = "1d";
+        if (query != null) {
+            for (String param : query.split("&")) {
+                String[] pair = param.split("=", 2);
+                if (pair.length == 2) {
+                    if ("symbol".equalsIgnoreCase(pair[0])) {
+                        symbol = URLDecoder.decode(pair[1], StandardCharsets.UTF_8);
+                    } else if ("timeframe".equalsIgnoreCase(pair[0])) {
+                        timeframe = URLDecoder.decode(pair[1], StandardCharsets.UTF_8);
+                    }
+                }
+            }
+        }
+
+        String json = watchlistController.handleGetChartJson(symbol, timeframe);
         sendJson(exchange, 200, json);
     }
 

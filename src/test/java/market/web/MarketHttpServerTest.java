@@ -290,4 +290,18 @@ class MarketHttpServerTest {
         assertThat(resp.headers().firstValue("Content-Type").orElse("")).contains("application/json");
         assertThat(resp.body()).startsWith("[").endsWith("]");
     }
+
+    @Test
+    @DisplayName("Should serve chart API under context path")
+    void shouldServeChartEndpoint() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+            .uri(URI.create("http://127.0.0.1:" + server.getPort() + "/market/api/chart?symbol=RELIANCE.NS&timeframe=1d"))
+            .GET()
+            .build();
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+        assertThat(resp.statusCode()).isEqualTo(200);
+        assertThat(resp.headers().firstValue("Content-Type").orElse("")).contains("application/json");
+        assertThat(resp.body()).contains("\"symbol\":\"RELIANCE.NS\"");
+        assertThat(resp.body()).contains("\"timeframe\":\"1d\"");
+    }
 }

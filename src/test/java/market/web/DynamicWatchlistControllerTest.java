@@ -87,9 +87,23 @@ class DynamicWatchlistControllerTest {
         DynamicWatchlistController controller = new DynamicWatchlistController(provider);
         String statusJson = controller.handleGetSymbolStatusJson();
 
-        assertThat(statusJson).contains("\"RELIANCE.NS\":{\"status\":\"OK\"}");
+        assertThat(statusJson).contains("\"RELIANCE.NS\":{\"status\":\"OK\"");
+        assertThat(statusJson).contains("\"companyName\":\"Reliance Industries Limited\"");
+        assertThat(statusJson).contains("\"isTradable\":");
         assertThat(statusJson).contains("\"TATAMOTORS.NS\":{\"status\":\"ERROR\"");
         assertThat(statusJson).contains("TMPV.NS");
+    }
+
+    @Test
+    void shouldReturnChartHistoryJsonForSymbol() {
+        YahooFinanceProvider provider = new YahooFinanceProvider();
+        provider.subscribe(List.of("RELIANCE.NS"));
+        DynamicWatchlistController controller = new DynamicWatchlistController(provider);
+
+        String chartJson = controller.handleGetChartJson("RELIANCE.NS", "1d");
+        assertThat(chartJson).contains("\"symbol\":\"RELIANCE.NS\"");
+        assertThat(chartJson).contains("\"timeframe\":\"1d\"");
+        assertThat(chartJson).contains("\"points\":");
     }
 
     @Test
