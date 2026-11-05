@@ -112,12 +112,16 @@ This document specifies Subsystem 1:
 Defines the `MarketTick` message:
 - `templateId`: 1, `schemaId`: 1, `version`: 0
 - Fields:
-  - `symbol`: Fixed or length-encoded string (e.g. max 16 chars: `"RELIANCE.NS"`)
+  - `symbol`: Fixed 16-character array (`char[16]`) — e.g., `"RELIANCE.NS"`
+  - `isin`: Fixed 12-character array (`char[12]`) — e.g., `"INE002A01018"`
+  - `sedol`: Fixed 7-character array (`char[7]`) — e.g., `"6714072"`
+  - `ric`: Fixed 16-character array (`char[16]`) — e.g., `"RELI.NS"`
   - `price`: `uint64` (scaled integer, e.g., price $\times 10^4$ for exact decimal representation without floating-point errors)
-  - `timestampEpochNs`: `int64` (market quote source timestamp in epoch nanoseconds)
-  - `fetchDurationNs`: `int64` (round-trip duration to fetch the quote)
-  - `publishedNs`: `int64` (timestamp just before offering to Aeron)
+  - `quoteTimestampNs`: `int64` (quote source/exchange time in epoch nanoseconds)
+  - `ingressTimestampNs`: `int64` (epoch nanoseconds when ingestion adapter received the quote)
+  - `fetchDurationNs`: `int64` (round-trip network fetch duration in nanoseconds)
   - `provider`: `enum` (`YAHOO`, `ZERODHA`, `DHAN`, `SIMULATED`)
+
 
 ### 5.2 Pluggable Event Bus Interface (`bus/MarketEventBus.java`)
 ```java
