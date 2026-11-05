@@ -4,6 +4,9 @@ import market.bus.aeron.AeronEventBus;
 import market.consumer.MarketDisplayConsumer;
 import market.producer.MarketDataProducer;
 import market.provider.yahoo.YahooFinanceProvider;
+import market.web.DynamicWatchlistController;
+import market.web.MarketHttpServer;
+import market.web.MarketStreamBroadcaster;
 import org.agrona.concurrent.SleepingMillisIdleStrategy;
 
 import java.io.File;
@@ -15,15 +18,21 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Main application entrypoint for Phase 1 of track-my-market:
+ * Main application entrypoint for track-my-market:
  * Ingests NSE/BSE stock quotes, serializes to zero-allocation SBE messages,
  * streams them over an embedded Aeron Archiving Media Driver message bus,
- * and displays live tick updates with microsecond latency metrics.
+ * displays live tick updates in console, and optionally serves a modern
+ * real-time web trading dashboard via SSE when --enable-ui is passed.
  */
 public class MarketApp {
     public static final int DEFAULT_STREAM_ID = 1001;
 
     public static void main(String[] args) {
+        List<String> argList = Arrays.asList(args);
+        boolean enableUi = argList.contains("--enable-ui")
+            || Boolean.parseBoolean(System.getProperty("market.ui.enabled",
+                System.getenv().getOrDefault("MARKET_UI_ENABLED", "false")));
+
         String symbolsProperty = System.getProperty("market.symbols",
             System.getenv().getOrDefault("MARKET_SYMBOLS", "RELIANCE.NS,TCS.NS,INFY.NS,HDFCBANK.NS"));
         List<String> symbols = Arrays.stream(symbolsProperty.split(","))
@@ -37,13 +46,28 @@ public class MarketApp {
         String customBaseUrl = System.getProperty("market.provider.yahoo.base-url",
             System.getenv().getOrDefault("YAHOO_FINANCE_BASE_URL", "https://query1.finance.yahoo.com"));
 
+        int serverPort = Integer.parseInt(System.getProperty("market.server.port",
+            System.getenv().getOrDefault("MARKET_SERVER_PORT", "8080")));
+        String bindHost = System.getProperty("market.server.bind-host",
+            System.getenv().getOrDefault("MARKET_SERVER_BIND_HOST", "0.0.0.0"));
+        String contextPath = System.getProperty("market.server.context-path",
+            System.getenv().getOrDefault("MARKET_SERVER_CONTEXT_PATH", "/"));
+
         System.out.println("======================================================================");
-        System.out.println("               TRACK-MY-MARKET: Phase 1 Ingestion & Bus               ");
+        System.out.println("                         TRACK-MY-MARKET                              ");
         System.out.println("======================================================================");
         System.out.printf("  • Provider: Yahoo Finance (Endpoint: %s)%n", customBaseUrl);
         System.out.printf("  • Symbols:  %s%n", symbols);
         System.out.printf("  • Interval: %d ms%n", pollIntervalMs);
         System.out.println("  • Bus:      Aeron Archiving Media Driver (IPC / SBE)");
+        System.out.printf("  • Web UI:   %s%n", enableUi ? "ENABLED" : "DISABLED (Headless)");
+        if (enableUi) {
+            String displayPath = contextPath.endsWith("/") ? contextPath : contextPath + "/";
+            System.out.printf("  • Dashboard URL: http://%s:%d%s%n",
+                "0.0.0.0".equals(bindHost) ? "localhost" : bindHost, serverPort, displayPath);
+            System.out.printf("  • SSE Stream:    http://%s:%d%sapi/stream%n",
+                "0.0.0.0".equals(bindHost) ? "localhost" : bindHost, serverPort, displayPath);
+        }
         System.out.println("======================================================================\n");
 
         Path mediaDriverDir;
@@ -74,11 +98,28 @@ public class MarketApp {
             Duration.ofMillis(pollIntervalMs)
         );
 
+        MarketHttpServer webServer = null;
+        MarketStreamBroadcaster broadcaster = null;
+
+        if (enableUi) {
+            broadcaster = new MarketStreamBroadcaster();
+            DynamicWatchlistController watchlistController = new DynamicWatchlistController(provider);
+            try {
+                webServer = new MarketHttpServer(bindHost, serverPort, contextPath, broadcaster, watchlistController);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to initialize embedded web server", e);
+            }
+        }
+
         AtomicBoolean running = new AtomicBoolean(true);
+        final MarketHttpServer finalServer = webServer;
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             System.out.println("\nShutting down track-my-market...");
             running.set(false);
+            if (finalServer != null) {
+                finalServer.stop();
+            }
             provider.stop();
             eventBus.close();
             System.out.println("Shutdown complete.");
@@ -87,6 +128,11 @@ public class MarketApp {
         try {
             eventBus.start();
             eventBus.subscribe(DEFAULT_STREAM_ID, displayConsumer);
+
+            if (enableUi && broadcaster != null) {
+                eventBus.subscribe(DEFAULT_STREAM_ID, broadcaster);
+                webServer.start();
+            }
 
             provider.registerTickListener(producer::onQuote);
             provider.subscribe(symbols);
