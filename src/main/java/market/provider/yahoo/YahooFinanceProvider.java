@@ -156,8 +156,9 @@ public class YahooFinanceProvider implements MarketDataProvider {
         return running.get();
     }
 
-    public Set<String> getSubscribedSymbols() {
-        return Collections.unmodifiableSet(subscribedSymbols);
+    @Override
+    public List<String> getSubscribedSymbols() {
+        return subscribedSymbols.stream().sorted().toList();
     }
 
     @Override
@@ -165,9 +166,23 @@ public class YahooFinanceProvider implements MarketDataProvider {
         if (symbols != null) {
             for (String s : symbols) {
                 if (s != null && !s.isBlank()) {
-                    subscribedSymbols.add(s.trim());
+                    String trimmed = s.trim();
+                    boolean added = subscribedSymbols.add(trimmed);
+                    if (added && running.get()) {
+                        pollSymbol(trimmed);
+                    }
                 }
             }
+        }
+    }
+
+    @Override
+    public void unsubscribe(String symbol) {
+        if (symbol != null && !symbol.isBlank()) {
+            String trimmed = symbol.trim();
+            subscribedSymbols.remove(trimmed);
+            lastQuoteTimes.remove(trimmed);
+            lastPrices.remove(trimmed);
         }
     }
 

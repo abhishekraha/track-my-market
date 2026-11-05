@@ -26,6 +26,23 @@ public interface MarketDataProvider extends AutoCloseable {
     void subscribe(List<String> symbols);
 
     /**
+     * Unsubscribes from market data for the given symbol.
+     *
+     * @param symbol ticker symbol to remove
+     */
+    default void unsubscribe(String symbol) {
+    }
+
+    /**
+     * Returns the list of currently subscribed ticker symbols.
+     *
+     * @return list of active ticker symbols
+     */
+    default List<String> getSubscribedSymbols() {
+        return List.of();
+    }
+
+    /**
      * Registers a callback listener to receive parsed market quotes.
      *
      * @param listener consumer receiving quotes
