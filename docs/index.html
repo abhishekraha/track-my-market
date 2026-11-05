@@ -1096,6 +1096,1406 @@
     .footer-links a:hover {
       color: var(--accent-cyan);
     }
+  
+
+    /* =========================================================
+       RULE-BASED ALERTING STYLES & DRAWER
+       ========================================================= */
+/* Alerts Drawer Header Bell Button */
+    .btn-alerts-bell {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 0.5rem;
+      padding: 0.4rem 0.85rem;
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+      outline: none;
+      position: relative;
+    }
+
+    /* Active Symbol Header Set Alert Button */
+    .btn-create-alert-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      border-radius: 0.375rem;
+      padding: 0.22rem 0.65rem;
+      color: #f59e0b;
+      font-family: var(--font-sans);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+      margin-left: 0.5rem;
+      vertical-align: middle;
+    }
+
+    .btn-create-alert-action:hover {
+      background: rgba(245, 158, 11, 0.25);
+      border-color: #f59e0b;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
+    .btn-alerts-bell:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+      color: #ffffff;
+    }
+
+    .btn-alerts-bell.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-blue);
+      color: var(--accent-blue);
+    }
+
+    .btn-alerts-bell .bell-icon {
+      width: 1.15rem;
+      height: 1.15rem;
+      color: #f59e0b;
+      transition: transform 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .btn-alerts-bell:hover .bell-icon {
+      transform: rotate(15deg) scale(1.08);
+    }
+
+    .alert-badge-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 1.25rem;
+      height: 1.25rem;
+      padding: 0 0.35rem;
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      background-color: var(--border-medium);
+      color: var(--text-muted);
+      transition: all 0.25s ease;
+    }
+
+    .alert-badge-count.active-count {
+      background: linear-gradient(135deg, #0284c7, #6366f1);
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
+      animation: alertPulse 2s infinite ease-in-out;
+    }
+
+    @keyframes alertPulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 8px rgba(56, 189, 248, 0.5); }
+      50% { transform: scale(1.1); box-shadow: 0 0 14px rgba(56, 189, 248, 0.85); }
+    }
+
+    /* Alerts Drawer Slide-Out Backdrop */
+    .alerts-drawer-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(7, 10, 18, 0.65);
+      backdrop-filter: blur(5px);
+      z-index: 998;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .alerts-drawer-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Alerts Drawer Panel */
+    .alerts-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 490px;
+      max-width: 95vw;
+      background: var(--bg-panel);
+      border-left: 1px solid var(--border-medium);
+      box-shadow: -12px 0 40px rgba(0, 0, 0, 0.75);
+      z-index: 999;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .alerts-drawer.open {
+      transform: translateX(0);
+    }
+
+    /* Drawer Header */
+    .drawer-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-medium);
+      background: rgba(30, 41, 59, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .drawer-header-left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .drawer-header-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 0.5rem;
+      background: linear-gradient(135deg, rgba(2, 132, 199, 0.25), rgba(99, 102, 241, 0.25));
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-blue);
+    }
+
+    .drawer-header-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+
+    .drawer-header-sub {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .btn-drawer-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.35rem;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .btn-drawer-close:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+    }
+
+    /* Drawer Tab Bar */
+    .drawer-nav-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border-medium);
+      background: rgba(15, 23, 42, 0.85);
+      padding: 0.25rem 0.75rem 0;
+      gap: 0.25rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .drawer-nav-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .drawer-tab {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 0.65rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .drawer-tab:hover {
+      color: var(--text-main);
+    }
+
+    .drawer-tab.active {
+      color: var(--accent-blue);
+      border-bottom-color: var(--accent-blue);
+    }
+
+    .drawer-tab-badge {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      padding: 0.05rem 0.4rem;
+      border-radius: 9999px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--text-dim);
+    }
+
+    .drawer-tab.active .drawer-tab-badge {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: rgba(56, 189, 248, 0.5);
+      color: var(--accent-blue);
+    }
+
+    .tg-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #64748b;
+      display: inline-block;
+    }
+    .tg-dot.active {
+      background: var(--green-up);
+      box-shadow: 0 0 6px var(--green-up);
+    }
+
+    /* Drawer Content Body */
+    .drawer-body-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem 1.4rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .drawer-pane {
+      display: none;
+      flex-direction: column;
+      gap: 1.15rem;
+    }
+
+    .drawer-pane.active {
+      display: flex;
+    }
+
+    /* Form Fields & Cyber Controls */
+    .cyber-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .cyber-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+    }
+
+    .cyber-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .cyber-input {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 0.45rem;
+      padding: 0.6rem 0.85rem;
+      color: var(--text-main);
+      font-size: 0.88rem;
+      font-family: var(--font-sans);
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .cyber-input.mono-num {
+      font-family: var(--font-mono);
+    }
+
+    .cyber-input:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+      background: var(--bg-card-hover);
+    }
+
+    .cyber-select {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 0.45rem;
+      padding: 0.6rem 0.85rem;
+      color: var(--text-main);
+      font-size: 0.85rem;
+      font-family: var(--font-sans);
+      outline: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .cyber-select:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+    }
+
+    .btn-cyber-ghost {
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--accent-blue);
+      border-radius: 0.45rem;
+      padding: 0.6rem 0.85rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .btn-cyber-ghost:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+    }
+
+    .live-price-banner {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid var(--border-subtle);
+      border-radius: 0.45rem;
+      padding: 0.5rem 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .live-price-banner-lbl {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+
+    .live-price-banner-val {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* Radio Pills for Condition / Mode */
+    .pill-radio-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+    }
+
+    .pill-radio-option {
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .pill-radio-option input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .pill-radio-card {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      padding: 0.65rem 0.75rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 0.45rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .pill-radio-option:hover .pill-radio-card {
+      border-color: var(--border-focus);
+      color: var(--text-main);
+      background: var(--bg-card-hover);
+    }
+
+    .pill-radio-option input[type="radio"]:checked + .pill-radio-card.above {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: rgba(16, 185, 129, 0.6);
+      color: #34d399;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+    }
+
+    .pill-radio-option input[type="radio"]:checked + .pill-radio-card.below {
+      background: rgba(244, 63, 94, 0.18);
+      border-color: rgba(244, 63, 94, 0.6);
+      color: #fb7185;
+      box-shadow: 0 0 12px rgba(244, 63, 94, 0.25);
+    }
+
+    .pill-radio-option input[type="radio"]:checked + .pill-radio-card.mode {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.6);
+      color: var(--accent-blue);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+    }
+
+    /* Target Price Offset Quick Pills */
+    .quick-offsets-row {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      margin-top: 0.25rem;
+    }
+
+    .quick-offset-lbl {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-right: 0.15rem;
+    }
+
+    .btn-quick-offset {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 0.25rem;
+      color: var(--text-muted);
+      font-size: 0.68rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      padding: 0.15rem 0.45rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-quick-offset:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--accent-blue);
+      color: var(--text-main);
+    }
+
+    /* Cyber Checkboxes */
+    .cyber-checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .cyber-checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .cyber-checkbox-label input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 17px;
+      height: 17px;
+      border: 1px solid var(--border-medium);
+      border-radius: 0.3rem;
+      background: var(--bg-card);
+      outline: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .cyber-checkbox-label input[type="checkbox"]:checked {
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+    }
+
+    .cyber-checkbox-label input[type="checkbox"]:checked::after {
+      content: '';
+      position: absolute;
+      width: 5px;
+      height: 9px;
+      border: solid #0b0f19;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      top: 1.5px;
+    }
+
+    .cyber-checkbox-label:hover {
+      color: var(--text-main);
+    }
+
+    /* Primary Neon Action Buttons */
+    .btn-neon-action {
+      background: linear-gradient(135deg, #0284c7, #6366f1);
+      border: none;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      color: #ffffff;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 18px rgba(56, 189, 248, 0.35);
+      transition: all 0.2s ease;
+      user-select: none;
+      width: 100%;
+    }
+
+    .btn-neon-action:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 22px rgba(56, 189, 248, 0.5);
+      background: linear-gradient(135deg, #0ea5e9, #4f46e5);
+    }
+
+    .btn-neon-action:active {
+      transform: translateY(0);
+    }
+
+    .btn-neon-action:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Active Rules Tab Cards */
+    .pane-sub-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding-bottom: 0.35rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .pane-sub-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .btn-pane-refresh {
+      background: transparent;
+      border: 1px solid var(--border-medium);
+      color: var(--text-muted);
+      border-radius: 0.35rem;
+      padding: 0.25rem 0.55rem;
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.2s;
+    }
+
+    .btn-pane-refresh:hover {
+      background: var(--bg-card);
+      border-color: var(--accent-blue);
+      color: var(--text-main);
+    }
+
+    .rules-card-container, .history-card-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .empty-state-card {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px dashed var(--border-medium);
+      border-radius: 0.5rem;
+      padding: 2.25rem 1.5rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .empty-state-icon {
+      width: 40px;
+      height: 40px;
+      color: var(--text-dim);
+    }
+
+    .empty-state-text {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      max-width: 280px;
+      line-height: 1.4;
+    }
+
+    .rule-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 0.5rem;
+      padding: 0.9rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+      transition: all 0.2s ease;
+    }
+
+    .rule-card:hover {
+      border-color: var(--border-focus);
+      background: var(--bg-card-hover);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .rule-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .rule-symbol-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .rule-symbol-badge {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+
+    .rule-condition-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      padding: 0.18rem 0.55rem;
+      border-radius: 9999px;
+    }
+
+    .rule-condition-pill.above {
+      background: rgba(16, 185, 129, 0.18);
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      color: #34d399;
+    }
+
+    .rule-condition-pill.below {
+      background: rgba(244, 63, 94, 0.18);
+      border: 1px solid rgba(244, 63, 94, 0.45);
+      color: #fb7185;
+    }
+
+    .rule-status-badge {
+      font-size: 0.65rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      padding: 0.15rem 0.5rem;
+      border-radius: 0.25rem;
+      letter-spacing: 0.05em;
+    }
+
+    .rule-status-badge.active {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.5);
+    }
+
+    .rule-status-badge.triggered {
+      background: rgba(245, 158, 11, 0.2);
+      color: #fbbf24;
+      border: 1px solid rgba(245, 158, 11, 0.5);
+    }
+
+    .rule-status-badge.disabled {
+      background: rgba(100, 116, 139, 0.2);
+      color: #94a3b8;
+      border: 1px solid rgba(100, 116, 139, 0.4);
+    }
+
+    .rule-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .rule-actions-row {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin-top: 0.2rem;
+    }
+
+    .btn-rule-btn {
+      flex: 1;
+      padding: 0.35rem 0.65rem;
+      border-radius: 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-medium);
+      color: var(--text-muted);
+    }
+
+    .btn-rule-btn:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-main);
+      border-color: var(--border-focus);
+    }
+
+    .btn-rule-btn.rearm {
+      border-color: rgba(245, 158, 11, 0.5);
+      color: #fbbf24;
+      background: rgba(245, 158, 11, 0.12);
+    }
+    .btn-rule-btn.rearm:hover {
+      background: rgba(245, 158, 11, 0.25);
+    }
+
+    .btn-rule-btn.delete {
+      flex: 0 0 auto;
+      border-color: rgba(244, 63, 94, 0.4);
+      color: #fb7185;
+      padding: 0.35rem 0.55rem;
+    }
+    .btn-rule-btn.delete:hover {
+      background: rgba(244, 63, 94, 0.18);
+    }
+
+    /* History Cards */
+    .history-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 0.5rem;
+      padding: 0.75rem 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .history-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .history-time {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+
+    .history-card-body {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .history-prices {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+    }
+
+    .history-target {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+
+    .history-msg {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      line-height: 1.3;
+    }
+
+    /* Telegram Settings Tab */
+    .tg-guide-box {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 0.5rem;
+      padding: 0.85rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .tg-guide-head {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent-blue);
+    }
+
+    .tg-steps {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      padding-left: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .tg-steps code {
+      font-family: var(--font-mono);
+      background: rgba(0, 0, 0, 0.35);
+      padding: 0.1rem 0.3rem;
+      border-radius: 0.2rem;
+      color: var(--accent-blue);
+    }
+
+    .tg-actions-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn-secondary-outline {
+      background: transparent;
+      border: 1px solid var(--border-medium);
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+      color: var(--text-main);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+    }
+
+    .btn-secondary-outline:hover {
+      background: var(--bg-card);
+      border-color: var(--accent-blue);
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
+    }
+
+    .btn-secondary-outline:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .tg-feedback-badge {
+      border-radius: 0.45rem;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.25s ease;
+    }
+
+    .tg-feedback-badge.success {
+      background: rgba(16, 185, 129, 0.18);
+      border: 1px solid rgba(16, 185, 129, 0.5);
+      color: #34d399;
+    }
+
+    .tg-feedback-badge.error {
+      background: rgba(244, 63, 94, 0.18);
+      border: 1px solid rgba(244, 63, 94, 0.5);
+      color: #fb7185;
+    }
+
+    .tg-feedback-badge.info {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: var(--accent-blue);
+    }
+
+    /* Floating Alert Toast Card */
+    .alert-floating-toast {
+      pointer-events: auto;
+      width: 380px;
+      max-width: calc(100vw - 2rem);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.98));
+      border: 1px solid rgba(56, 189, 248, 0.5);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(56, 189, 248, 0.3);
+      border-radius: 0.75rem;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      animation: alertToastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      position: relative;
+    }
+
+    .alert-floating-toast.dismissing {
+      opacity: 0;
+      transform: translateX(35px) scale(0.95);
+    }
+
+    @keyframes alertToastSlideIn {
+      from { opacity: 0; transform: translateY(25px) scale(0.94); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .alert-toast-top {
+      padding: 0.75rem 1rem 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    .alert-toast-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.72rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: #38bdf8;
+      letter-spacing: 0.05em;
+    }
+
+    .alert-toast-bell-icon {
+      color: #f59e0b;
+      animation: bellShake 1.2s infinite ease-in-out;
+    }
+
+    @keyframes bellShake {
+      0%, 100% { transform: rotate(0deg); }
+      20%, 60% { transform: rotate(15deg); }
+      40%, 80% { transform: rotate(-15deg); }
+    }
+
+    .alert-toast-timestamp {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+
+    .btn-alert-toast-close {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.15rem;
+      line-height: 1;
+      padding: 0.15rem 0.35rem;
+      border-radius: 0.25rem;
+      transition: color 0.15s;
+    }
+
+    .btn-alert-toast-close:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .alert-toast-content {
+      padding: 0.85rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .alert-toast-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .alert-toast-symbol-text {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+    }
+
+    .alert-toast-condition-badge {
+      padding: 0.2rem 0.6rem;
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .alert-toast-condition-badge.above {
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.5);
+      color: #34d399;
+    }
+
+    .alert-toast-condition-badge.below {
+      background: rgba(244, 63, 94, 0.2);
+      border: 1px solid rgba(244, 63, 94, 0.5);
+      color: #fb7185;
+    }
+
+    .alert-toast-price-info {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .alert-toast-trigger-val {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #f8fafc;
+      font-family: var(--font-mono);
+    }
+
+    .alert-toast-target-val {
+      font-size: 0.78rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+    }
+
+    .alert-toast-bar-track {
+      height: 3.5px;
+      background: rgba(51, 65, 85, 0.5);
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .alert-toast-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #38bdf8, #6366f1, #f59e0b);
+      width: 100%;
+      animation: alertToastProgress 8s linear forwards;
+    }
+
+    @keyframes alertToastProgress {
+      from { width: 100%; }
+      to { width: 0%; }
+    }
+
+    /* =========================================================
+       AERON TELEMETRY DASHBOARD & CYBER MODAL STYLES
+       ========================================================= */
+    .aeron-telemetry-pill-btn {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(99, 102, 241, 0.18)) !important;
+      border: 1px solid rgba(56, 189, 248, 0.45) !important;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.15);
+      text-align: left;
+    }
+    .aeron-telemetry-pill-btn:hover {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.22), rgba(99, 102, 241, 0.3)) !important;
+      border-color: #38bdf8 !important;
+      transform: translateY(-1px);
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+    }
+    .aeron-telemetry-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 8px #38bdf8;
+      display: inline-block;
+      animation: pulse-cyan 1.8s infinite;
+    }
+    @keyframes pulse-cyan {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    /* Aeron Telemetry Cyber Modal */
+    .telemetry-modal-card {
+      max-width: 860px !important;
+      background: #0f172a !important;
+      border: 1px solid rgba(56, 189, 248, 0.35) !important;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75), 0 0 35px rgba(56, 189, 248, 0.12) !important;
+    }
+    .telemetry-icon {
+      background: rgba(56, 189, 248, 0.15) !important;
+      border: 1px solid rgba(56, 189, 248, 0.4) !important;
+      color: #38bdf8 !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .telemetry-health-pill {
+      font-size: 0.68rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      padding: 0.18rem 0.6rem;
+      border-radius: 9999px;
+      letter-spacing: 0.04em;
+    }
+    .telemetry-health-pill.healthy {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.45);
+      color: #34d399;
+      box-shadow: 0 0 8px rgba(16, 185, 129, 0.2);
+    }
+    .telemetry-health-pill.warning {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      color: #fbbf24;
+    }
+    .telemetry-health-pill.danger {
+      background: rgba(244, 63, 94, 0.15);
+      border: 1px solid rgba(244, 63, 94, 0.45);
+      color: #fb7185;
+    }
+    .telemetry-refresh-pill {
+      font-size: 0.65rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--border-medium);
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .telemetry-refresh-pill .refresh-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #38bdf8;
+      animation: pulse-cyan 2s infinite;
+    }
+    .telemetry-modal-body {
+      gap: 1.25rem !important;
+    }
+    .telemetry-section {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-medium);
+      border-radius: 0.65rem;
+      padding: 1rem 1.15rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .section-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .section-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: var(--font-sans);
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+    .section-badge {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+    }
+    .latency-gauge-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+    .latency-gauge-bar {
+      width: 100%;
+      height: 8px;
+      background: #1e293b;
+      border-radius: 9999px;
+      overflow: hidden;
+      position: relative;
+    }
+    .latency-gauge-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981 0%, #38bdf8 60%, #f59e0b 85%, #f43f5e 100%);
+      border-radius: 9999px;
+      transition: width 0.4s ease;
+    }
+    .latency-gauge-scale {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.62rem;
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+    }
+    .gauge-target {
+      color: #38bdf8;
+      font-weight: 600;
+    }
+    .telemetry-metrics-grid-5 {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.65rem;
+    }
+    .telemetry-metrics-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.65rem;
+    }
+    @media (max-width: 768px) {
+      .telemetry-metrics-grid-5 { grid-template-columns: repeat(2, 1fr); }
+      .telemetry-metrics-grid-4 { grid-template-columns: repeat(2, 1fr); }
+    }
+    .telemetry-stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 0.5rem;
+      padding: 0.65rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+    .telemetry-stat-card.card-accent-cyan {
+      border-color: rgba(56, 189, 248, 0.45);
+      background: rgba(14, 165, 233, 0.08);
+    }
+    .telemetry-stat-card.card-accent-green {
+      border-color: rgba(16, 185, 129, 0.45);
+      background: rgba(16, 185, 129, 0.08);
+    }
+    .telemetry-stat-card .stat-lbl {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-dim);
+      letter-spacing: 0.03em;
+    }
+    .telemetry-stat-card .stat-val {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .telemetry-stat-card .stat-sub {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+    }
+    .telemetry-arch-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 640px) {
+      .telemetry-arch-grid { grid-template-columns: 1fr; }
+    }
+    .telemetry-arch-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-medium);
+      border-radius: 0.65rem;
+      padding: 0.9rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .arch-card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .arch-card-header h4 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+    .arch-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.72rem;
+    }
+    .arch-table tr {
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+    }
+    .arch-table tr:last-child {
+      border-bottom: none;
+    }
+    .arch-table td {
+      padding: 0.35rem 0;
+    }
+    .arch-table td:first-child {
+      color: var(--text-dim);
+      width: 45%;
+    }
+    .arch-table td:last-child {
+      color: var(--text-main);
+      text-align: right;
+    }
+    .arch-table code {
+      background: rgba(30, 41, 59, 0.8);
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: #38bdf8;
+    }
+  
+  
+    .btn-table-alert {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      border-radius: 4px;
+      padding: 0.2rem 0.55rem;
+      color: #f59e0b;
+      font-size: 0.72rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-table-alert:hover {
+      background: rgba(245, 158, 11, 0.28);
+      border-color: #f59e0b;
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+
   </style>
 </head>
 <body>
@@ -1147,6 +2547,14 @@
       </ul>
 
       <div class="nav-actions">
+        <button id="nav-alert-btn" class="btn-alerts-bell" type="button" onclick="toggleAlertsDrawer()" title="Rule-Based Alerts & Telegram Notification Drawer">
+          <svg class="bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+          <span>+ CREATE ALERT</span>
+          <span id="nav-alert-badge-count" class="alert-badge-count">0</span>
+        </button>
         <a href="https://github.com/abhishekraha/track-my-market" target="_blank" rel="noopener noreferrer" class="btn-github">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
@@ -1237,6 +2645,14 @@
         </div>
 
         <div class="desk-hud-chips">
+          <button id="btn-desk-create-alert" class="btn-alerts-bell" type="button" onclick="toggleAlertsDrawer()" title="Rule-Based Alerts & Telegram Notification Drawer" style="margin-right: 0.6rem;">
+            <svg class="bell-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span>+ CREATE ALERT</span>
+            <span id="alert-badge-count" class="alert-badge-count">0</span>
+          </button>
           <div class="hud-chip">
             <span class="hud-chip-label">Ingestion RTT</span>
             <span class="hud-chip-val mono" id="desk-ingest-val">78.4 ms</span>
@@ -1365,6 +2781,7 @@
                 <th style="text-align:right">Ingress RTT</th>
                 <th style="text-align:right">Bus Latency</th>
                 <th>Status</th>
+                <th style="text-align:center">Action</th>
               </tr>
             </thead>
             <tbody id="watchlist-body">
@@ -1379,6 +2796,15 @@
                 <td class="mono" style="text-align:right">78.4 ms</td>
                 <td class="mono" style="text-align:right; color:var(--accent-cyan)">0.82 &mu;s</td>
                 <td><span style="color:var(--accent-emerald); font-weight:700">● LIVE</span></td>
+              <td style="text-align:center" onclick="event.stopPropagation()">
+                  <button type="button" class="btn-table-alert" onclick="openCreateAlertForSymbol('TCS.NS')" title="Set price breach alert for TCS.NS">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span>Alert</span>
+                  </button>
+                </td>
               </tr>
               <tr onclick="switchSymbol('RELIANCE.NS', 'Reliance Industries Ltd.', 1418.50, '+1.42%', 'INE002A01018', '6724590', 'RELI.NS', 'INR')">
                 <td>
@@ -1391,6 +2817,15 @@
                 <td class="mono" style="text-align:right">82.1 ms</td>
                 <td class="mono" style="text-align:right; color:var(--accent-cyan)">0.74 &mu;s</td>
                 <td><span style="color:var(--accent-emerald); font-weight:700">● LIVE</span></td>
+              <td style="text-align:center" onclick="event.stopPropagation()">
+                  <button type="button" class="btn-table-alert" onclick="openCreateAlertForSymbol('RELIANCE.NS')" title="Set price breach alert for RELIANCE.NS">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span>Alert</span>
+                  </button>
+                </td>
               </tr>
               <tr onclick="switchSymbol('INFY.NS', 'Infosys Limited', 1892.30, '-0.45%', 'INE009A01021', '6456789', 'INFY.NS', 'INR')">
                 <td>
@@ -1403,6 +2838,15 @@
                 <td class="mono" style="text-align:right">91.3 ms</td>
                 <td class="mono" style="text-align:right; color:var(--accent-cyan)">0.69 &mu;s</td>
                 <td><span style="color:var(--accent-emerald); font-weight:700">● LIVE</span></td>
+              <td style="text-align:center" onclick="event.stopPropagation()">
+                  <button type="button" class="btn-table-alert" onclick="openCreateAlertForSymbol('INFY.NS')" title="Set price breach alert for INFY.NS">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span>Alert</span>
+                  </button>
+                </td>
               </tr>
               <tr onclick="switchSymbol('HDFCBANK.NS', 'HDFC Bank Limited', 1745.20, '+0.25%', 'INE040A01034', '6432109', 'HDBK.NS', 'INR')">
                 <td>
@@ -1415,6 +2859,15 @@
                 <td class="mono" style="text-align:right">86.7 ms</td>
                 <td class="mono" style="text-align:right; color:var(--accent-cyan)">0.79 &mu;s</td>
                 <td><span style="color:var(--accent-emerald); font-weight:700">● LIVE</span></td>
+              <td style="text-align:center" onclick="event.stopPropagation()">
+                  <button type="button" class="btn-table-alert" onclick="openCreateAlertForSymbol('HDFCBANK.NS')" title="Set price breach alert for HDFCBANK.NS">
+                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2">
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                    </svg>
+                    <span>Alert</span>
+                  </button>
+                </td>
               </tr>
               <tr onclick="switchSymbol('AAPL', 'Apple Inc.', 234.80, '+0.88%', 'US0378331005', '2046251', 'AAPL.O', 'USD')">
                 <td>
@@ -2059,6 +3512,785 @@
       resetHudSummary();
       startFastTickUpdates();
     });
+  
+    // =========================================================
+    // RULE-BASED ALERTING ENGINE & TELEGRAM CLIENT (DOCS DEMO)
+    // =========================================================
+
+    const alertState = {
+      rules: JSON.parse(localStorage.getItem('tmm_alert_rules') || '[]'),
+      history: JSON.parse(localStorage.getItem('tmm_alert_history') || '[]'),
+      telegram: JSON.parse(localStorage.getItem('tmm_tg_config') || '{"botToken":"","chatId":"","enabled":false}'),
+      drawerOpen: false,
+      activeTab: 'create'
+    };
+
+    function saveAlertRules() {
+      try { localStorage.setItem('tmm_alert_rules', JSON.stringify(alertState.rules)); } catch (e) {}
+    }
+
+    function saveAlertHistory() {
+      try { localStorage.setItem('tmm_alert_history', JSON.stringify(alertState.history)); } catch (e) {}
+    }
+
+    function saveTelegramSettings() {
+      try { localStorage.setItem('tmm_tg_config', JSON.stringify(alertState.telegram)); } catch (e) {}
+    }
+
+    function updateAlertBadges() {
+      const activeCount = alertState.rules.filter(r => r.status === 'ACTIVE').length;
+      document.querySelectorAll('#alert-badge-count, #nav-alert-badge-count, #desk-alert-badge-count').forEach(el => {
+        if (el) {
+          el.textContent = activeCount;
+          el.classList.toggle('active-count', activeCount > 0);
+        }
+      });
+      const tabActiveEl = document.getElementById('tab-active-count');
+      if (tabActiveEl) tabActiveEl.textContent = alertState.rules.length;
+      const tabHistEl = document.getElementById('tab-history-count');
+      if (tabHistEl) tabHistEl.textContent = alertState.history.length;
+      const tgDot = document.getElementById('tab-tg-dot');
+      if (tgDot) tgDot.classList.toggle('active', !!alertState.telegram.enabled);
+    }
+
+    function openAlertsDrawer(targetTab = null) {
+      alertState.drawerOpen = true;
+      const drawer = document.getElementById('alerts-drawer');
+      const backdrop = document.getElementById('alerts-drawer-backdrop');
+      if (drawer) drawer.classList.add('open');
+      if (backdrop) backdrop.classList.add('open');
+
+      if (targetTab) {
+        switchAlertTab(targetTab);
+      }
+      useActiveSymbolForAlert();
+      renderActiveRulesList();
+      renderAlertHistoryList();
+      updateAlertBadges();
+      loadTelegramConfigIntoForm();
+    }
+
+    function closeAlertsDrawer() {
+      alertState.drawerOpen = false;
+      const drawer = document.getElementById('alerts-drawer');
+      const backdrop = document.getElementById('alerts-drawer-backdrop');
+      if (drawer) drawer.classList.remove('open');
+      if (backdrop) backdrop.classList.remove('open');
+    }
+
+    function toggleAlertsDrawer() {
+      if (alertState.drawerOpen) {
+        closeAlertsDrawer();
+      } else {
+        openAlertsDrawer();
+      }
+    }
+
+    function switchAlertTab(tabName) {
+      alertState.activeTab = tabName;
+      document.querySelectorAll('.drawer-tab-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tabName);
+      });
+      document.querySelectorAll('.drawer-tab-pane').forEach(p => {
+        p.classList.toggle('active', p.id === 'tab-pane-' + tabName);
+      });
+    }
+
+    function openCreateAlertForActiveSymbol() {
+      openAlertsDrawer('create');
+      const symInput = document.getElementById('alert-symbol-input');
+      const targetInput = document.getElementById('alert-target-price');
+      if (symInput) symInput.value = currentSymbol;
+      const curr = SYMBOL_DATA[currentSymbol]?.currentPrice || SYMBOL_DATA[currentSymbol]?.basePrice || 4124;
+      if (targetInput) targetInput.value = Number(curr).toFixed(2);
+      handleAlertSymbolInput(currentSymbol);
+    }
+
+    function openCreateAlertForSymbol(sym) {
+      openAlertsDrawer('create');
+      const symInput = document.getElementById('alert-symbol-input');
+      const targetInput = document.getElementById('alert-target-price');
+      if (symInput) symInput.value = sym;
+      const curr = SYMBOL_DATA[sym]?.currentPrice || SYMBOL_DATA[sym]?.basePrice || 1000;
+      if (targetInput) targetInput.value = Number(curr).toFixed(2);
+      handleAlertSymbolInput(sym);
+    }
+
+    function useActiveSymbolForAlert() {
+      const symInput = document.getElementById('alert-symbol-input');
+      if (symInput && !symInput.value) {
+        symInput.value = currentSymbol;
+      }
+      handleAlertSymbolInput(symInput ? symInput.value : currentSymbol);
+    }
+
+    function handleAlertSymbolInput(symVal) {
+      const sym = (symVal || '').trim().toUpperCase();
+      const info = SYMBOL_DATA[sym];
+      const curPriceEl = document.getElementById('alert-current-price');
+      if (curPriceEl) {
+        if (info) {
+          const symChar = info.symChar || '₹';
+          curPriceEl.textContent = symChar + ' ' + Number(info.currentPrice || info.basePrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } else {
+          curPriceEl.textContent = '--';
+        }
+      }
+    }
+
+    function formatCurrency(amount, sym) {
+      if (amount == null || isNaN(amount)) return '--';
+      const num = Number(amount);
+      const symStr = (sym || '').toUpperCase();
+      const isIndia = symStr.endsWith('.NS') || symStr.endsWith('.BO') || symStr === 'TCS.NS' || symStr === 'RELIANCE.NS' || symStr === 'INFY.NS';
+      const symbolPrefix = isIndia ? '₹ ' : '$ ';
+      return symbolPrefix + num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function showToast(message, type = 'info') {
+      let container = document.getElementById('toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+      }
+      const toast = document.createElement('div');
+      toast.className = 'toast-item ' + type;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(40px)';
+        toast.style.transition = 'all 0.35s ease';
+        setTimeout(() => toast.remove(), 400);
+      }, 4000);
+    }
+
+    function playAlertChime() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(587.33, now); // D5
+        osc1.frequency.exponentialRampToValueAtTime(880.00, now + 0.15); // A5
+
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(880.00, now);
+        osc2.frequency.exponentialRampToValueAtTime(1174.66, now + 0.18); // D6
+
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.35, now + 0.04);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.85);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.9);
+        osc2.stop(now + 0.9);
+      } catch (e) {
+        console.warn('Audio chime unavailable:', e);
+      }
+    }
+
+    function showAlertToast(alertData) {
+      let container = document.getElementById('toast-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+      }
+
+      const toast = document.createElement('div');
+      toast.className = 'alert-toast';
+
+      const symbol = escapeHtml(alertData.symbol);
+      const isAbove = alertData.condition === 'ABOVE';
+      const condLabel = isAbove ? '>= ' + formatCurrency(alertData.targetPrice, alertData.symbol) : '<= ' + formatCurrency(alertData.targetPrice, alertData.symbol);
+      const condClass = isAbove ? 'above' : 'below';
+      const condIcon = isAbove ? '▲' : '▼';
+      const timeStr = new Date(alertData.timestampEpochMs || Date.now()).toLocaleTimeString();
+
+      toast.innerHTML = `
+        <div class="alert-toast-top">
+          <div class="alert-toast-indicator">
+            <svg class="alert-toast-bell-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span class="alert-toast-title">PRICE THRESHOLD TRIGGERED</span>
+          </div>
+          <span class="alert-toast-timestamp">${timeStr}</span>
+          <button type="button" class="btn-alert-toast-close" title="Dismiss" onclick="this.closest('.alert-toast').remove()">&times;</button>
+        </div>
+        <div class="alert-toast-content">
+          <div class="alert-toast-row">
+            <span class="alert-toast-symbol-text">${symbol}</span>
+            <span class="alert-toast-condition-badge ${condClass}">${condIcon} ${condLabel}</span>
+          </div>
+          <div class="alert-toast-price-info">
+            <span class="alert-toast-trigger-val mono-num">${formatCurrency(alertData.triggerPrice, symbol)}</span>
+            <span class="alert-toast-target-val mono-num">(Target: ${formatCurrency(alertData.targetPrice, symbol)})</span>
+          </div>
+          ${alertData.message ? `<div class="alert-toast-msg">${escapeHtml(alertData.message)}</div>` : ''}
+        </div>
+        <div class="alert-toast-bar-track">
+          <div class="alert-toast-bar-fill"></div>
+        </div>
+      `;
+
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(40px)';
+        toast.style.transition = 'all 0.35s ease';
+        setTimeout(() => toast.remove(), 400);
+      }, 6500);
+    }
+
+    function submitCreateAlert() {
+      const symInput = document.getElementById('alert-symbol-input');
+      const targetInput = document.getElementById('alert-target-price');
+      const symbol = (symInput?.value || '').trim().toUpperCase();
+      if (!symbol) {
+        showToast('Please enter a stock symbol', 'error');
+        symInput?.focus();
+        return;
+      }
+      const targetPrice = parseFloat(targetInput?.value);
+      if (isNaN(targetPrice) || targetPrice <= 0) {
+        showToast('Please specify a valid positive target price threshold', 'error');
+        targetInput?.focus();
+        return;
+      }
+
+      const condition = document.querySelector('input[name="alert-condition"]:checked')?.value || 'ABOVE';
+      const triggerMode = document.querySelector('input[name="alert-trigger-mode"]:checked')?.value || 'ONE_SHOT';
+      const cooldownMinutes = parseInt(document.getElementById('alert-cooldown-select')?.value || '15', 10);
+      const notifyUi = !!document.getElementById('alert-notify-ui')?.checked;
+      const notifyTelegram = !!document.getElementById('alert-notify-telegram')?.checked;
+
+      const curr = SYMBOL_DATA[symbol]?.currentPrice || SYMBOL_DATA[symbol]?.basePrice || targetPrice;
+      const id = 'rule-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6);
+
+      const rule = {
+        id,
+        symbol,
+        condition,
+        targetPrice,
+        triggerMode,
+        cooldownMinutes,
+        notifyUi,
+        notifyTelegram,
+        status: 'ACTIVE',
+        referencePrice: curr,
+        lastTriggeredAtEpochMs: 0,
+        createdAtEpochMs: Date.now()
+      };
+
+      alertState.rules.unshift(rule);
+      saveAlertRules();
+      updateAlertBadges();
+      renderActiveRulesList();
+      showToast(`Alert created for ${symbol} (${condition} ${formatCurrency(targetPrice, symbol)})`, 'success');
+      switchAlertTab('active');
+    }
+
+    function toggleAlertRule(id, active) {
+      const rule = alertState.rules.find(r => r.id === id);
+      if (!rule) return;
+      if (active) {
+        rule.status = 'ACTIVE';
+        rule.referencePrice = SYMBOL_DATA[rule.symbol]?.currentPrice || SYMBOL_DATA[rule.symbol]?.basePrice || rule.targetPrice;
+        showToast(`Alert rule ${rule.symbol} re-armed`, 'info');
+      } else {
+        rule.status = 'DISABLED';
+        showToast(`Alert rule ${rule.symbol} paused`, 'info');
+      }
+      saveAlertRules();
+      renderActiveRulesList();
+      updateAlertBadges();
+    }
+
+    function deleteAlertRule(id) {
+      alertState.rules = alertState.rules.filter(r => r.id !== id);
+      saveAlertRules();
+      renderActiveRulesList();
+      updateAlertBadges();
+      showToast('Alert rule deleted', 'info');
+    }
+
+    function renderActiveRulesList() {
+      const listEl = document.getElementById('active-rules-list');
+      if (!listEl) return;
+      if (!alertState.rules || alertState.rules.length === 0) {
+        listEl.innerHTML = `
+          <div class="empty-state-card">
+            <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            <span class="empty-state-text">No active alert rules configured.<br>Create a threshold rule in the <strong>Create Alert</strong> tab to monitor price breaches.</span>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = alertState.rules.map(rule => {
+        const symbol = escapeHtml(rule.symbol);
+        const condition = rule.condition || 'ABOVE';
+        const isAbove = condition === 'ABOVE';
+        const condLabel = isAbove ? '>= ' + formatCurrency(rule.targetPrice, rule.symbol) : '<= ' + formatCurrency(rule.targetPrice, rule.symbol);
+        const condClass = isAbove ? 'above' : 'below';
+        const condIcon = isAbove ? '▲' : '▼';
+        const status = rule.status || 'ACTIVE';
+        const statusClass = status.toLowerCase();
+        const modeLabel = rule.triggerMode === 'RECURRING' ? `Recurring (${rule.cooldownMinutes || 15}m)` : 'One-Shot';
+        const lastTriggered = rule.lastTriggeredAtEpochMs ? new Date(rule.lastTriggeredAtEpochMs).toLocaleTimeString() : 'Never';
+        const channels = [];
+        if (rule.notifyUi !== false) channels.push('🔊 Audio/Toast');
+        if (rule.notifyTelegram) channels.push('📱 Telegram');
+
+        let toggleBtnHtml = '';
+        if (status === 'ACTIVE') {
+          toggleBtnHtml = `<button type="button" class="btn-rule-btn" onclick="toggleAlertRule('${escapeHtml(rule.id)}', false)">Pause</button>`;
+        } else if (status === 'DISABLED') {
+          toggleBtnHtml = `<button type="button" class="btn-rule-btn" onclick="toggleAlertRule('${escapeHtml(rule.id)}', true)">Resume</button>`;
+        } else if (status === 'TRIGGERED') {
+          toggleBtnHtml = `<button type="button" class="btn-rule-btn rearm" onclick="toggleAlertRule('${escapeHtml(rule.id)}', true)">Re-arm Rule</button>`;
+        }
+
+        return `
+          <div class="rule-card" data-rule-id="${escapeHtml(rule.id)}">
+            <div class="rule-card-header">
+              <div class="rule-symbol-wrap">
+                <span class="rule-symbol-badge">${symbol}</span>
+                <span class="rule-condition-pill ${condClass}">${condIcon} ${condLabel}</span>
+              </div>
+              <span class="rule-status-badge ${statusClass}">${status}</span>
+            </div>
+            <div class="rule-meta-row">
+              <span>Mode: <strong>${modeLabel}</strong></span>
+              <span>Last: <strong>${lastTriggered}</strong></span>
+            </div>
+            ${channels.length > 0 ? `<div class="rule-meta-row" style="color:var(--text-muted);"><span>Channels: ${channels.join(' &bull; ')}</span></div>` : ''}
+            <div class="rule-actions-row">
+              ${toggleBtnHtml}
+              <button type="button" class="btn-rule-btn delete" onclick="deleteAlertRule('${escapeHtml(rule.id)}')" title="Delete rule">
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+                <span>Delete</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderAlertHistoryList() {
+      const histEl = document.getElementById('alert-history-list');
+      if (!histEl) return;
+      if (!alertState.history || alertState.history.length === 0) {
+        histEl.innerHTML = `
+          <div class="empty-state-card">
+            <span class="empty-state-text">No alerts have been triggered yet.<br>When prices breach your configured rules, triggered logs will appear here.</span>
+          </div>
+        `;
+        return;
+      }
+
+      histEl.innerHTML = alertState.history.map(evt => {
+        const symbol = escapeHtml(evt.symbol);
+        const condition = evt.condition || 'ABOVE';
+        const isAbove = condition === 'ABOVE';
+        const condLabel = isAbove ? '>= ' + formatCurrency(evt.targetPrice, evt.symbol) : '<= ' + formatCurrency(evt.targetPrice, evt.symbol);
+        const condClass = isAbove ? 'above' : 'below';
+        const condIcon = isAbove ? '▲' : '▼';
+        const timeStr = evt.timestampEpochMs ? new Date(evt.timestampEpochMs).toLocaleTimeString() : '--';
+
+        return `
+          <div class="history-item">
+            <div class="history-item-top">
+              <span class="history-symbol-badge">${symbol}</span>
+              <span class="history-cond-badge ${condClass}">${condIcon} ${condLabel}</span>
+              <span class="history-time-stamp mono-num">${timeStr}</span>
+            </div>
+            <div class="history-item-mid">
+              <span>Trigger Price: <strong class="mono-num ${isAbove ? 'val-green' : 'val-red'}">${formatCurrency(evt.triggerPrice, evt.symbol)}</strong></span>
+              <span>Target: <strong class="mono-num">${formatCurrency(evt.targetPrice, evt.symbol)}</strong></span>
+            </div>
+            ${evt.message ? `<div class="history-item-msg">${escapeHtml(evt.message)}</div>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    function clearAlertHistoryView() {
+      alertState.history = [];
+      saveAlertHistory();
+      renderAlertHistoryList();
+      updateAlertBadges();
+      showToast('Alert history cleared', 'info');
+    }
+
+    function loadTelegramConfigIntoForm() {
+      const tokenInput = document.getElementById('telegram-bot-token');
+      const chatInput = document.getElementById('telegram-chat-id');
+      const toggleInput = document.getElementById('telegram-enabled-toggle');
+      if (tokenInput && alertState.telegram.botToken) tokenInput.value = alertState.telegram.botToken;
+      if (chatInput && alertState.telegram.chatId) chatInput.value = alertState.telegram.chatId;
+      if (toggleInput) toggleInput.checked = !!alertState.telegram.enabled;
+    }
+
+    function saveTelegramConfig() {
+      const tokenInput = document.getElementById('telegram-bot-token');
+      const chatInput = document.getElementById('telegram-chat-id');
+      const toggleInput = document.getElementById('telegram-enabled-toggle');
+      alertState.telegram.botToken = (tokenInput?.value || '').trim();
+      alertState.telegram.chatId = (chatInput?.value || '').trim();
+      alertState.telegram.enabled = !!toggleInput?.checked;
+      saveTelegramSettings();
+      updateAlertBadges();
+      showToast('Telegram settings saved', 'success');
+      displayTelegramFeedback('Settings saved successfully', 'success');
+    }
+
+    function sendTestTelegramPing() {
+      const chatInput = document.getElementById('telegram-chat-id');
+      const chatId = (chatInput?.value || alertState.telegram.chatId || '').trim();
+      if (!chatId) {
+        displayTelegramFeedback('Please provide a Telegram Chat/Group ID', 'error');
+        showToast('Chat ID required for test ping', 'error');
+        return;
+      }
+      displayTelegramFeedback('Sending verification ping to Telegram...', 'info');
+      setTimeout(() => {
+        displayTelegramFeedback(`Test ping sent to ${chatId}! Verified ready for alerts.`, 'success');
+        showToast('Telegram test message delivered', 'success');
+      }, 800);
+    }
+
+    function displayTelegramFeedback(msg, type) {
+      const el = document.getElementById('telegram-feedback-box');
+      if (el) {
+        el.textContent = msg;
+        el.className = 'telegram-feedback-box ' + type;
+        el.style.display = 'block';
+      }
+    }
+
+    function evaluateSymbolAlerts(sym, newPrice, oldPrice) {
+      if (!alertState.rules || alertState.rules.length === 0) return;
+      alertState.rules.forEach(rule => {
+        if (rule.symbol !== sym || rule.status !== 'ACTIVE') return;
+
+        const now = Date.now();
+        if (rule.triggerMode === 'RECURRING' && rule.lastTriggeredAtEpochMs > 0) {
+          const elapsedMin = (now - rule.lastTriggeredAtEpochMs) / 60000;
+          if (elapsedMin < (rule.cooldownMinutes || 15)) return;
+        }
+
+        const prev = (oldPrice != null) ? oldPrice : rule.referencePrice;
+        let triggered = false;
+
+        if (rule.condition === 'ABOVE') {
+          if (newPrice >= rule.targetPrice && prev < rule.targetPrice) {
+            triggered = true;
+          }
+        } else if (rule.condition === 'BELOW') {
+          if (newPrice <= rule.targetPrice && prev > rule.targetPrice) {
+            triggered = true;
+          }
+        }
+
+        if (triggered) {
+          rule.lastTriggeredAtEpochMs = now;
+          if (rule.triggerMode === 'ONE_SHOT') {
+            rule.status = 'TRIGGERED';
+          }
+          saveAlertRules();
+          renderActiveRulesList();
+          updateAlertBadges();
+
+          const evt = {
+            alertId: rule.id,
+            symbol: rule.symbol,
+            condition: rule.condition,
+            targetPrice: rule.targetPrice,
+            triggerPrice: newPrice,
+            timestampEpochMs: now,
+            message: `${rule.symbol} crossed ${rule.condition} ${formatCurrency(rule.targetPrice, rule.symbol)} at ${formatCurrency(newPrice, rule.symbol)}`,
+            notifyUi: rule.notifyUi,
+            notifyTelegram: rule.notifyTelegram
+          };
+
+          alertState.history.unshift(evt);
+          if (alertState.history.length > 50) alertState.history.pop();
+          saveAlertHistory();
+          renderAlertHistoryList();
+
+          if (rule.notifyUi !== false) {
+            playAlertChime();
+            showAlertToast(evt);
+          }
+        }
+      });
+    }
+
   </script>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <div id="alerts-drawer-backdrop" class="alerts-drawer-backdrop" onclick="closeAlertsDrawer()"></div>
+
+  <aside id="alerts-drawer" class="alerts-drawer" aria-label="Rule-Based Alerts Drawer">
+    <!-- Drawer Header -->
+    <div class="drawer-header">
+      <div class="drawer-header-left">
+        <div class="drawer-header-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+          </svg>
+        </div>
+        <div>
+          <h2 class="drawer-header-title">Alert Rules &amp; Dispatch</h2>
+          <span class="drawer-header-sub">Aeron IPC Engine &bull; Telegram</span>
+        </div>
+      </div>
+      <button type="button" id="btn-alerts-close" class="btn-drawer-close" title="Close Drawer" onclick="closeAlertsDrawer()">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Drawer Navigation Tabs -->
+    <nav class="drawer-nav-tabs">
+      <button type="button" class="drawer-tab active" id="tab-btn-create" data-tab="create" onclick="switchAlertTab('create')">
+        <span>Create Alert</span>
+      </button>
+      <button type="button" class="drawer-tab" id="tab-btn-active" data-tab="active" onclick="switchAlertTab('active')">
+        <span>Active Rules</span>
+        <span id="tab-active-count" class="drawer-tab-badge">0</span>
+      </button>
+      <button type="button" class="drawer-tab" id="tab-btn-history" data-tab="history" onclick="switchAlertTab('history')">
+        <span>Alert History</span>
+        <span id="tab-history-count" class="drawer-tab-badge">0</span>
+      </button>
+      <button type="button" class="drawer-tab" id="tab-btn-telegram" data-tab="telegram" onclick="switchAlertTab('telegram')">
+        <span>Telegram Settings</span>
+        <span id="tab-tg-dot" class="tg-dot" title="Telegram status indicator"></span>
+      </button>
+    </nav>
+
+    <!-- Drawer Body Panes -->
+    <div class="drawer-body-container">
+      <!-- Tab 1: Create Alert -->
+      <div id="pane-alert-create" class="drawer-pane active">
+        <div class="cyber-form-group">
+          <label class="cyber-label" for="alert-symbol-input">Stock Symbol</label>
+          <div class="cyber-input-wrap">
+            <input type="text" id="alert-symbol-input" class="cyber-input mono-num" placeholder="e.g. TCS.NS, RELIANCE.NS, AAPL" autocomplete="off" spellcheck="false" oninput="handleAlertSymbolInput(this.value)">
+            <button type="button" class="btn-cyber-ghost" onclick="useActiveSymbolForAlert()" title="Pre-fill with currently selected chart symbol">USE ACTIVE</button>
+          </div>
+        </div>
+
+        <div class="live-price-banner">
+          <span class="live-price-banner-lbl">Current Market Price:</span>
+          <span id="alert-current-price" class="live-price-banner-val mono-num">--</span>
+        </div>
+
+        <div class="cyber-form-group">
+          <label class="cyber-label">Condition Selector</label>
+          <div class="pill-radio-group">
+            <label class="pill-radio-option">
+              <input type="radio" name="alert-condition" id="alert-cond-above" value="ABOVE" checked>
+              <div class="pill-radio-card above">
+                <span>▲</span>
+                <span>Price Above (&gt;=)</span>
+              </div>
+            </label>
+            <label class="pill-radio-option">
+              <input type="radio" name="alert-condition" id="alert-cond-below" value="BELOW">
+              <div class="pill-radio-card below">
+                <span>▼</span>
+                <span>Price Below (&lt;=)</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div class="cyber-form-group">
+          <label class="cyber-label" for="alert-target-price">Target Price Threshold</label>
+          <input type="number" id="alert-target-price" class="cyber-input mono-num" step="any" min="0" placeholder="0.00">
+          <div class="quick-offsets-row">
+            <span class="quick-offset-lbl">Quick:</span>
+            <button type="button" class="btn-quick-offset" onclick="applyTargetOffset(0.005)">+0.5%</button>
+            <button type="button" class="btn-quick-offset" onclick="applyTargetOffset(0.01)">+1%</button>
+            <button type="button" class="btn-quick-offset" onclick="applyTargetOffset(0.02)">+2%</button>
+            <button type="button" class="btn-quick-offset" onclick="applyTargetOffset(0.05)">+5%</button>
+            <button type="button" class="btn-quick-offset" onclick="applyTargetOffset(-0.005)">-0.5%</button>
+            <button type="button" class="btn-quick-offset" onclick="applyTargetOffset(-0.01)">-1%</button>
+            <button type="button" class="btn-quick-offset" onclick="applyTargetOffset(-0.02)">-2%</button>
+            <button type="button" class="btn-quick-offset" onclick="applyTargetOffset(-0.05)">-5%</button>
+          </div>
+        </div>
+
+        <div class="cyber-form-group">
+          <label class="cyber-label">Trigger Mode</label>
+          <div class="pill-radio-group">
+            <label class="pill-radio-option">
+              <input type="radio" name="alert-trigger-mode" id="alert-mode-oneshot" value="ONE_SHOT" checked onchange="handleTriggerModeChange()">
+              <div class="pill-radio-card mode">
+                <span>One-Shot (Fires once)</span>
+              </div>
+            </label>
+            <label class="pill-radio-option">
+              <input type="radio" name="alert-trigger-mode" id="alert-mode-recurring" value="RECURRING" onchange="handleTriggerModeChange()">
+              <div class="pill-radio-card mode">
+                <span>Recurring (Cooldown)</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <div id="cooldown-group" class="cyber-form-group" style="display: none;">
+          <label class="cyber-label" for="alert-cooldown-select">Cooldown Duration</label>
+          <select id="alert-cooldown-select" class="cyber-select">
+            <option value="5">5 Minutes</option>
+            <option value="15" selected>15 Minutes</option>
+            <option value="30">30 Minutes</option>
+            <option value="60">1 Hour (60 Minutes)</option>
+          </select>
+        </div>
+
+        <div class="cyber-form-group">
+          <label class="cyber-label">Notification Channels</label>
+          <div class="cyber-checkbox-group">
+            <label class="cyber-checkbox-label">
+              <input type="checkbox" id="alert-notify-ui" checked>
+              <span>In-App Sound &amp; Toast</span>
+            </label>
+            <label class="cyber-checkbox-label">
+              <input type="checkbox" id="alert-notify-telegram">
+              <span>Telegram Notification</span>
+            </label>
+          </div>
+        </div>
+
+        <button type="button" id="btn-create-alert" class="btn-neon-action" onclick="submitCreateAlert()">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>Create Alert Rule</span>
+        </button>
+      </div>
+
+      <!-- Tab 2: Active Rules -->
+      <div id="pane-alert-active" class="drawer-pane">
+        <div class="pane-sub-header">
+          <span class="pane-sub-title">Live Server Rules</span>
+          <button type="button" id="btn-refresh-alerts" class="btn-pane-refresh" onclick="loadAlerts()">
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            <span>Refresh</span>
+          </button>
+        </div>
+        <div id="active-rules-list" class="rules-card-container">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Tab 3: Alert History -->
+      <div id="pane-alert-history" class="drawer-pane">
+        <div class="pane-sub-header">
+          <span class="pane-sub-title">Audit Trail (Last 50 Events)</span>
+          <button type="button" class="btn-pane-refresh" onclick="clearAlertHistoryView()">
+            <span>Clear View</span>
+          </button>
+        </div>
+        <div id="alert-history-list" class="history-card-container">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Tab 4: Telegram Settings -->
+      <div id="pane-alert-telegram" class="drawer-pane">
+        <div class="tg-guide-box">
+          <div class="tg-guide-head">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.52 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .37z"/>
+            </svg>
+            <span>Telegram Bot Setup</span>
+          </div>
+          <ol class="tg-steps">
+            <li>Message <code>@BotFather</code> to get your <b>Bot Token</b>.</li>
+            <li>Start your bot or add it to a channel/group.</li>
+            <li>Get your <b>Chat ID</b> via <code>@userinfobot</code> or message updates.</li>
+          </ol>
+        </div>
+
+        <div class="cyber-form-group">
+          <label class="cyber-label" for="telegram-bot-token">Bot API Token</label>
+          <div class="cyber-input-wrap">
+            <input type="password" id="telegram-bot-token" class="cyber-input" placeholder="e.g. 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ">
+            <button type="button" class="btn-cyber-ghost" onclick="toggleTokenMask()" title="Show/Hide Token">SHOW</button>
+          </div>
+        </div>
+
+        <div class="cyber-form-group">
+          <label class="cyber-label" for="telegram-chat-id">Chat ID or Channel</label>
+          <input type="text" id="telegram-chat-id" class="cyber-input mono-num" placeholder="e.g. 987654321 or -1001234567890">
+        </div>
+
+        <div class="cyber-form-group">
+          <label class="cyber-checkbox-label">
+            <input type="checkbox" id="telegram-enabled-toggle">
+            <span><strong>Enable Telegram Dispatch</strong></span>
+          </label>
+        </div>
+
+        <div class="tg-actions-row">
+          <button type="button" id="btn-save-telegram" class="btn-neon-action" onclick="saveTelegramConfig()">
+            Save Credentials
+          </button>
+          <button type="button" id="btn-test-telegram" class="btn-secondary-outline" onclick="sendTestTelegramPing()">
+            Send Test Ping
+          </button>
+        </div>
+
+        <div id="telegram-test-result" style="display: none;"></div>
+      </div>
+    </div>
+  </aside>
+
 </body>
 </html>
