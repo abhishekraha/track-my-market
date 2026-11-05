@@ -44,12 +44,12 @@ flowchart LR
 
 ---
 
-### Phase 2: Streaming Web Desk & Containerization (Completed)
+### Phase 2: Streaming Web Desk & Raw Containerization (Completed)
 - [x] **Aeron-to-SSE Bridge**: Implemented `MarketStreamBroadcaster` that subscribes to the Aeron bus and multicasts JSON ticks over Server-Sent Events.
-- [x] **Virtual Thread HTTP Server**: Embedded Java 25 `HttpServer` with `Executors.newVirtualThreadPerTaskExecutor()` handling concurrent SSE subscribers.
-- [x] **Dynamic Watchlist REST API**: Endpoints (`GET /api/symbols`, `POST /api/symbols`, `DELETE /api/symbols/{sym}`, `GET /api/search`) for runtime ticker management.
-- [x] **TradingView Lightweight Charts v4**: Real-time candlestick and area charting with smooth updates and dynamic resizing.
-- [x] **Docker & Nginx Containerization**: Multi-stage Dockerfile, `docker-compose.yml` with 512MB shared memory allocation, and Nginx reverse proxy configured with `proxy_buffering off`.
+- [x] **Virtual Thread HTTP Server**: Embedded Java 25 `HttpServer` with `Executors.newVirtualThreadPerTaskExecutor()` handling concurrent SSE subscribers directly on port 8080.
+- [x] **Dynamic Watchlist REST API**: Endpoints (`GET /api/symbols`, `POST /api/symbols`, `DELETE /api/symbols/{sym}`, `GET /api/search`, `GET /api/fx`) for runtime ticker and currency management.
+- [x] **TradingView Lightweight Charts v4**: Real-time candlestick and area charting with smooth updates, dynamic resizing, custom timezone tick formatters, and FX currency conversion.
+- [x] **Raw Standalone Docker Containerization**: Self-contained multi-stage Dockerfile and lightweight `docker-compose.yml` with 512MB shared memory allocation (`shm_size: 512m`) for Aeron IPC ring buffers, running raw on port 8080 without external proxy dependencies.
 
 ---
 
@@ -164,3 +164,20 @@ flowchart LR
 - [ ] **Strategy Backtester**:
   - Replay historical Aeron archive recordings (`AeronArchive`).
   - Deterministic tick-by-tick simulation of order execution with customizable slippage models.
+
+---
+
+### Architectural Design Note: Multi-Container Ingress Gateway (Planned Future Phase)
+*Noted for future implementation when transitioning to a distributed microservice mesh.*
+
+When scaling to multiple independent service containers, a dedicated Nginx ingress container will be introduced as the single entrypoint gateway:
+```mermaid
+flowchart TD
+    Client["Browser / External Clients"] -->|Port 80 / 443| NGINX["Nginx Ingress Gateway Container<br/>(Reverse Proxy, SSL, Rate-Limiting)"]
+    NGINX -->|/api/market, /api/stream| C1["track-my-market:8080<br/>(Aeron IPC & Market Engine)"]
+    NGINX -->|/api/alerts| C2["alert-service:8081<br/>(Edge Triggered Telegram Bot)"]
+    NGINX -->|/metrics| C3["metrics-exporter:9090<br/>(Prometheus / Grafana)"]
+    NGINX -->|/api/quant| C4["quant-worker:8082<br/>(Options Greeks / Backtester)"]
+```
+- **Current State:** `track-my-market` runs standalone and raw on port `8080` without an extra Nginx container wrapper.
+- **Future State:** An isolated Nginx container will handle multi-service routing, SSL termination, path rewriting, and load balancing across all backend microservice containers once the ecosystem expands.
