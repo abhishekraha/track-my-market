@@ -6,3 +6,4 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 docs/superpowers/
 superpowers/
+data/
