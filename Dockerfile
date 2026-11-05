@@ -20,8 +20,8 @@ ENV MARKET_SERVER_BIND_HOST="0.0.0.0"
 ENV MARKET_SERVER_CONTEXT_PATH="/"
 ENV YAHOO_FINANCE_BASE_URL="https://query1.finance.yahoo.com"
 
-# Ensure execution permission for the startup script
-RUN chmod +x bin/track-my-market
+# Ensure execution permission for the startup script and install curl for healthchecks
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/* && chmod +x bin/track-my-market
 
 ENTRYPOINT ["bin/track-my-market"]
 CMD ["--enable-ui"]
