@@ -77,4 +77,8 @@ tasks.test {
 
 application {
     mainClass.set("market.MarketApp")
+    applicationDefaultJvmArgs = listOf(
+        "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+        "--enable-native-access=ALL-UNNAMED"
+    )
 }
