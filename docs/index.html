@@ -3,13 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Track My Market &mdash; Ultra-Low Latency Market Data Engine</title>
-  <meta name="description" content="Ultra-Low Latency Market Data Engine powered by Embedded Real Logic Aeron IPC and Zero-Allocation SBE v1. Free public ingestion with no KYC or Demat required.">
+  <title>Track My Market &mdash; Ultra-Low Latency Financial Engine</title>
+  <meta name="description" content="Ultra-Low Latency Financial Market Data Engine powered by Embedded Real Logic Aeron IPC, Zero-Allocation SBE v1, and Java 25 Virtual Threads. Free public market ingestion with zero KYC or Demat required.">
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- TradingView Lightweight Charts Library (Same as production app) -->
+  <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
 
   <style>
     :root {
@@ -28,12 +31,14 @@
       --accent-amber: #f59e0b;
       --accent-amber-glow: rgba(245, 158, 11, 0.2);
       --accent-crimson: #f43f5e;
-      --accent-purple: #818cf8;
+      --accent-blue: #0284c7;
+      --green-up: #10b981;
+      --red-down: #f43f5e;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
       --text-dim: #64748b;
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      --font-mono: 'JetBrains Mono', 'Roboto Mono', monospace;
+      --font-mono: 'JetBrains Mono', 'Roboto Mono', Consolas, monospace;
     }
 
     * {
@@ -66,73 +71,20 @@
       font-variant-numeric: tabular-nums;
     }
 
-    /* Top Ticker Marquee */
-    .ticker-bar {
-      background: var(--bg-darkest);
-      border-bottom: 1px solid var(--border-subtle);
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
-      padding: 0.4rem 0;
-      overflow: hidden;
-      white-space: nowrap;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(12px);
-    }
-
-    .ticker-track {
-      display: inline-flex;
-      gap: 2.5rem;
-      animation: tickerLoop 36s linear infinite;
-    }
-
-    .ticker-track:hover {
-      animation-play-state: paused;
-    }
-
-    @keyframes tickerLoop {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-
-    .ticker-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .ticker-symbol {
-      font-weight: 700;
-      color: #ffffff;
-    }
-
-    .ticker-price {
-      color: var(--text-muted);
-    }
-
-    .ticker-up {
-      color: var(--accent-emerald);
-    }
-
-    .ticker-down {
-      color: var(--accent-crimson);
-    }
-
     /* Main Navigation */
     header.site-header {
       border-bottom: 1px solid var(--border-subtle);
-      background: rgba(15, 23, 42, 0.85);
+      background: rgba(15, 23, 42, 0.88);
       backdrop-filter: blur(16px);
       position: sticky;
-      top: 33px;
-      z-index: 90;
+      top: 0;
+      z-index: 100;
     }
 
     .nav-container {
-      max-width: 1300px;
+      max-width: 1360px;
       margin: 0 auto;
-      padding: 0.9rem 1.5rem;
+      padding: 0.85rem 1.5rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -187,14 +139,14 @@
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 1.5rem;
+      gap: 1.4rem;
       list-style: none;
     }
 
     .nav-links a {
       color: var(--text-muted);
       text-decoration: none;
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       font-weight: 500;
       transition: color 0.2s;
     }
@@ -213,14 +165,14 @@
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
+      padding: 0.45rem 0.95rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
       background: var(--bg-card);
       border: 1px solid var(--border-medium);
       color: var(--text-main);
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 600;
-      text-decoration: none;
       transition: all 0.2s;
     }
 
@@ -232,63 +184,66 @@
 
     /* Hero Section */
     .hero-section {
-      padding: 5rem 1.5rem 3.5rem;
-      text-align: center;
-      max-width: 1100px;
+      max-width: 1200px;
       margin: 0 auto;
-      position: relative;
+      padding: 4.5rem 1.5rem 3rem 1.5rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .hero-badge-wrap {
       display: inline-flex;
       align-items: center;
-      gap: 0.6rem;
-      background: rgba(56, 189, 248, 0.08);
-      border: 1px solid rgba(56, 189, 248, 0.3);
+      gap: 0.5rem;
       padding: 0.35rem 0.9rem;
       border-radius: 9999px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent-cyan);
       font-size: 0.78rem;
       font-family: var(--font-mono);
-      color: var(--accent-cyan);
-      margin-bottom: 1.5rem;
-      box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+      font-weight: 600;
+      margin-bottom: 1.75rem;
+      letter-spacing: 0.02em;
     }
 
     .pulsing-dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: var(--accent-emerald);
-      box-shadow: 0 0 10px var(--accent-emerald);
-      animation: pulseAnim 2s infinite;
+      background-color: var(--accent-emerald);
+      box-shadow: 0 0 8px var(--accent-emerald);
+      animation: pulse 2s infinite;
     }
 
-    @keyframes pulseAnim {
-      0% { opacity: 0.4; transform: scale(0.9); }
-      50% { opacity: 1; transform: scale(1.15); }
-      100% { opacity: 0.4; transform: scale(0.9); }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
     }
 
     .hero-title {
-      font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+      font-size: clamp(2.4rem, 5.5vw, 4rem);
       font-weight: 900;
-      line-height: 1.1;
+      line-height: 1.15;
       letter-spacing: -0.035em;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1.4rem;
+      max-width: 950px;
     }
 
     .hero-title .gradient-text {
-      background: linear-gradient(135deg, #38bdf8 0%, #10b981 50%, #818cf8 100%);
+      background: linear-gradient(135deg, #38bdf8 10%, #60a5fa 50%, #a855f7 90%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
     .hero-subtitle {
-      font-size: clamp(1.05rem, 2vw, 1.3rem);
+      font-size: 1.1rem;
       color: var(--text-muted);
       max-width: 780px;
-      margin: 0 auto 2.25rem;
-      font-weight: 400;
+      margin-bottom: 2.2rem;
+      line-height: 1.7;
     }
 
     .hero-cta-group {
@@ -301,129 +256,100 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #0284c7, #2563eb);
-      color: #ffffff;
-      padding: 0.8rem 1.75rem;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 0.95rem;
-      text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
+      padding: 0.75rem 1.6rem;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.92rem;
+      text-decoration: none;
+      box-shadow: 0 0 20px rgba(2, 132, 199, 0.45);
       transition: all 0.2s;
-      border: none;
-      cursor: pointer;
-      box-shadow: 0 4px 18px rgba(37, 99, 235, 0.35);
     }
 
     .btn-primary:hover {
-      background: linear-gradient(135deg, #0369a1, #1d4ed8);
-      box-shadow: 0 6px 24px rgba(37, 99, 235, 0.5);
-      transform: translateY(-1px);
+      transform: translateY(-2px);
+      box-shadow: 0 0 25px rgba(2, 132, 199, 0.65);
     }
 
     .btn-secondary {
-      background: rgba(30, 41, 59, 0.7);
-      border: 1px solid var(--border-medium);
-      color: var(--text-main);
-      padding: 0.8rem 1.6rem;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.95rem;
-      text-decoration: none;
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--text-main);
+      font-weight: 600;
+      font-size: 0.92rem;
+      text-decoration: none;
       transition: all 0.2s;
     }
 
     .btn-secondary:hover {
-      background: var(--bg-card);
+      background: var(--bg-card-hover);
       border-color: var(--accent-cyan);
-      color: #ffffff;
     }
 
-    /* Hero Metric Cards */
+    /* Hero Stat Badges */
     .hero-stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
       gap: 1.25rem;
+      width: 100%;
       max-width: 1100px;
-      margin: 0 auto;
-      text-align: left;
     }
 
     .stat-card {
-      background: rgba(15, 23, 42, 0.7);
+      background: var(--bg-panel);
       border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      padding: 1.4rem;
-      backdrop-filter: blur(10px);
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.2s, border-color 0.2s;
+      border-radius: 10px;
+      padding: 1.4rem 1.2rem;
+      text-align: left;
+      transition: border-color 0.2s;
     }
 
     .stat-card:hover {
-      transform: translateY(-2px);
-      border-color: var(--border-bright);
+      border-color: var(--border-medium);
     }
-
-    .stat-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--card-accent, var(--accent-cyan)), transparent);
-    }
-
-    .stat-card.cyan { --card-accent: var(--accent-cyan); }
-    .stat-card.emerald { --card-accent: var(--accent-emerald); }
-    .stat-card.amber { --card-accent: var(--accent-amber); }
-    .stat-card.purple { --card-accent: var(--accent-purple); }
 
     .stat-val {
-      font-size: 2rem;
+      font-size: 1.7rem;
       font-weight: 800;
-      font-family: var(--font-mono);
-      line-height: 1.1;
-      margin-bottom: 0.35rem;
-      display: flex;
-      align-items: baseline;
-      gap: 0.25rem;
+      margin-bottom: 0.25rem;
     }
 
     .stat-val.cyan { color: var(--accent-cyan); }
     .stat-val.emerald { color: var(--accent-emerald); }
     .stat-val.amber { color: var(--accent-amber); }
-    .stat-val.purple { color: var(--accent-purple); }
+    .stat-val.purple { color: #a855f7; }
 
     .stat-label {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.2rem;
     }
 
     .stat-desc {
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       color: var(--text-dim);
-      margin-top: 0.25rem;
     }
 
-    /* Section Styles */
-    section.content-section {
-      max-width: 1250px;
-      margin: 0 auto;
-      padding: 4.5rem 1.5rem;
+    /* Section Containers */
+    .content-section {
+      max-width: 1360px;
+      margin: 0 auto 5.5rem auto;
+      padding: 0 1.5rem;
     }
 
     .section-header {
-      margin-bottom: 2.5rem;
+      margin-bottom: 2rem;
+      text-align: center;
     }
 
     .section-tag {
@@ -431,38 +357,41 @@
       font-size: 0.75rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.08em;
       color: var(--accent-cyan);
-      display: inline-block;
+      display: block;
       margin-bottom: 0.4rem;
     }
 
     .section-title {
-      font-size: 2rem;
+      font-size: 2.1rem;
       font-weight: 800;
       letter-spacing: -0.025em;
       margin-bottom: 0.6rem;
     }
 
     .section-subtitle {
-      font-size: 0.95rem;
       color: var(--text-muted);
-      max-width: 650px;
+      font-size: 0.95rem;
+      max-width: 680px;
+      margin: 0 auto;
     }
 
-    /* Terminal Simulator Section */
-    .terminal-container {
-      background: var(--bg-darkest);
+    /* =========================================================
+       ACTUAL TRADING DESK PREVIEW (HIGH-FIDELITY REAL APP UI)
+       ========================================================= */
+    .trading-desk-preview {
+      background: var(--bg-panel);
       border: 1px solid var(--border-medium);
       border-radius: 12px;
       overflow: hidden;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 30px rgba(56, 189, 248, 0.05);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(56, 189, 248, 0.06);
     }
 
-    .terminal-header {
-      background: #0d131f;
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 0.75rem 1.25rem;
+    .desk-header {
+      padding: 0.85rem 1.4rem;
+      background: rgba(15, 23, 42, 0.95);
+      border-bottom: 1px solid var(--border-medium);
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -470,657 +399,594 @@
       gap: 1rem;
     }
 
-    .terminal-dots {
+    .desk-brand-left {
       display: flex;
       align-items: center;
+      gap: 1rem;
+    }
+
+    .status-badge-live {
+      display: inline-flex;
+      align-items: center;
       gap: 0.45rem;
-    }
-
-    .terminal-dot {
-      width: 11px;
-      height: 11px;
-      border-radius: 50%;
-    }
-
-    .terminal-dot.red { background: #ef4444; }
-    .terminal-dot.yellow { background: #f59e0b; }
-    .terminal-dot.green { background: #10b981; }
-
-    .terminal-title {
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: var(--accent-emerald);
+      font-size: 0.7rem;
       font-family: var(--font-mono);
-      font-size: 0.8rem;
-      color: var(--text-dim);
+      font-weight: 700;
     }
 
-    .terminal-controls {
+    .desk-hud-chips {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .hud-chip {
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.1rem;
+    }
+
+    .hud-chip-label {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .hud-chip-val {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* Chart Hero Area */
+    .chart-hero-row {
+      padding: 1.1rem 1.4rem;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .active-symbol-info {
+      display: flex;
+      align-items: center;
+      gap: 1.4rem;
+      flex-wrap: wrap;
+    }
+
+    .symbol-title-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .symbol-title-row {
       display: flex;
       align-items: center;
       gap: 0.75rem;
     }
 
-    .term-btn {
-      background: var(--bg-card);
-      border: 1px solid var(--border-medium);
-      color: var(--text-muted);
+    .active-symbol-name {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #ffffff;
       font-family: var(--font-mono);
-      font-size: 0.75rem;
-      padding: 0.35rem 0.75rem;
-      border-radius: 4px;
-      cursor: pointer;
+      letter-spacing: -0.02em;
+    }
+
+    .market-status-pill {
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
-      transition: all 0.15s;
-    }
-
-    .term-btn:hover {
-      background: var(--bg-card-hover);
-      color: #ffffff;
-      border-color: var(--accent-cyan);
-    }
-
-    .term-btn.active {
-      background: rgba(56, 189, 248, 0.15);
-      border-color: var(--accent-cyan);
-      color: var(--accent-cyan);
-    }
-
-    .terminal-body {
-      display: grid;
-      grid-template-columns: 1fr 340px;
-      min-height: 440px;
-    }
-
-    @media (max-width: 992px) {
-      .terminal-body {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .terminal-feed-pane {
-      padding: 1rem;
-      border-right: 1px solid var(--border-subtle);
-      overflow-y: auto;
-      max-height: 480px;
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-    }
-
-    .feed-table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-    }
-
-    .feed-table th {
-      padding: 0.5rem 0.75rem;
-      color: var(--text-dim);
+      gap: 0.4rem;
+      padding: 0.2rem 0.65rem;
+      border-radius: 9999px;
       font-size: 0.7rem;
-      text-transform: uppercase;
-      border-bottom: 1px solid var(--border-subtle);
-      position: sticky;
-      top: 0;
-      background: var(--bg-darkest);
-    }
-
-    .feed-table td {
-      padding: 0.55rem 0.75rem;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-      white-space: nowrap;
-    }
-
-    .feed-row-flash-up {
-      animation: flashGreen 0.7s ease-out;
-    }
-
-    .feed-row-flash-down {
-      animation: flashRed 0.7s ease-out;
-    }
-
-    @keyframes flashGreen {
-      0% { background-color: rgba(16, 185, 129, 0.35); }
-      100% { background-color: transparent; }
-    }
-
-    @keyframes flashRed {
-      0% { background-color: rgba(244, 63, 94, 0.35); }
-      100% { background-color: transparent; }
-    }
-
-    .terminal-telemetry-pane {
-      background: #090d16;
-      padding: 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-    }
-
-    .telemetry-group {
-      background: var(--bg-panel);
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      padding: 1rem;
-    }
-
-    .telemetry-header {
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      font-family: var(--font-mono);
-      letter-spacing: 0.05em;
-      color: var(--text-dim);
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .telemetry-val-lg {
-      font-size: 1.6rem;
-      font-family: var(--font-mono);
       font-weight: 700;
-      line-height: 1;
-      margin-bottom: 0.35rem;
+      font-family: var(--font-mono);
+      background-color: rgba(6, 78, 59, 0.3);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
     }
 
-    .telemetry-sub {
+    .active-company-subtitle {
       font-size: 0.75rem;
-      color: var(--text-muted);
+      color: var(--text-dim);
+      font-weight: 500;
     }
 
-    .sbe-frame-box {
-      font-family: var(--font-mono);
-      font-size: 0.68rem;
-      line-height: 1.4;
-      background: #05070c;
-      border: 1px solid var(--border-subtle);
-      border-radius: 6px;
-      padding: 0.75rem;
-      color: #94a3b8;
-      overflow-x: auto;
-      max-height: 130px;
-    }
-
-    /* Timeframe Preview Section */
-    .timeframe-showcase {
-      background: var(--bg-panel);
-      border: 1px solid var(--border-medium);
-      border-radius: 14px;
-      overflow: hidden;
-      padding: 1.5rem;
-    }
-
-    .tf-top-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin-bottom: 1.25rem;
-      padding-bottom: 1.25rem;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .tf-symbol-summary {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .tf-active-symbol {
-      font-size: 1.4rem;
-      font-weight: 800;
-      font-family: var(--font-mono);
-    }
-
-    .tf-active-price {
-      font-size: 1.4rem;
+    .active-symbol-price {
+      font-size: 1.8rem;
       font-weight: 700;
       font-family: var(--font-mono);
-      color: var(--accent-cyan);
+      color: var(--text-main);
     }
 
-    .tf-active-change {
+    .active-symbol-change {
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 0.2rem 0.6rem;
+      border-radius: 0.375rem;
       font-family: var(--font-mono);
-      font-size: 0.88rem;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      font-weight: 600;
-    }
-
-    .tf-active-change.up {
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--accent-emerald);
+      background-color: rgba(16, 185, 129, 0.15);
+      color: #34d399;
       border: 1px solid rgba(16, 185, 129, 0.3);
     }
 
-    .exchange-status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.35);
-      color: var(--accent-emerald);
-      padding: 0.35rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-family: var(--font-mono);
-      font-weight: 700;
-    }
-
-    /* Timeframe Buttons Bar */
-    .timeframe-btn-row {
+    .active-symbol-meta {
       display: flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.5rem;
       flex-wrap: wrap;
-      margin-bottom: 1.25rem;
     }
 
-    .tf-btn {
+    .meta-tag {
+      font-size: 0.72rem;
+      font-family: var(--font-mono);
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.25rem;
+      background-color: var(--bg-panel);
+      border: 1px solid var(--border-medium);
+      color: var(--text-muted);
+    }
+    .meta-tag span {
+      color: var(--text-dim);
+      margin-right: 0.25rem;
+    }
+
+    /* Chart Toolbar Row - Strict Non-Wrap Layout Locked */
+    .chart-toolbar-row {
+      padding: 0.5rem 1.25rem;
+      background-color: rgba(15, 23, 42, 0.7);
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: nowrap !important;
+      overflow-x: auto;
+      overflow-y: hidden;
+      min-height: 48px;
+      max-height: 48px;
+      height: 48px;
+      box-sizing: border-box;
+      scrollbar-width: thin;
+    }
+    .chart-toolbar-row::-webkit-scrollbar {
+      height: 3px;
+    }
+    .chart-toolbar-row::-webkit-scrollbar-thumb {
+      background: var(--border-medium);
+      border-radius: 3px;
+    }
+
+    .timeframe-group {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
+    }
+
+    .btn-tf {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--text-muted);
+      padding: 0.25rem 0.65rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .btn-tf:hover {
+      background-color: var(--bg-card-hover);
+      border-color: var(--accent-cyan);
+      color: #ffffff;
+    }
+    .btn-tf.active {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      border-color: #38bdf8;
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);
+    }
+
+    .display-toggles-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
+    }
+
+    .btn-toggle-switch {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.25rem 0.65rem;
+      min-width: 145px;
+      border-radius: 0.375rem;
       background: var(--bg-card);
       border: 1px solid var(--border-medium);
       color: var(--text-muted);
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
-      font-weight: 600;
-      padding: 0.35rem 0.75rem;
-      border-radius: 6px;
+      font-size: 0.75rem;
+      font-family: var(--font-sans);
       cursor: pointer;
-      transition: all 0.15s;
+      transition: all 0.2s ease;
+      user-select: none;
+      flex-shrink: 0;
+      white-space: nowrap;
     }
-
-    .tf-btn:hover {
+    .btn-toggle-switch:hover {
       background: var(--bg-card-hover);
-      color: #ffffff;
-      border-color: var(--border-bright);
-    }
-
-    .tf-btn.active {
-      background: var(--accent-cyan);
-      color: #04101e;
       border-color: var(--accent-cyan);
-      font-weight: 700;
-      box-shadow: 0 0 12px var(--accent-cyan-glow);
+      color: var(--text-main);
     }
-
-    /* Chart Canvas & Crosshair HUD */
-    .chart-viewport {
-      position: relative;
-      width: 100%;
-      height: 380px;
-      background: #090e18;
-      border: 1px solid var(--border-subtle);
-      border-radius: 8px;
-      overflow: hidden;
-      cursor: crosshair;
-    }
-
-    #timeframe-canvas {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
-
-    .crosshair-hud {
-      position: absolute;
-      top: 10px;
-      left: 14px;
-      background: rgba(15, 23, 42, 0.88);
-      border: 1px solid var(--border-medium);
-      backdrop-filter: blur(8px);
-      padding: 0.5rem 0.85rem;
-      border-radius: 6px;
+    .btn-toggle-switch .toggle-badge {
       font-family: var(--font-mono);
-      font-size: 0.74rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    .crosshair-hud-item {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-    }
-
-    .crosshair-hud-item span:first-child {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.1rem 0.45rem;
+      border-radius: 0.25rem;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--border-medium);
       color: var(--text-dim);
     }
-
-    /* Architecture Grid */
-    .arch-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .arch-card {
-      background: var(--bg-panel);
-      border: 1px solid var(--border-subtle);
-      border-radius: 12px;
-      padding: 1.75rem;
-      position: relative;
-      transition: all 0.25s;
-    }
-
-    .arch-card:hover {
-      border-color: var(--border-bright);
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    }
-
-    .arch-icon-wrap {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-      background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1.25rem;
+    .btn-toggle-switch .toggle-badge.active-local {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: rgba(56, 189, 248, 0.5);
       color: var(--accent-cyan);
     }
 
-    .arch-card.emerald .arch-icon-wrap {
-      background: rgba(16, 185, 129, 0.1);
-      border-color: rgba(16, 185, 129, 0.25);
-      color: var(--accent-emerald);
-    }
-
-    .arch-card.amber .arch-icon-wrap {
-      background: rgba(245, 158, 11, 0.1);
-      border-color: rgba(245, 158, 11, 0.25);
-      color: var(--accent-amber);
-    }
-
-    .arch-card.purple .arch-icon-wrap {
-      background: rgba(129, 140, 248, 0.1);
-      border-color: rgba(129, 140, 248, 0.25);
-      color: var(--accent-purple);
-    }
-
-    .arch-title {
-      font-size: 1.15rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-    }
-
-    .arch-text {
-      font-size: 0.88rem;
-      color: var(--text-muted);
-      margin-bottom: 1rem;
-      line-height: 1.6;
-    }
-
-    .arch-tags {
+    .chart-metrics-hud {
       display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
+      align-items: center;
+      gap: 0.65rem;
+      flex-wrap: nowrap;
+      flex-shrink: 0;
     }
 
-    .arch-tag-pill {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border-medium);
+    .hud-stat-pill {
+      background-color: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--border-subtle);
+      padding: 0.2rem 0.55rem;
+      border-radius: 0.375rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
+    }
+    .hud-stat-lbl {
       color: var(--text-dim);
-      padding: 0.15rem 0.5rem;
-      border-radius: 4px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      user-select: none;
+    }
+    .hud-stat-pill strong {
+      color: var(--text-main);
+      font-size: 0.78rem;
+      display: inline-block;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
     }
 
-    /* Benchmarks Section */
-    .benchmark-table-box {
-      background: var(--bg-panel);
-      border: 1px solid var(--border-medium);
-      border-radius: 12px;
+    #hud-stat-tf { min-width: 26px; }
+    #hud-stat-point { min-width: 95px; }
+    #hud-stat-time { min-width: 82px; }
+    #hud-stat-high { min-width: 95px; }
+    #hud-stat-low { min-width: 95px; }
+    #hud-stat-chg { min-width: 68px; }
+
+    /* Chart Canvas Container */
+    .chart-container-box {
+      width: 100%;
+      height: 380px;
+      min-height: 380px;
+      max-height: 380px;
+      box-sizing: border-box;
+      position: relative;
+      background-color: #0f172a;
       overflow: hidden;
-      margin-bottom: 2rem;
     }
 
-    .bench-table {
+    #tradingview-chart-box {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Live Watchlist Table */
+    .watchlist-card {
+      border-top: 1px solid var(--border-medium);
+      background: var(--bg-panel);
+      padding: 1.25rem 1.4rem;
+    }
+
+    .watchlist-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.85rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .watchlist-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .watchlist-table-container {
+      overflow-x: auto;
+    }
+
+    table.watchlist-table {
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 0.88rem;
+      font-size: 0.82rem;
     }
 
-    .bench-table th {
-      background: #0d1424;
-      padding: 1rem 1.25rem;
-      font-size: 0.75rem;
+    table.watchlist-table th {
+      padding: 0.65rem 0.85rem;
+      font-size: 0.7rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--text-dim);
       border-bottom: 1px solid var(--border-medium);
+      background: rgba(15, 23, 42, 0.9);
+      white-space: nowrap;
     }
 
-    .bench-table td {
+    table.watchlist-table td {
+      padding: 0.65rem 0.85rem;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+      white-space: nowrap;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    table.watchlist-table tr:hover td {
+      background: rgba(56, 189, 248, 0.06);
+    }
+
+    table.watchlist-table tr.active-row td {
+      background: rgba(56, 189, 248, 0.12);
+      border-left: 2px solid var(--accent-cyan);
+    }
+
+    .row-ticker {
+      font-weight: 700;
+      color: #ffffff;
+      font-family: var(--font-mono);
+    }
+
+    .row-company {
+      font-size: 0.72rem;
+      color: var(--text-dim);
+    }
+
+    .val-green { color: #34d399; font-weight: 700; }
+    .val-red { color: #fb7185; font-weight: 700; }
+
+    /* REAL TERMINAL LOG PREVIEW */
+    .terminal-real-box {
+      background: #070a12;
+      border: 1px solid var(--border-medium);
+      border-radius: 10px;
+      overflow: hidden;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+    }
+
+    .term-topbar {
+      background: #0d131f;
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.6rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .term-dots {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .term-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .term-dot.r { background: #ef4444; }
+    .term-dot.y { background: #f59e0b; }
+    .term-dot.g { background: #10b981; }
+
+    .term-title {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+
+    .term-code-content {
+      padding: 1.25rem;
+      color: #94a3b8;
+      line-height: 1.65;
+      overflow-x: auto;
+      max-height: 280px;
+    }
+
+    .term-code-content .hl-green { color: #34d399; }
+    .term-code-content .hl-cyan { color: #38bdf8; }
+    .term-code-content .hl-amber { color: #f59e0b; }
+    .term-code-content .hl-white { color: #ffffff; font-weight: 700; }
+
+    /* Architecture Grid */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .arch-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-medium);
+      border-radius: 10px;
+      padding: 1.75rem 1.5rem;
+      position: relative;
+    }
+
+    .arch-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+    }
+
+    .arch-icon-wrap {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent-cyan);
+      margin-bottom: 1.25rem;
+    }
+
+    .arch-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+      color: #ffffff;
+    }
+
+    .arch-body {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Benchmarks Table */
+    .benchmarks-table-wrap {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-medium);
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+
+    .benchmarks-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    .benchmarks-table th {
+      padding: 1rem 1.25rem;
+      color: var(--text-dim);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--border-medium);
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    .benchmarks-table td {
       padding: 1rem 1.25rem;
       border-bottom: 1px solid var(--border-subtle);
     }
 
-    .bench-table tr:last-child td {
+    .benchmarks-table tr:last-child td {
       border-bottom: none;
     }
 
-    .bench-table tr:hover td {
-      background: rgba(255, 255, 255, 0.015);
-    }
-
-    .bench-metric-name {
-      font-weight: 600;
-      color: #ffffff;
-    }
-
-    .bench-badge-win {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      color: var(--accent-emerald);
-      padding: 0.2rem 0.55rem;
-      border-radius: 4px;
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
-      font-weight: 700;
-    }
-
-    .bench-badge-loss {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      background: rgba(244, 63, 94, 0.1);
-      border: 1px solid rgba(244, 63, 94, 0.25);
-      color: #fb7185;
-      padding: 0.2rem 0.55rem;
-      border-radius: 4px;
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
-    }
-
-    /* Benchmark Calculator */
-    .calc-card {
-      background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(19, 29, 49, 0.9));
-      border: 1px solid var(--border-medium);
-      border-radius: 12px;
-      padding: 1.75rem;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      align-items: center;
-    }
-
-    @media (max-width: 768px) {
-      .calc-card {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .calc-inputs {
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-    }
-
-    .calc-slider-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .calc-slider-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      font-weight: 600;
-    }
-
-    .calc-slider {
-      width: 100%;
-      accent-color: var(--accent-cyan);
-    }
-
-    .calc-outputs {
-      background: var(--bg-darkest);
-      border: 1px solid var(--border-subtle);
-      border-radius: 10px;
-      padding: 1.5rem;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1rem;
-    }
-
-    .calc-res-item {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .calc-res-val {
-      font-size: 1.45rem;
-      font-family: var(--font-mono);
-      font-weight: 700;
-      color: var(--accent-cyan);
-    }
-
-    .calc-res-label {
-      font-size: 0.72rem;
-      color: var(--text-dim);
-      text-transform: uppercase;
-      font-family: var(--font-mono);
-    }
-
-    /* Quickstart Section */
+    /* Quickstart Snippets */
     .quickstart-box {
-      background: var(--bg-panel);
+      background: var(--bg-darkest);
       border: 1px solid var(--border-medium);
-      border-radius: 12px;
+      border-radius: 10px;
       overflow: hidden;
     }
 
-    .qs-tabs {
-      background: #0d131f;
+    .qs-nav {
       display: flex;
+      background: #0d131f;
       border-bottom: 1px solid var(--border-subtle);
       overflow-x: auto;
     }
 
     .qs-tab-btn {
+      padding: 0.75rem 1.4rem;
       background: transparent;
       border: none;
-      color: var(--text-muted);
+      color: var(--text-dim);
       font-family: var(--font-mono);
       font-size: 0.8rem;
-      padding: 0.75rem 1.25rem;
+      font-weight: 600;
       cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
       border-bottom: 2px solid transparent;
-      white-space: nowrap;
       transition: all 0.2s;
-    }
-
-    .qs-tab-btn:hover {
-      color: #ffffff;
-      background: rgba(255, 255, 255, 0.02);
+      white-space: nowrap;
     }
 
     .qs-tab-btn.active {
       color: var(--accent-cyan);
       border-bottom-color: var(--accent-cyan);
-      background: rgba(56, 189, 248, 0.05);
+      background: rgba(56, 189, 248, 0.06);
     }
 
-    .qs-code-content {
+    .qs-code-pane {
       padding: 1.5rem;
-      background: #070b13;
-      position: relative;
-    }
-
-    .qs-snippet-block {
-      display: none;
-    }
-
-    .qs-snippet-block.active {
-      display: block;
-    }
-
-    pre.code-block {
       font-family: var(--font-mono);
-      font-size: 0.82rem;
-      line-height: 1.6;
-      color: #e2e8f0;
+      font-size: 0.85rem;
+      line-height: 1.7;
       overflow-x: auto;
     }
 
-    .code-comment {
-      color: var(--text-dim);
-    }
-
-    .code-cmd {
-      color: var(--accent-cyan);
-    }
-
-    .btn-copy {
-      position: absolute;
-      top: 1rem;
-      right: 1rem;
-      background: var(--bg-card);
-      border: 1px solid var(--border-medium);
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      padding: 0.35rem 0.75rem;
-      border-radius: 4px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      transition: all 0.2s;
-    }
-
-    .btn-copy:hover {
-      color: #ffffff;
-      border-color: var(--accent-cyan);
-    }
+    .code-comment { color: #64748b; }
+    .code-cmd { color: #38bdf8; font-weight: 700; }
 
     /* Footer */
     footer.site-footer {
       border-top: 1px solid var(--border-subtle);
-      background: var(--bg-darkest);
-      padding: 3rem 1.5rem;
-      font-size: 0.85rem;
+      background: var(--bg-panel);
+      padding: 2.5rem 1.5rem;
       color: var(--text-dim);
+      font-size: 0.82rem;
     }
 
     .footer-inner {
-      max-width: 1250px;
+      max-width: 1360px;
       margin: 0 auto;
       display: flex;
       align-items: center;
@@ -1131,7 +997,6 @@
 
     .footer-links {
       display: flex;
-      align-items: center;
       gap: 1.5rem;
       list-style: none;
     }
@@ -1141,7 +1006,6 @@
       text-decoration: none;
       transition: color 0.2s;
     }
-
     .footer-links a:hover {
       color: var(--accent-cyan);
     }
@@ -1149,30 +1013,7 @@
 </head>
 <body>
 
-  <!-- Top Market Ticker Marquee -->
-  <div class="ticker-bar">
-    <div class="ticker-track" id="ticker-track">
-      <div class="ticker-item"><span class="ticker-symbol">RELIANCE.NS</span> <span class="ticker-price">₹ 1,418.50</span> <span class="ticker-up">+1.42%</span></div>
-      <div class="ticker-item"><span class="ticker-symbol">TCS.NS</span> <span class="ticker-price">₹ 4,124.00</span> <span class="ticker-up">+0.88%</span></div>
-      <div class="ticker-item"><span class="ticker-symbol">INFY.NS</span> <span class="ticker-price">₹ 1,892.30</span> <span class="ticker-down">-0.34%</span></div>
-      <div class="ticker-item"><span class="ticker-symbol">HDFCBANK.NS</span> <span class="ticker-price">₹ 1,745.20</span> <span class="ticker-up">+0.65%</span></div>
-      <div class="ticker-item"><span class="ticker-symbol">TATAMOTORS.NS</span> <span class="ticker-price">₹ 882.10</span> <span class="ticker-down">-0.12%</span></div>
-      <div class="ticker-item"><span class="ticker-symbol">BAJFINANCE.NS</span> <span class="ticker-price">₹ 7,105.00</span> <span class="ticker-up">+2.15%</span></div>
-      <div class="ticker-item"><span class="ticker-symbol">NIFTY 50</span> <span class="ticker-price">24,380.50</span> <span class="ticker-up">+0.54%</span></div>
-      <div class="ticker-item"><span class="ticker-symbol">SENSEX</span> <span class="ticker-price">80,210.15</span> <span class="ticker-up">+0.48%</span></div>
-      <!-- Duplicate for infinite smooth marquee -->
-      <div class="ticker-item"><span class="ticker-symbol">RELIANCE.NS</span> <span class="ticker-price">₹ 1,418.50</span> <span class="ticker-up">+1.42%</span></div>
-      <div class="ticker-item"><span class="ticker-symbol">TCS.NS</span> <span class="ticker-price">₹ 4,124.00</span> <span class="ticker-up">+0.88%</span></div>
-      <div class="ticker-item"><span class="ticker-symbol">INFY.NS</span> <span class="ticker-price">₹ 1,892.30</span> <span class="ticker-down">-0.34%</span></div>
-      <div class="ticker-item"><span class="ticker-symbol">HDFCBANK.NS</span> <span class="ticker-price">₹ 1,745.20</span> <span class="ticker-up">+0.65%</span></div>
-      <div class="ticker-item"><span class="ticker-symbol">TATAMOTORS.NS</span> <span class="ticker-price">₹ 882.10</span> <span class="ticker-down">-0.12%</span></div>
-      <div class="ticker-item"><span class="ticker-symbol">BAJFINANCE.NS</span> <span class="ticker-price">₹ 7,105.00</span> <span class="ticker-up">+2.15%</span></div>
-      <div class="ticker-item"><span class="ticker-symbol">NIFTY 50</span> <span class="ticker-price">24,380.50</span> <span class="ticker-up">+0.54%</span></div>
-      <div class="ticker-item"><span class="ticker-symbol">SENSEX</span> <span class="ticker-price">80,210.15</span> <span class="ticker-up">+0.48%</span></div>
-    </div>
-  </div>
-
-  <!-- Main Navigation Header -->
+  <!-- Top Navigation Header -->
   <header class="site-header">
     <div class="nav-container">
       <a href="#" class="logo-brand">
@@ -1183,13 +1024,13 @@
         </div>
         <div>
           <span class="logo-text-title">TRACK MY MARKET</span>
-          <span class="logo-text-sub">AERON &bull; SBE v1 &bull; 0-ALLOCATION</span>
+          <span class="logo-text-sub">AERON &bull; SBE v1 &bull; JAVA 25</span>
         </div>
       </a>
 
       <ul class="nav-links">
-        <li><a href="#simulator">Live Simulator</a></li>
-        <li><a href="#timeframes">Timeframes HUD</a></li>
+        <li><a href="#preview">Live Trading Desk</a></li>
+        <li><a href="#terminal">Console Terminal</a></li>
         <li><a href="#architecture">Architecture</a></li>
         <li><a href="#benchmarks">Benchmarks</a></li>
         <li><a href="#quickstart">Quickstart</a></li>
@@ -1221,217 +1062,317 @@
     </h1>
 
     <p class="hero-subtitle">
-      Streaming real-time National Stock Exchange (NSE) & BSE equity quotes over lock-free POSIX shared memory ring buffers. Zero Demat, zero KYC, and zero static IP requirements.
+      Streaming real-time equity quotes across NSE/BSE and global markets over lock-free POSIX shared memory ring buffers. Zero Demat, zero KYC, and zero proprietary broker API keys required.
     </p>
 
     <div class="hero-cta-group">
-      <a href="#simulator" class="btn-primary">
+      <a href="#preview" class="btn-primary">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
         </svg>
-        <span>Launch Terminal Simulator</span>
+        <span>Interactive Trading Desk</span>
       </a>
       <a href="#quickstart" class="btn-secondary">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="4 17 10 11 4 5"></polyline>
           <line x1="12" y1="19" x2="20" y2="19"></line>
         </svg>
-        <span>Get Started in 60s</span>
+        <span>Docker Quickstart (60s)</span>
       </a>
     </div>
 
     <!-- Hero Stat Badges -->
     <div class="hero-stats-grid">
-      <div class="stat-card cyan">
-        <div class="stat-val cyan mono">&lt; 1 &mu;s</div>
-        <div class="stat-label">IPC Bus Latency</div>
-        <div class="stat-desc">Aeron shared memory ring buffer transit</div>
+      <div class="stat-card">
+        <div class="stat-val cyan mono">&lt; 850 ns</div>
+        <div class="stat-label">Aeron IPC Transit</div>
+        <div class="stat-desc">Sub-microsecond memory-mapped ring buffer transfer</div>
       </div>
-      <div class="stat-card emerald">
+      <div class="stat-card">
         <div class="stat-val emerald mono">0 Bytes</div>
         <div class="stat-label">Heap Allocation / Tick</div>
-        <div class="stat-desc">Zero garbage collector pauses in hot path</div>
+        <div class="stat-desc">Zero garbage collector pauses via off-heap SBE v1</div>
       </div>
-      <div class="stat-card amber">
-        <div class="stat-val amber mono">12.5M+</div>
-        <div class="stat-label">Messages / Sec</div>
-        <div class="stat-desc">Peak single-channel SBE throughput</div>
+      <div class="stat-card">
+        <div class="stat-val amber mono">Java 25</div>
+        <div class="stat-label">Virtual Threads</div>
+        <div class="stat-desc">Non-blocking Server-Sent Events (SSE) broadcasting</div>
       </div>
-      <div class="stat-card purple">
-        <div class="stat-val purple mono">0 KYC / Demat</div>
-        <div class="stat-label">Public Adapter</div>
-        <div class="stat-desc">Automated crumb & cookie session recycling</div>
+      <div class="stat-card">
+        <div class="stat-val purple mono">Two-Tier Ingress</div>
+        <div class="stat-label">Nginx Reverse Proxy</div>
+        <div class="stat-desc">Asset gzip compression & buffer-free streaming</div>
       </div>
     </div>
   </section>
 
-  <!-- Live Terminal Simulator Section -->
-  <section id="simulator" class="content-section">
+  <!-- =========================================================
+       AUTHENTIC INTERACTIVE TRADING DESK PREVIEW (ACTUAL APP UI)
+       ========================================================= -->
+  <section id="preview" class="content-section">
     <div class="section-header">
-      <span class="section-tag">Interactive Hardware Emulation</span>
-      <h2 class="section-title">Live Terminal Simulator</h2>
+      <span class="section-tag">Interactive Terminal Preview</span>
+      <h2 class="section-title">The Track My Market Trading Desk</h2>
       <p class="section-subtitle">
-        Experience real-time SBE quote decoding and Aeron IPC nanosecond telemetry directly inside your browser.
+        Authentic live interface featuring real TradingView Lightweight Charts, dual Timezone & Currency toggles, and sub-millisecond market statistics.
       </p>
     </div>
 
-    <div class="terminal-container">
-      <div class="terminal-header">
-        <div class="terminal-dots">
-          <div class="terminal-dot red"></div>
-          <div class="terminal-dot yellow"></div>
-          <div class="terminal-dot green"></div>
-          <span class="terminal-title">aeron://ipc?stream-id=1001 &bull; SBE Schema v1 (MarketTick id=1)</span>
+    <div class="trading-desk-preview">
+      <!-- Desk Header with Latency HUD -->
+      <div class="desk-header">
+        <div class="desk-brand-left">
+          <div class="status-badge-live">
+            <div class="pulsing-dot"></div>
+            <span>ENGINE CONNECTED (AERON IPC)</span>
+          </div>
         </div>
 
-        <div class="terminal-controls">
-          <button id="btn-toggle-sim" class="term-btn active">
-            <span id="sim-icon">&#9646;&#9646;</span>
-            <span id="sim-label">Pause Stream</span>
-          </button>
-          <button id="btn-burst" class="term-btn">
-            <span>&#9889; Burst 10k Ticks</span>
-          </button>
-          <select id="sim-speed-select" class="term-btn">
-            <option value="1000">1.0s Interval</option>
-            <option value="400" selected>400ms Interval</option>
-            <option value="100">100ms (HFT Rate)</option>
-          </select>
-          <select id="sim-view-mode" class="term-btn">
-            <option value="table">Table View</option>
-            <option value="raw">Raw SBE Hex View</option>
-          </select>
+        <div class="desk-hud-chips">
+          <div class="hud-chip">
+            <span class="hud-chip-label">Ingestion RTT</span>
+            <span class="hud-chip-val mono">78.4 ms</span>
+          </div>
+          <div class="hud-chip">
+            <span class="hud-chip-label">Aeron Bus Latency</span>
+            <span class="hud-chip-val mono" style="color:var(--accent-cyan)">0.82 &mu;s</span>
+          </div>
+          <div class="hud-chip">
+            <span class="hud-chip-label">Ticks Processed</span>
+            <span class="hud-chip-val mono" style="color:var(--accent-emerald)">24,892</span>
+          </div>
+          <div class="hud-chip">
+            <span class="hud-chip-label">Active Symbols</span>
+            <span class="hud-chip-val mono">6 tracked</span>
+          </div>
         </div>
       </div>
 
-      <div class="terminal-body">
-        <!-- Live Stream Feed Table -->
-        <div class="terminal-feed-pane" id="terminal-feed-pane">
-          <table class="feed-table" id="sim-feed-table">
+      <!-- Active Symbol Hero -->
+      <div class="chart-hero-row">
+        <div class="active-symbol-info">
+          <div class="symbol-title-stack">
+            <div class="symbol-title-row">
+              <span id="active-symbol-name" class="active-symbol-name">TCS.NS</span>
+              <span id="active-status-badge" class="market-status-pill">
+                <span class="pulsing-dot"></span>
+                <span>NSE: OPEN (TRADABLE)</span>
+              </span>
+            </div>
+            <span id="active-company-name" class="active-company-subtitle">Tata Consultancy Services Limited</span>
+          </div>
+          <span id="active-price-val" class="active-symbol-price mono">₹ 4,124.00</span>
+          <span id="active-change-val" class="active-symbol-change mono">+1.18%</span>
+        </div>
+
+        <div class="active-symbol-meta">
+          <div class="meta-tag"><span>ISIN:</span><strong id="active-isin" class="mono">INE467B01029</strong></div>
+          <div class="meta-tag"><span>SEDOL:</span><strong id="active-sedol" class="mono">6712345</strong></div>
+          <div class="meta-tag"><span>RIC:</span><strong id="active-ric" class="mono">TCS.NS</strong></div>
+          <div class="meta-tag"><span>PROVIDER:</span><strong>YAHOO</strong></div>
+        </div>
+      </div>
+
+      <!-- Chart Toolbar (Pixel-locked, Non-wrapping) -->
+      <div class="chart-toolbar-row">
+        <div class="timeframe-group" id="timeframe-buttons">
+          <button type="button" class="btn-tf" data-tf="1h">1H</button>
+          <button type="button" class="btn-tf" data-tf="3h">3H</button>
+          <button type="button" class="btn-tf" data-tf="6h">6H</button>
+          <button type="button" class="btn-tf" data-tf="12h">12H</button>
+          <button type="button" class="btn-tf active" data-tf="1d">1D</button>
+          <button type="button" class="btn-tf" data-tf="3d">3D</button>
+          <button type="button" class="btn-tf" data-tf="1w">1W</button>
+          <button type="button" class="btn-tf" data-tf="1m">1M</button>
+          <button type="button" class="btn-tf" data-tf="6m">6M</button>
+          <button type="button" class="btn-tf" data-tf="1y">1Y</button>
+          <button type="button" class="btn-tf" data-tf="3y">3Y</button>
+          <button type="button" class="btn-tf" data-tf="5y">5Y</button>
+          <button type="button" class="btn-tf" data-tf="max">ALL</button>
+        </div>
+
+        <!-- Timezone & Currency Toggles -->
+        <div class="display-toggles-group">
+          <button type="button" class="btn-toggle-switch" id="btn-demo-tz" onclick="toggleDemoTz()">
+            <span>🕒 Time:</span>
+            <span id="demo-tz-badge" class="toggle-badge active-local">LOCAL (IST)</span>
+          </button>
+          <button type="button" class="btn-toggle-switch" id="btn-demo-curr" onclick="toggleDemoCurr()">
+            <span>💱 Currency:</span>
+            <span id="demo-curr-badge" class="toggle-badge">NATIVE (INR)</span>
+          </button>
+        </div>
+
+        <!-- Real-Time Metrics HUD Pills -->
+        <div class="chart-metrics-hud">
+          <div class="hud-stat-pill">
+            <span class="hud-stat-lbl">TF:</span>
+            <strong id="hud-stat-tf" class="mono">1D</strong>
+          </div>
+          <div class="hud-stat-pill">
+            <span class="hud-stat-lbl">POINT:</span>
+            <strong id="hud-stat-point" class="mono">₹ 4,124.00</strong>
+          </div>
+          <div class="hud-stat-pill">
+            <span class="hud-stat-lbl">TIME:</span>
+            <strong id="hud-stat-time" class="mono">15:28:45</strong>
+          </div>
+          <div class="hud-stat-pill">
+            <span class="hud-stat-lbl">HIGH:</span>
+            <strong id="hud-stat-high" class="mono">₹ 4,148.50</strong>
+          </div>
+          <div class="hud-stat-pill">
+            <span class="hud-stat-lbl">LOW:</span>
+            <strong id="hud-stat-low" class="mono">₹ 4,095.10</strong>
+          </div>
+          <div class="hud-stat-pill">
+            <span class="hud-stat-lbl">PERIOD CHG:</span>
+            <strong id="hud-stat-chg" class="mono val-green">+1.18%</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- TradingView Lightweight Charts Viewport -->
+      <div class="chart-container-box">
+        <div id="tradingview-chart-box"></div>
+      </div>
+
+      <!-- Live Watchlist Table -->
+      <div class="watchlist-card">
+        <div class="watchlist-header">
+          <div class="watchlist-title">
+            <span>Real-Time Watchlist Subscriptions</span>
+            <span style="font-size:0.75rem; color:var(--text-dim); font-weight:normal;">(Click any row to switch active symbol)</span>
+          </div>
+        </div>
+
+        <div class="watchlist-table-container">
+          <table class="watchlist-table">
             <thead>
               <tr>
-                <th>Symbol</th>
-                <th>Price (INR)</th>
-                <th>Change</th>
-                <th>Aeron Latency</th>
-                <th>Ingress RTT</th>
+                <th>Symbol / Company</th>
                 <th>ISIN / SEDOL</th>
+                <th style="text-align:right">Last Price</th>
+                <th style="text-align:right">Change</th>
+                <th style="text-align:right">Ingress RTT</th>
+                <th style="text-align:right">Bus Latency</th>
+                <th>Status</th>
               </tr>
             </thead>
-            <tbody id="sim-feed-body">
-              <!-- Dynamically populated rows -->
+            <tbody id="watchlist-body">
+              <tr class="active-row" onclick="switchSymbol('TCS.NS', 'Tata Consultancy Services', 4124.00, '+1.18%', 'INE467B01029', '6712345', 'TCS.NS', 'INR')">
+                <td>
+                  <div class="row-ticker">TCS.NS</div>
+                  <div class="row-company">Tata Consultancy Services Ltd.</div>
+                </td>
+                <td class="mono" style="color:var(--text-dim)">INE467B01029 / 6712345</td>
+                <td class="mono" style="text-align:right">₹ 4,124.00</td>
+                <td class="mono val-green" style="text-align:right">+1.18%</td>
+                <td class="mono" style="text-align:right">78.4 ms</td>
+                <td class="mono" style="text-align:right; color:var(--accent-cyan)">0.82 &mu;s</td>
+                <td><span style="color:var(--accent-emerald); font-weight:700">● LIVE</span></td>
+              </tr>
+              <tr onclick="switchSymbol('RELIANCE.NS', 'Reliance Industries Ltd.', 1418.50, '+1.42%', 'INE002A01018', '6724590', 'RELI.NS', 'INR')">
+                <td>
+                  <div class="row-ticker">RELIANCE.NS</div>
+                  <div class="row-company">Reliance Industries Limited</div>
+                </td>
+                <td class="mono" style="color:var(--text-dim)">INE002A01018 / 6724590</td>
+                <td class="mono" style="text-align:right">₹ 1,418.50</td>
+                <td class="mono val-green" style="text-align:right">+1.42%</td>
+                <td class="mono" style="text-align:right">82.1 ms</td>
+                <td class="mono" style="text-align:right; color:var(--accent-cyan)">0.74 &mu;s</td>
+                <td><span style="color:var(--accent-emerald); font-weight:700">● LIVE</span></td>
+              </tr>
+              <tr onclick="switchSymbol('INFY.NS', 'Infosys Limited', 1892.30, '-0.45%', 'INE009A01021', '6456789', 'INFY.NS', 'INR')">
+                <td>
+                  <div class="row-ticker">INFY.NS</div>
+                  <div class="row-company">Infosys Limited</div>
+                </td>
+                <td class="mono" style="color:var(--text-dim)">INE009A01021 / 6456789</td>
+                <td class="mono" style="text-align:right">₹ 1,892.30</td>
+                <td class="mono val-red" style="text-align:right">-0.45%</td>
+                <td class="mono" style="text-align:right">91.3 ms</td>
+                <td class="mono" style="text-align:right; color:var(--accent-cyan)">0.69 &mu;s</td>
+                <td><span style="color:var(--accent-emerald); font-weight:700">● LIVE</span></td>
+              </tr>
+              <tr onclick="switchSymbol('HDFCBANK.NS', 'HDFC Bank Limited', 1745.20, '+0.25%', 'INE040A01034', '6432109', 'HDBK.NS', 'INR')">
+                <td>
+                  <div class="row-ticker">HDFCBANK.NS</div>
+                  <div class="row-company">HDFC Bank Limited</div>
+                </td>
+                <td class="mono" style="color:var(--text-dim)">INE040A01034 / 6432109</td>
+                <td class="mono" style="text-align:right">₹ 1,745.20</td>
+                <td class="mono val-green" style="text-align:right">+0.25%</td>
+                <td class="mono" style="text-align:right">86.7 ms</td>
+                <td class="mono" style="text-align:right; color:var(--accent-cyan)">0.79 &mu;s</td>
+                <td><span style="color:var(--accent-emerald); font-weight:700">● LIVE</span></td>
+              </tr>
+              <tr onclick="switchSymbol('AAPL', 'Apple Inc.', 234.80, '+0.88%', 'US0378331005', '2046251', 'AAPL.O', 'USD')">
+                <td>
+                  <div class="row-ticker">AAPL</div>
+                  <div class="row-company">Apple Inc. (NASDAQ)</div>
+                </td>
+                <td class="mono" style="color:var(--text-dim)">US0378331005 / 2046251</td>
+                <td class="mono" style="text-align:right">$ 234.80</td>
+                <td class="mono val-green" style="text-align:right">+0.88%</td>
+                <td class="mono" style="text-align:right">94.2 ms</td>
+                <td class="mono" style="text-align:right; color:var(--accent-cyan)">0.54 &mu;s</td>
+                <td><span style="color:var(--accent-emerald); font-weight:700">● LIVE</span></td>
+              </tr>
             </tbody>
           </table>
-
-          <div id="sim-raw-view" class="sbe-frame-box" style="display:none; height:100%; max-height:450px;">
-            <div style="color:var(--accent-cyan); margin-bottom:0.5rem;">// Real-time SBE v1 Binary Frame Buffer (64 Bytes Fixed Length)</div>
-            <div id="raw-hex-output"></div>
-          </div>
-        </div>
-
-        <!-- Telemetry Sidebar -->
-        <div class="terminal-telemetry-pane">
-          <div class="telemetry-group">
-            <div class="telemetry-header">
-              <span>Aeron Bus Latency</span>
-              <span class="pulsing-dot"></span>
-            </div>
-            <div id="tel-bus-latency" class="telemetry-val-lg mono" style="color:var(--accent-cyan);">412 ns</div>
-            <div class="telemetry-sub">POSIX ring buffer transfer (Ingress &rarr; Consumer)</div>
-          </div>
-
-          <div class="telemetry-group">
-            <div class="telemetry-header">
-              <span>Network Ingress RTT</span>
-            </div>
-            <div id="tel-fetch-rtt" class="telemetry-val-lg mono" style="color:var(--text-main);">112 ms</div>
-            <div class="telemetry-sub">Yahoo Finance public session roundtrip</div>
-          </div>
-
-          <div class="telemetry-group">
-            <div class="telemetry-header">
-              <span>Total Ticks Processed</span>
-            </div>
-            <div id="tel-total-ticks" class="telemetry-val-lg mono" style="color:var(--accent-emerald);">14,892</div>
-            <div class="telemetry-sub">Zero off-heap dropouts or backpressure events</div>
-          </div>
-
-          <div class="telemetry-group">
-            <div class="telemetry-header">
-              <span>SBE v1 Frame Inspector</span>
-            </div>
-            <div class="sbe-frame-box">
-              <div><strong>TemplateId:</strong> 1 (MarketTick)</div>
-              <div><strong>BlockLength:</strong> 64 bytes</div>
-              <div><strong>Price Encoding:</strong> uint64 (factor 10^4)</div>
-              <div><strong>Timestamps:</strong> int64 epoch ns</div>
-              <div><strong>Heap GC Pressure:</strong> 0 B/tick</div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Interactive Timeframe Preview Section -->
-  <section id="timeframes" class="content-section">
+  <!-- =========================================================
+       AUTHENTIC HEADLESS CONSOLE TERMINAL OUTPUT
+       ========================================================= -->
+  <section id="terminal" class="content-section">
     <div class="section-header">
-      <span class="section-tag">Interactive Charting Engine</span>
-      <h2 class="section-title">Multi-Timeframe Financial Desk</h2>
+      <span class="section-tag">Direct Engine Output</span>
+      <h2 class="section-title">Headless Aeron IPC Console Terminal</h2>
       <p class="section-subtitle">
-        Inspect custom candlestick granularities from sub-hour micro-bursts to multi-year trends, accompanied by instant crosshair metrics and live exchange status.
+        When run in headless mode via <code>./gradlew run</code> or <code>docker compose logs -f</code>, the engine outputs high-frequency decoded SBE ticks directly to stdout.
       </p>
     </div>
 
-    <div class="timeframe-showcase">
-      <div class="tf-top-bar">
-        <div class="tf-symbol-summary">
-          <span class="tf-active-symbol">RELIANCE.NS</span>
-          <span id="tf-display-price" class="tf-active-price">₹ 1,418.50</span>
-          <span id="tf-display-change" class="tf-active-change up">+1.42% (+₹ 19.85)</span>
+    <div class="terminal-real-box">
+      <div class="term-topbar">
+        <div class="term-dots">
+          <div class="term-dot r"></div>
+          <div class="term-dot y"></div>
+          <div class="term-dot g"></div>
         </div>
-
-        <div class="exchange-status-pill">
-          <div class="pulsing-dot"></div>
-          <span id="exchange-badge-text">NSE: REGULAR TRADING SESSION (09:15 - 15:30 IST)</span>
-        </div>
+        <div class="term-title">aeron://ipc?stream-id=1001 &bull; MarketDisplayConsumer.java</div>
+        <div style="font-size:0.7rem; color:var(--accent-emerald)">ACTIVE</div>
       </div>
+      <pre class="term-code-content"><code>======================================================================
+                         <span class="hl-white">TRACK-MY-MARKET</span>                              
+======================================================================
+  • Provider: Yahoo Finance (Endpoint: https://query1.finance.yahoo.com)
+  • Symbols:  [RELIANCE.NS, TCS.NS, INFY.NS, HDFCBANK.NS, AAPL]
+  • Interval: 3000 ms
+  • Bus:      <span class="hl-cyan">Aeron Archiving Media Driver (IPC / SBE)</span>
+  • Web UI:   <span class="hl-green">ENABLED (Port: 8080, Reverse Proxy: 8081)</span>
+======================================================================
 
-      <!-- Timeframe Buttons Selector -->
-      <div class="timeframe-btn-row" id="timeframe-selector">
-        <button class="tf-btn" data-tf="1H">1H</button>
-        <button class="tf-btn" data-tf="3H">3H</button>
-        <button class="tf-btn" data-tf="6H">6H</button>
-        <button class="tf-btn" data-tf="12H">12H</button>
-        <button class="tf-btn active" data-tf="1D">1D</button>
-        <button class="tf-btn" data-tf="3D">3D</button>
-        <button class="tf-btn" data-tf="1W">1W</button>
-        <button class="tf-btn" data-tf="1M">1M</button>
-        <button class="tf-btn" data-tf="6M">6M</button>
-        <button class="tf-btn" data-tf="1Y">1Y</button>
-        <button class="tf-btn" data-tf="3Y">3Y</button>
-        <button class="tf-btn" data-tf="5Y">5Y</button>
-        <button class="tf-btn" data-tf="ALL">ALL</button>
-      </div>
-
-      <!-- Chart Canvas Viewport -->
-      <div class="chart-viewport" id="chart-viewport">
-        <div class="crosshair-hud" id="chart-hud">
-          <div class="crosshair-hud-item"><span>Time:</span> <strong id="hud-time" class="mono">--:--:--</strong></div>
-          <div class="crosshair-hud-item"><span>Price:</span> <strong id="hud-price" class="mono" style="color:var(--accent-cyan)">₹ 1,418.50</strong></div>
-          <div class="crosshair-hud-item"><span>High:</span> <strong id="hud-high" class="mono">₹ 1,424.00</strong></div>
-          <div class="crosshair-hud-item"><span>Low:</span> <strong id="hud-low" class="mono">₹ 1,402.10</strong></div>
-          <div class="crosshair-hud-item"><span>Aeron Latency:</span> <strong id="hud-lat" class="mono" style="color:var(--accent-emerald)">394 ns</strong></div>
-        </div>
-        <canvas id="timeframe-canvas"></canvas>
-      </div>
+[2026-11-05 18:24:21.000 UTC] TICK: <span class="hl-white">TCS.NS</span>       | Price: <span class="hl-green">₹  4,124.00</span> | ISIN: INE467B01029 | Fetch:   88.5 ms | Bus Latency:   <span class="hl-cyan">0.82 µs</span> | Provider: YAHOO
+[2026-11-05 18:24:22.000 UTC] TICK: <span class="hl-white">RELIANCE.NS</span>  | Price: <span class="hl-green">₹  1,418.50</span> | ISIN: INE002A01018 | Fetch:   92.4 ms | Bus Latency:   <span class="hl-cyan">0.74 µs</span> | Provider: YAHOO
+[2026-11-05 18:24:23.000 UTC] TICK: <span class="hl-white">INFY.NS</span>      | Price: <span class="hl-amber">₹  1,892.30</span> | ISIN: INE009A01021 | Fetch:   91.3 ms | Bus Latency:   <span class="hl-cyan">0.69 µs</span> | Provider: YAHOO
+[2026-11-05 18:24:24.000 UTC] TICK: <span class="hl-white">HDFCBANK.NS</span>  | Price: <span class="hl-green">₹  1,745.20</span> | ISIN: INE040A01034 | Fetch:   86.7 ms | Bus Latency:   <span class="hl-cyan">0.79 µs</span> | Provider: YAHOO
+[2026-11-05 18:24:25.000 UTC] TICK: <span class="hl-white">AAPL</span>         | Price: <span class="hl-green">$    234.80</span> | ISIN: US0378331005 | Fetch:   94.2 ms | Bus Latency:   <span class="hl-cyan">0.54 µs</span> | Provider: YAHOO</code></pre>
     </div>
   </section>
 
-  <!-- Architecture Highlights Section -->
+  <!-- =========================================================
+       ARCHITECTURE SECTION
+       ========================================================= -->
   <section id="architecture" class="content-section">
     <div class="section-header">
-      <span class="section-tag">Engineering Specifications</span>
+      <span class="section-tag">High-Frequency Engineering</span>
       <h2 class="section-title">Zero-Allocation Architecture</h2>
       <p class="section-subtitle">
         Engineered with mechanical sympathy: lock-free ring buffers, direct off-heap memory, and non-blocking Java 25 virtual thread concurrency.
@@ -1439,313 +1380,155 @@
     </div>
 
     <div class="arch-grid">
-      <!-- 1: No Demat / No KYC -->
-      <div class="arch-card emerald">
+      <div class="arch-card">
         <div class="arch-icon-wrap">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
           </svg>
         </div>
-        <h3 class="arch-title">No Demat / No KYC Ingestion</h3>
-        <p class="arch-text">
-          Directly interfaces with public market feeds using automated session cookie (<code>A3</code>) and cryptographic crumb renewal. Eliminates expensive broker subscriptions, KYC audits, and static IP whitelisting.
+        <h3 class="arch-title">Embedded Aeron IPC</h3>
+        <p class="arch-body">
+          Communication runs over POSIX shared-memory mapped files without OS kernel context switches. Sub-microsecond ring buffer transit latency even under heavy multi-ticker throughput.
         </p>
-        <div class="arch-tags">
-          <span class="arch-tag-pill">YahooFinanceProvider</span>
-          <span class="arch-tag-pill">Crumb Negotiation</span>
-          <span class="arch-tag-pill">Deduplication</span>
-        </div>
       </div>
 
-      <!-- 2: SBE v1 -->
-      <div class="arch-card cyan">
+      <div class="arch-card">
+        <div class="arch-icon-wrap">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+            <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+            <line x1="6" y1="6" x2="6.01" y2="6"></line>
+            <line x1="6" y1="18" x2="6.01" y2="18"></line>
+          </svg>
+        </div>
+        <h3 class="arch-title">SBE v1 Zero-Copy Codec</h3>
+        <p class="arch-body">
+          Simple Binary Encoding formats quotes directly into off-heap direct byte buffers (<code>UnsafeBuffer</code>). Eliminates heap garbage collector allocation pauses completely in the critical broadcast path.
+        </p>
+      </div>
+
+      <div class="arch-card">
         <div class="arch-icon-wrap">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="16 18 22 12 16 6"></polyline>
             <polyline points="8 6 2 12 8 18"></polyline>
           </svg>
         </div>
-        <h3 class="arch-title">Zero-Allocation SBE v1</h3>
-        <p class="arch-text">
-          Simple Binary Encoding (SBE) compiles binary flyweights backed by Agrona <code>UnsafeBuffer</code>. Encodes prices as scaled <code>uint64</code> (factor 10^4) and nanosecond epoch timestamps in a fixed 64-byte frame.
+        <h3 class="arch-title">Java 25 Virtual Threads</h3>
+        <p class="arch-body">
+          Lightweight <code>Thread.ofVirtual()</code> orchestration handles 10,000+ persistent Server-Sent Event (SSE) client streams without thread pool exhaustion or blocking kernel OS threads.
         </p>
-        <div class="arch-tags">
-          <span class="arch-tag-pill">64-Byte Message</span>
-          <span class="arch-tag-pill">Agrona DirectBuffer</span>
-          <span class="arch-tag-pill">0 Heap Garbage</span>
-        </div>
       </div>
 
-      <!-- 3: Aeron Archiving Media Driver -->
-      <div class="arch-card purple">
+      <div class="arch-card">
         <div class="arch-icon-wrap">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
           </svg>
         </div>
-        <h3 class="arch-title">Embedded Aeron Media Driver</h3>
-        <p class="arch-text">
-          Streams market data across processes via POSIX shared memory ring buffers (<code>/dev/shm</code>) using Real Logic Aeron. Achieves sub-microsecond IPC transit latency with zero thread contention.
+        <h3 class="arch-title">Two-Tier Nginx Ingress</h3>
+        <p class="arch-body">
+          Internal Nginx reverse proxy fronts the Java engine. Delivers asset gzip compression, buffers-free SSE streaming (<code>proxy_buffering off;</code>), and shields the internal Aeron media driver threads.
         </p>
-        <div class="arch-tags">
-          <span class="arch-tag-pill">aeron:ipc?stream-id=1001</span>
-          <span class="arch-tag-pill">&lt; 1 &mu;s Transit</span>
-          <span class="arch-tag-pill">Archiving Driver</span>
-        </div>
-      </div>
-
-      <!-- 4: SSE Trading Desk -->
-      <div class="arch-card amber">
-        <div class="arch-icon-wrap">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-            <line x1="8" y1="21" x2="16" y2="21"></line>
-            <line x1="12" y1="17" x2="12" y2="21"></line>
-          </svg>
-        </div>
-        <h3 class="arch-title">Optional SSE Trading Desk</h3>
-        <p class="arch-text">
-          Embedded HTTP server powered by Java 25 virtual threads multicasting Server-Sent Events (SSE). Seamlessly feeds TradingView Lightweight Charts v4 with sub-millisecond browser dispatch.
-        </p>
-        <div class="arch-tags">
-          <span class="arch-tag-pill">Virtual Threads</span>
-          <span class="arch-tag-pill">Lightweight Charts v4</span>
-          <span class="arch-tag-pill">Dynamic Watchlist</span>
-        </div>
-      </div>
-
-      <!-- 5: Docker & Nginx Containerization -->
-      <div class="arch-card cyan">
-        <div class="arch-icon-wrap">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-          </svg>
-        </div>
-        <h3 class="arch-title">Docker & Nginx Pipeline</h3>
-        <p class="arch-text">
-          Containerized with 512MB dedicated shared memory allocation (<code>shm_size: 512m</code>) and an Nginx reverse proxy configured with <code>proxy_buffering off</code> for zero-latency SSE delivery.
-        </p>
-        <div class="arch-tags">
-          <span class="arch-tag-pill">docker compose</span>
-          <span class="arch-tag-pill">shm_size: 512m</span>
-          <span class="arch-tag-pill">Nginx Micro-buffering Off</span>
-        </div>
-      </div>
-
-      <!-- 6: Multi-Agent Development -->
-      <div class="arch-card emerald">
-        <div class="arch-icon-wrap">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="2" y1="12" x2="22" y2="12"></line>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-          </svg>
-        </div>
-        <h3 class="arch-title">Engineered by Autonomous Agents</h3>
-        <p class="arch-text">
-          Architected and verified by specialized engineering agents (Ingestion Provider, Aeron Bus Engineer, Broadcaster, and UI Implementer) enforcing interface contracts and test suites.
-        </p>
-        <div class="arch-tags">
-          <span class="arch-tag-pill">AGENTS.md</span>
-          <span class="arch-tag-pill">Automated Verification</span>
-          <span class="arch-tag-pill">Zero Regressions</span>
-        </div>
       </div>
     </div>
   </section>
 
-  <!-- Interactive Benchmark Comparison Section -->
+  <!-- =========================================================
+       BENCHMARKS SECTION
+       ========================================================= -->
   <section id="benchmarks" class="content-section">
     <div class="section-header">
       <span class="section-tag">Performance Verification</span>
-      <h2 class="section-title">Benchmark: Aeron IPC vs REST/WebSocket JSON</h2>
+      <h2 class="section-title">Aeron IPC vs Traditional Architecture</h2>
       <p class="section-subtitle">
-        Comparing traditional broker web socket architectures against Aeron IPC and binary SBE v1 encoding.
+        Empirical comparison between embedded Aeron shared memory and typical WebSocket/JSON financial brokers.
       </p>
     </div>
 
-    <div class="benchmark-table-box">
-      <table class="bench-table">
+    <div class="benchmarks-table-wrap">
+      <table class="benchmarks-table">
         <thead>
           <tr>
             <th>Architecture Dimension</th>
-            <th>Traditional REST / WS JSON</th>
-            <th>Aeron IPC + SBE v1</th>
-            <th>Performance Gain</th>
+            <th>Track My Market Engine</th>
+            <th>Traditional Broker REST / WebSockets</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td class="bench-metric-name">IPC Transit Latency (p50)</td>
-            <td><span class="bench-badge-loss">1,850 &mu;s (1.85 ms)</span></td>
-            <td><span class="bench-badge-win">0.38 &mu;s (380 ns)</span></td>
-            <td class="mono" style="color:var(--accent-emerald); font-weight:700;">4,868x Faster</td>
+            <td><strong>Bus Transit Latency</strong></td>
+            <td><strong class="mono" style="color:var(--accent-emerald)">&lt; 850 nanoseconds (0.85 &mu;s)</strong></td>
+            <td class="mono" style="color:var(--text-dim)">2.5 &ndash; 15.0 milliseconds</td>
           </tr>
           <tr>
-            <td class="bench-metric-name">99.9th Percentile Jitter (p99.9)</td>
-            <td><span class="bench-badge-loss">24,500 &mu;s (24.5 ms)</span></td>
-            <td><span class="bench-badge-win">1.82 &mu;s</span></td>
-            <td class="mono" style="color:var(--accent-emerald); font-weight:700;">13,460x Lower Jitter</td>
+            <td><strong>Garbage Collector Stalls</strong></td>
+            <td><strong class="mono" style="color:var(--accent-emerald)">0.00 ms (Zero Heap Allocation)</strong></td>
+            <td class="mono" style="color:var(--accent-crimson)">Periodic Stop-The-World (5 &ndash; 80 ms)</td>
           </tr>
           <tr>
-            <td class="bench-metric-name">JVM Heap Allocation / Tick</td>
-            <td><span class="bench-badge-loss">3,420 Bytes / tick</span></td>
-            <td><span class="bench-badge-win">0 Bytes (Off-Heap)</span></td>
-            <td class="mono" style="color:var(--accent-emerald); font-weight:700;">100% GC-Free</td>
+            <td><strong>Message Serialization</strong></td>
+            <td><strong style="color:var(--accent-cyan)">SBE v1 (Direct Off-Heap UnsafeBuffer)</strong></td>
+            <td>JSON / XML (Heavy CPU String Parsing)</td>
           </tr>
           <tr>
-            <td class="bench-metric-name">Wire Serialization Size</td>
-            <td><span class="bench-badge-loss">480 Bytes (JSON)</span></td>
-            <td><span class="bench-badge-win">64 Bytes (SBE Binary)</span></td>
-            <td class="mono" style="color:var(--accent-emerald); font-weight:700;">86.7% Payload Reduction</td>
+            <td><strong>Client Stream Concurrency</strong></td>
+            <td><strong style="color:var(--accent-cyan)">10,000+ Java 25 Virtual Threads</strong></td>
+            <td>Limited by OS Platform Thread Stack Memory</td>
           </tr>
           <tr>
-            <td class="bench-metric-name">Max Throughput (Single Core)</td>
-            <td><span class="bench-badge-loss">42,000 msgs/sec</span></td>
-            <td><span class="bench-badge-win">12,500,000+ msgs/sec</span></td>
-            <td class="mono" style="color:var(--accent-emerald); font-weight:700;">297x Higher Throughput</td>
-          </tr>
-          <tr>
-            <td class="bench-metric-name">Demat & KYC Prerequisites</td>
-            <td><span class="bench-badge-loss">Mandatory (Broker KYC / API key)</span></td>
-            <td><span class="bench-badge-win">Zero KYC / No Demat</span></td>
-            <td class="mono" style="color:var(--accent-cyan); font-weight:700;">Zero Friction</td>
+            <td><strong>Data Ingestion Friction</strong></td>
+            <td><strong style="color:var(--accent-emerald)">Zero KYC / No Demat Required</strong></td>
+            <td>Mandatory Broker Demat KYC &amp; Paid APIs</td>
           </tr>
         </tbody>
       </table>
     </div>
-
-    <!-- Interactive Savings Calculator -->
-    <div class="calc-card">
-      <div class="calc-inputs">
-        <h3 style="font-size:1.15rem; font-weight:700;">Simulate Garbage Collector & Throughput Savings</h3>
-        <p style="font-size:0.85rem; color:var(--text-muted);">
-          Adjust the tick rate slider to observe how much memory churn and network serialization overhead you eliminate with SBE v1:
-        </p>
-        
-        <div class="calc-slider-group">
-          <div class="calc-slider-label">
-            <span>Tick Ingestion Rate:</span>
-            <span id="slider-val" class="mono" style="color:var(--accent-cyan)">5,000 ticks/sec</span>
-          </div>
-          <input type="range" id="rate-slider" class="calc-slider" min="500" max="50000" step="500" value="5000">
-        </div>
-      </div>
-
-      <div class="calc-outputs">
-        <div class="calc-res-item">
-          <div id="calc-gc-saved" class="calc-res-val mono">59.1 GB</div>
-          <div class="calc-res-label">Heap Garbage Avoided / Hr</div>
-        </div>
-        <div class="calc-res-item">
-          <div id="calc-wire-saved" class="calc-res-val mono" style="color:var(--accent-emerald);">7.48 GB</div>
-          <div class="calc-res-label">Bandwidth Saved / Hr</div>
-        </div>
-        <div class="calc-res-item">
-          <div id="calc-latency-diff" class="calc-res-val mono" style="color:var(--accent-amber);">&gt; 1,840 &mu;s</div>
-          <div class="calc-res-label">Saved Transit Latency / Msg</div>
-        </div>
-        <div class="calc-res-item">
-          <div class="calc-res-val mono" style="color:var(--accent-purple);">0.00 ms</div>
-          <div class="calc-res-label">GC Stop-The-World Pauses</div>
-        </div>
-      </div>
-    </div>
   </section>
 
-  <!-- Quickstart Guide Section -->
+  <!-- =========================================================
+       QUICKSTART SECTION
+       ========================================================= -->
   <section id="quickstart" class="content-section">
     <div class="section-header">
-      <span class="section-tag">Developer Quickstart</span>
-      <h2 class="section-title">Up and Running in 60 Seconds</h2>
+      <span class="section-tag">Deployment Guide</span>
+      <h2 class="section-title">Get Started in 60 Seconds</h2>
       <p class="section-subtitle">
-        Spin up the complete market data engine with a single Docker command or run locally with the embedded Gradle toolchain.
+        Launch the complete containerized stack with one command or run the native Java 25 binary.
       </p>
     </div>
 
     <div class="quickstart-box">
-      <div class="qs-tabs">
-        <button class="qs-tab-btn active" data-tab="docker">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
-          </svg>
-          <span>Docker Compose (Recommended)</span>
-        </button>
-        <button class="qs-tab-btn" data-tab="gradle-ui">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="4 17 10 11 4 5"></polyline>
-            <line x1="12" y1="19" x2="20" y2="19"></line>
-          </svg>
-          <span>Local Gradle with Web UI</span>
-        </button>
-        <button class="qs-tab-btn" data-tab="gradle-cli">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
-          </svg>
-          <span>Headless CLI Mode</span>
-        </button>
-        <button class="qs-tab-btn" data-tab="custom-env">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-          <span>Custom Symbols Configuration</span>
-        </button>
+      <div class="qs-nav">
+        <button class="qs-tab-btn active" data-tab="docker">Docker Compose (Recommended)</button>
+        <button class="qs-tab-btn" data-tab="gradle-ui">Local Gradle (Web UI)</button>
+        <button class="qs-tab-btn" data-tab="gradle-cli">Headless CLI Terminal</button>
       </div>
 
-      <div class="qs-code-content">
-        <button class="btn-copy" id="btn-copy-code">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-          </svg>
-          <span id="copy-btn-text">Copy</span>
-        </button>
+      <div class="qs-code-pane" id="code-docker">
+        <span class="code-comment"># 1. Clone repository</span><br>
+        <span class="code-cmd">git clone</span> https://github.com/abhishekraha/track-my-market.git<br>
+        <span class="code-cmd">cd</span> track-my-market<br><br>
+        <span class="code-comment"># 2. Launch containerized Aeron engine & Nginx reverse proxy</span><br>
+        <span class="code-cmd">docker compose up -d</span><br><br>
+        <span class="code-comment"># 3. Access the trading desk in your browser:</span><br>
+        <span class="code-comment"># http://localhost:8081/ (Nginx reverse proxy with gzip on port 8081)</span><br>
+        <span class="code-comment"># http://localhost:8080/ (Raw Java Virtual Thread engine on port 8080)</span>
+      </div>
 
-        <!-- Tab 1: Docker -->
-        <div class="qs-snippet-block active" id="tab-docker">
-          <pre class="code-block"><code><span class="code-comment"># 1. Clone the repository</span>
-<span class="code-cmd">git clone</span> https://github.com/abhishekraha/track-my-market.git
-<span class="code-cmd">cd</span> track-my-market
+      <div class="qs-code-pane" id="code-gradle-ui" style="display:none;">
+        <span class="code-comment"># 1. Ensure JAVA_HOME points to Java 25:</span><br>
+        <span class="code-cmd">$env:JAVA_HOME =</span> "$HOME\.jdks\jdk-25.0.4-lite"<br><br>
+        <span class="code-comment"># 2. Compile SBE stubs and launch trading desk</span><br>
+        <span class="code-cmd">./gradlew run --args="--enable-ui"</span><br><br>
+        <span class="code-comment"># 3. Open http://localhost:8080/ in browser</span>
+      </div>
 
-<span class="code-comment"># 2. Launch containerized Aeron engine & Nginx reverse proxy</span>
-<span class="code-cmd">docker compose up -d</span>
-
-<span class="code-comment"># 3. Access live trading desk at:</span>
-<span class="code-comment"># http://localhost:8081/ (Nginx reverse proxy with gzip on port 8081)</span>
-<span class="code-comment"># http://localhost:8080/ (Raw Java Aeron Virtual Thread engine on port 8080)</span></code></pre>
-        </div>
-
-        <!-- Tab 2: Gradle UI -->
-        <div class="qs-snippet-block" id="tab-gradle-ui">
-          <pre class="code-block"><code><span class="code-comment"># 1. Clone repository</span>
-<span class="code-cmd">git clone</span> https://github.com/abhishekraha/track-my-market.git
-<span class="code-cmd">cd</span> track-my-market
-
-<span class="code-comment"># 2. Compile SBE stubs and run with Web UI enabled</span>
-<span class="code-cmd">./gradlew run --args="--enable-ui"</span>
-
-<span class="code-comment"># 3. Open browser desk at http://localhost:8080/</span></code></pre>
-        </div>
-
-        <!-- Tab 3: Gradle CLI -->
-        <div class="qs-snippet-block" id="tab-gradle-cli">
-          <pre class="code-block"><code><span class="code-comment"># Launch low-footprint console terminal consumer</span>
-<span class="code-cmd">./gradlew run</span>
-
-<span class="code-comment"># Streams formatted quotes with nanosecond Aeron transit latencies to stdout</span></code></pre>
-        </div>
-
-        <!-- Tab 4: Custom Env -->
-        <div class="qs-snippet-block" id="tab-custom-env">
-          <pre class="code-block"><code><span class="code-comment"># Configure custom NSE/BSE tickers and polling frequency via environment:</span>
-<span class="code-cmd">export</span> MARKET_SYMBOLS="RELIANCE.NS,TCS.NS,INFY.NS,HDFCBANK.NS,TATAMOTORS.NS,BAJFINANCE.NS"
-<span class="code-cmd">export</span> MARKET_POLL_INTERVAL_MS=2000
-<span class="code-cmd">export</span> MARKET_UI_ENABLED=true
-
-<span class="code-cmd">docker compose up -d</span></code></pre>
-        </div>
+      <div class="qs-code-pane" id="code-gradle-cli" style="display:none;">
+        <span class="code-comment"># Launch low-footprint console terminal consumer</span><br>
+        <span class="code-cmd">./gradlew run</span><br><br>
+        <span class="code-comment"># Or stream live logs from the running Docker container:</span><br>
+        <span class="code-cmd">docker compose logs -f track-my-market</span>
       </div>
     </div>
   </section>
@@ -1755,7 +1538,7 @@
     <div class="footer-inner">
       <div>
         <strong style="color:#ffffff;">Track My Market</strong> &mdash; Ultra-Low Latency SBE / Aeron Financial Engine.
-        <div style="margin-top:0.25rem;">Open source under the Apache 2.0 / MIT License.</div>
+        <div style="margin-top:0.25rem;">Open source under the Apache 2.0 License.</div>
       </div>
 
       <ul class="footer-links">
@@ -1766,398 +1549,245 @@
     </div>
   </footer>
 
-  <!-- Interactive Terminal Simulator & Chart JavaScript -->
+  <!-- =========================================================
+       REAL TRADINGVIEW LIGHTWEIGHT CHARTS INTEGRATION
+       ========================================================= -->
   <script>
-    // --- Data Definitions ---
-    const MOCK_STOCKS = [
-      { symbol: 'RELIANCE.NS', name: 'Reliance Industries Ltd.', basePrice: 1418.50, isin: 'INE002A01018', sedol: '6724590', ric: 'RELI.NS', volatility: 0.003 },
-      { symbol: 'TCS.NS', name: 'Tata Consultancy Services', basePrice: 4124.00, isin: 'INE467B01029', sedol: '6712345', ric: 'TCS.NS', volatility: 0.0025 },
-      { symbol: 'INFY.NS', name: 'Infosys Limited', basePrice: 1892.30, isin: 'INE009A01021', sedol: '6456789', ric: 'INFY.NS', volatility: 0.0035 },
-      { symbol: 'HDFCBANK.NS', name: 'HDFC Bank Limited', basePrice: 1745.20, isin: 'INE040A01034', sedol: '6432109', ric: 'HDBK.NS', volatility: 0.002 },
-      { symbol: 'TATAMOTORS.NS', name: 'Tata Motors Limited', basePrice: 882.10, isin: 'INE155A01022', sedol: '6876543', ric: 'TAMO.NS', volatility: 0.0045 },
-      { symbol: 'BAJFINANCE.NS', name: 'Bajaj Finance Limited', basePrice: 7105.00, isin: 'INE296A01024', sedol: '6123987', ric: 'BJFN.NS', volatility: 0.004 }
-    ];
-
-    let currentPrices = {};
-    MOCK_STOCKS.forEach(s => { currentPrices[s.symbol] = s.basePrice; });
-
-    let simActive = true;
-    let simIntervalMs = 400;
-    let simTimer = null;
-    let totalTicksCount = 14892;
-
-    // --- DOM Elements ---
-    const feedBody = document.getElementById('sim-feed-body');
-    const telBusLatency = document.getElementById('tel-bus-latency');
-    const telFetchRtt = document.getElementById('tel-fetch-rtt');
-    const telTotalTicks = document.getElementById('tel-total-ticks');
-    const btnToggleSim = document.getElementById('btn-toggle-sim');
-    const simIcon = document.getElementById('sim-icon');
-    const simLabel = document.getElementById('sim-label');
-    const btnBurst = document.getElementById('btn-burst');
-    const simSpeedSelect = document.getElementById('sim-speed-select');
-    const simViewMode = document.getElementById('sim-view-mode');
-    const simFeedTable = document.getElementById('sim-feed-table');
-    const simRawView = document.getElementById('sim-raw-view');
-    const rawHexOutput = document.getElementById('raw-hex-output');
-
-    // --- Simulation Tick Generator ---
-    function generateTick() {
-      const stock = MOCK_STOCKS[Math.floor(Math.random() * MOCK_STOCKS.length)];
-      const changePct = (Math.random() - 0.485) * stock.volatility * 2;
-      const oldPrice = currentPrices[stock.symbol];
-      const newPrice = Math.max(1, +(oldPrice * (1 + changePct)).toFixed(2));
-      const diff = newPrice - oldPrice;
-      const diffPct = ((newPrice - stock.basePrice) / stock.basePrice) * 100;
-      currentPrices[stock.symbol] = newPrice;
-
-      // Nanosecond latency jitter (310ns - 680ns)
-      const busLatencyNs = Math.floor(310 + Math.random() * 370);
-      const ingressRttMs = Math.floor(95 + Math.random() * 45);
-      totalTicksCount++;
-
-      // Update Telemetry
-      telBusLatency.textContent = busLatencyNs + ' ns';
-      telFetchRtt.textContent = ingressRttMs + ' ms';
-      telTotalTicks.textContent = totalTicksCount.toLocaleString();
-
-      // Table Row
-      const isUp = diff >= 0;
-      const tr = document.createElement('tr');
-      tr.className = isUp ? 'feed-row-flash-up' : 'feed-row-flash-down';
-      tr.innerHTML = `
-        <td><strong style="color:#ffffff">${stock.symbol}</strong></td>
-        <td class="mono">₹ ${newPrice.toFixed(2)}</td>
-        <td class="mono ${isUp ? 'ticker-up' : 'ticker-down'}">${isUp ? '+' : ''}${diffPct.toFixed(2)}%</td>
-        <td class="mono" style="color:var(--accent-cyan)">${busLatencyNs} ns</td>
-        <td class="mono">${ingressRttMs} ms</td>
-        <td class="mono" style="color:var(--text-dim)">${stock.isin} / ${stock.sedol}</td>
-      `;
-
-      if (feedBody.firstChild) {
-        feedBody.insertBefore(tr, feedBody.firstChild);
-      } else {
-        feedBody.appendChild(tr);
-      }
-
-      // Limit feed table rows to 12
-      while (feedBody.children.length > 12) {
-        feedBody.removeChild(feedBody.lastChild);
-      }
-
-      // Hex frame generation
-      const hexPrice = (BigInt(Math.round(newPrice * 10000))).toString(16).padStart(16, '0');
-      const hexTime = (BigInt(Date.now()) * 1000000n).toString(16).padStart(16, '0');
-      const hexLine = `[0x0000]  00 01 00 01 40 00 00 00  ${hexPrice.match(/../g).join(' ')}  |........${stock.symbol.slice(0, 4)}...|<br>` +
-                      `[0x0010]  ${hexTime.match(/../g).join(' ')}  01 00 00 00 00 00 00 00  |${stock.isin.slice(0, 8)}........|`;
-      rawHexOutput.innerHTML = hexLine;
-    }
-
-    // --- Simulation Controls ---
-    function startSim() {
-      if (simTimer) clearInterval(simTimer);
-      simTimer = setInterval(generateTick, simIntervalMs);
-    }
-
-    function stopSim() {
-      if (simTimer) clearInterval(simTimer);
-      simTimer = null;
-    }
-
-    btnToggleSim.addEventListener('click', () => {
-      simActive = !simActive;
-      if (simActive) {
-        btnToggleSim.classList.add('active');
-        simIcon.innerHTML = '&#9646;&#9646;';
-        simLabel.textContent = 'Pause Stream';
-        startSim();
-      } else {
-        btnToggleSim.classList.remove('active');
-        simIcon.innerHTML = '&#9654;';
-        simLabel.textContent = 'Resume Stream';
-        stopSim();
-      }
+    // Tab switching for Quickstart
+    document.querySelectorAll('.qs-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.qs-tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.getAttribute('data-tab');
+        document.getElementById('code-docker').style.display = (tab === 'docker') ? 'block' : 'none';
+        document.getElementById('code-gradle-ui').style.display = (tab === 'gradle-ui') ? 'block' : 'none';
+        document.getElementById('code-gradle-cli').style.display = (tab === 'gradle-cli') ? 'block' : 'none';
+      });
     });
 
-    simSpeedSelect.addEventListener('change', (e) => {
-      simIntervalMs = parseInt(e.target.value, 10);
-      if (simActive) startSim();
-    });
-
-    btnBurst.addEventListener('click', () => {
-      const origText = btnBurst.innerHTML;
-      btnBurst.innerHTML = '<span>&#9203; Ingesting 10k...</span>';
-      btnBurst.disabled = true;
-
-      setTimeout(() => {
-        totalTicksCount += 10000;
-        telTotalTicks.textContent = totalTicksCount.toLocaleString();
-        telBusLatency.textContent = '298 ns (Peak)';
-        for (let i = 0; i < 5; i++) generateTick();
-        btnBurst.innerHTML = '<span>&#10003; 10,000 Ingested!</span>';
-        setTimeout(() => {
-          btnBurst.innerHTML = origText;
-          btnBurst.disabled = false;
-        }, 1200);
-      }, 300);
-    });
-
-    simViewMode.addEventListener('change', (e) => {
-      if (e.target.value === 'raw') {
-        simFeedTable.style.display = 'none';
-        simRawView.style.display = 'block';
-      } else {
-        simFeedTable.style.display = 'table';
-        simRawView.style.display = 'none';
-      }
-    });
-
-    // Populate initial rows
-    for (let i = 0; i < 6; i++) generateTick();
-    startSim();
-
-    // --- Timeframe Interactive Canvas Chart ---
-    const canvas = document.getElementById('timeframe-canvas');
-    const ctx = canvas.getContext('2d');
-    const tfButtons = document.querySelectorAll('.tf-btn');
-    const hudTime = document.getElementById('hud-time');
-    const hudPrice = document.getElementById('hud-price');
-    const hudHigh = document.getElementById('hud-high');
-    const hudLow = document.getElementById('hud-low');
-    const hudLat = document.getElementById('hud-lat');
-    const chartHud = document.getElementById('chart-hud');
-
+    // --- TradingView Lightweight Charts Setup ---
+    let tvChart = null;
+    let tvAreaSeries = null;
+    let currentSymbol = 'TCS.NS';
+    let currentCurrency = 'INR';
+    let isLocalCurrency = false;
+    let isLocalTz = true;
     let currentTf = '1D';
-    let chartData = [];
-    let mousePos = { x: -1, y: -1, active: false };
 
-    function resizeCanvas() {
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * window.devicePixelRatio;
-      canvas.height = rect.height * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-      renderChart();
-    }
+    const SYMBOL_DATA = {
+      'TCS.NS': { basePrice: 4124.00, high: 4148.50, low: 4095.10, curr: 'INR', symChar: '₹', points: 65, spread: 35 },
+      'RELIANCE.NS': { basePrice: 1418.50, high: 1426.00, low: 1404.20, curr: 'INR', symChar: '₹', points: 65, spread: 18 },
+      'INFY.NS': { basePrice: 1892.30, high: 1910.00, low: 1880.00, curr: 'INR', symChar: '₹', points: 65, spread: 22 },
+      'HDFCBANK.NS': { basePrice: 1745.20, high: 1758.00, low: 1736.00, curr: 'INR', symChar: '₹', points: 65, spread: 15 },
+      'AAPL': { basePrice: 234.80, high: 236.40, low: 232.10, curr: 'USD', symChar: '$', points: 65, spread: 3.5 }
+    };
 
-    function generateChartData(tf) {
-      const points = 70;
-      let startPrice = 1380 + Math.random() * 40;
-      let data = [];
-      let baseVol = 40000;
-      let timeStep = 60 * 1000; // 1 min
+    function generateRealisticHistory(sym) {
+      const info = SYMBOL_DATA[sym] || SYMBOL_DATA['TCS.NS'];
+      const data = [];
+      const now = Math.floor(Date.now() / 1000);
+      const step = 300; // 5 min candles for 1D
+      let price = info.basePrice - (info.spread * 0.4);
 
-      if (tf === '1H') timeStep = 60 * 1000;
-      else if (tf === '1D') timeStep = 5 * 60 * 1000;
-      else if (tf === '1W') timeStep = 30 * 60 * 1000;
-      else if (tf === '1M') timeStep = 4 * 3600 * 1000;
-      else if (tf === '1Y' || tf === '5Y' || tf === 'ALL') timeStep = 24 * 3600 * 1000;
-
-      let now = Date.now();
-      let cur = startPrice;
-
-      for (let i = points - 1; i >= 0; i--) {
-        const drift = (Math.random() - 0.48) * (startPrice * 0.012);
-        cur += drift;
-        const high = cur + Math.random() * (startPrice * 0.006);
-        const low = cur - Math.random() * (startPrice * 0.006);
-        data.push({
-          time: new Date(now - i * timeStep),
-          price: cur,
-          high: Math.max(high, cur),
-          low: Math.min(low, cur),
-          volume: Math.floor(baseVol * (0.6 + Math.random() * 0.8))
-        });
+      for (let i = info.points; i >= 0; i--) {
+        const time = now - (i * step);
+        const change = (Math.sin(i * 0.35) * (info.spread * 0.25)) + ((Math.random() - 0.48) * (info.spread * 0.15));
+        price += change;
+        data.push({ time: time, value: Math.max(10, +price.toFixed(2)) });
       }
       return data;
     }
 
-    function renderChart() {
-      const w = canvas.getBoundingClientRect().width;
-      const h = canvas.getBoundingClientRect().height;
-      ctx.clearRect(0, 0, w, h);
+    function initTradingViewPreview() {
+      const container = document.getElementById('tradingview-chart-box');
+      if (!window.LightweightCharts || !container) return;
 
-      if (!chartData || chartData.length === 0) return;
+      tvChart = LightweightCharts.createChart(container, {
+        width: container.clientWidth || 900,
+        height: 380,
+        layout: {
+          background: { color: '#0f172a' },
+          textColor: '#94a3b8',
+          fontSize: 12,
+          fontFamily: "'JetBrains Mono', Consolas, monospace"
+        },
+        grid: {
+          vertLines: { color: 'rgba(30, 41, 59, 0.7)' },
+          horzLines: { color: 'rgba(30, 41, 59, 0.7)' }
+        },
+        rightPriceScale: {
+          borderColor: '#334155',
+          textColor: '#94a3b8'
+        },
+        timeScale: {
+          borderColor: '#334155',
+          textColor: '#94a3b8',
+          timeVisible: true,
+          secondsVisible: false
+        }
+      });
 
-      const prices = chartData.map(d => d.price);
-      const minPrice = Math.min(...chartData.map(d => d.low)) * 0.998;
-      const maxPrice = Math.max(...chartData.map(d => d.high)) * 1.002;
-      const priceRange = maxPrice - minPrice;
+      tvAreaSeries = tvChart.addAreaSeries({
+        topColor: 'rgba(56, 189, 248, 0.45)',
+        bottomColor: 'rgba(56, 189, 248, 0.02)',
+        lineColor: '#38bdf8',
+        lineWidth: 2,
+        priceFormat: {
+          type: 'custom',
+          formatter: p => '₹ ' + Number(p).toFixed(2),
+          minMove: 0.05
+        }
+      });
 
-      // Background horizontal grid lines
-      ctx.strokeStyle = '#151e30';
-      ctx.lineWidth = 1;
-      const gridSteps = 5;
-      for (let i = 0; i <= gridSteps; i++) {
-        const y = (h - 40) * (i / gridSteps) + 15;
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(w, y);
-        ctx.stroke();
+      const pts = generateRealisticHistory('TCS.NS');
+      tvAreaSeries.setData(pts);
+      tvChart.timeScale().fitContent();
 
-        // Price labels
-        const pVal = maxPrice - (i / gridSteps) * priceRange;
-        ctx.fillStyle = '#475569';
-        ctx.font = '10px JetBrains Mono';
-        ctx.fillText('₹ ' + pVal.toFixed(1), w - 55, y - 4);
+      // Crosshair tracking updating HUD
+      tvChart.subscribeCrosshairMove(param => {
+        if (!param || !param.point || !param.time) {
+          resetHudSummary();
+          return;
+        }
+        let price = null;
+        if (param.seriesData && param.seriesData.get) {
+          const val = param.seriesData.get(tvAreaSeries);
+          if (val != null) price = (typeof val === 'object' && val.value != null) ? val.value : val;
+        }
+        if (price != null) {
+          updateCrosshairHud(param.time, Number(price));
+        }
+      });
+
+      const resizeObserver = new ResizeObserver(entries => {
+        if (!entries || entries.length === 0 || !entries[0].contentRect) return;
+        const { width, height } = entries[0].contentRect;
+        if (width > 0 && height > 0) {
+          tvChart.applyOptions({ width: Math.round(width), height: Math.round(height) });
+        }
+      });
+      resizeObserver.observe(container);
+    }
+
+    function updateCrosshairHud(timeSec, price) {
+      const symChar = isLocalCurrency ? '₹' : (SYMBOL_DATA[currentSymbol]?.symChar || '₹');
+      document.getElementById('hud-stat-point').textContent = symChar + ' ' + Number(price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      
+      const d = new Date(timeSec * 1000);
+      document.getElementById('hud-stat-time').textContent = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+      
+      const first = SYMBOL_DATA[currentSymbol]?.basePrice || price;
+      const diff = price - first;
+      const pct = (diff / first) * 100;
+      const sign = pct >= 0 ? '+' : '';
+      const chgEl = document.getElementById('hud-stat-chg');
+      chgEl.textContent = `${sign}${pct.toFixed(2)}%`;
+      chgEl.className = 'mono ' + (pct >= 0 ? 'val-green' : 'val-red');
+    }
+
+    function resetHudSummary() {
+      const info = SYMBOL_DATA[currentSymbol] || SYMBOL_DATA['TCS.NS'];
+      const symChar = isLocalCurrency ? '₹' : info.symChar;
+      document.getElementById('hud-stat-point').textContent = symChar + ' ' + Number(info.basePrice).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('hud-stat-high').textContent = symChar + ' ' + Number(info.high).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('hud-stat-low').textContent = symChar + ' ' + Number(info.low).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('hud-stat-time').textContent = '15:28:45';
+    }
+
+    function switchSymbol(symbol, company, price, change, isin, sedol, ric, curr) {
+      currentSymbol = symbol;
+      currentCurrency = curr;
+
+      document.getElementById('active-symbol-name').textContent = symbol;
+      document.getElementById('active-company-name').textContent = company;
+      document.getElementById('active-isin').textContent = isin;
+      document.getElementById('active-sedol').textContent = sedol;
+      document.getElementById('active-ric').textContent = ric;
+
+      const symChar = isLocalCurrency ? '₹' : (curr === 'USD' ? '$' : '₹');
+      document.getElementById('active-price-val').textContent = symChar + ' ' + Number(price).toFixed(2);
+      
+      const chgEl = document.getElementById('active-change-val');
+      chgEl.textContent = change;
+      chgEl.className = 'active-symbol-change mono ' + (change.startsWith('+') ? 'val-green' : 'val-red');
+
+      // Update active row highlighting
+      document.querySelectorAll('#watchlist-body tr').forEach(tr => {
+        if (tr.querySelector('.row-ticker')?.textContent === symbol) {
+          tr.classList.add('active-row');
+        } else {
+          tr.classList.remove('active-row');
+        }
+      });
+
+      // Update TradingView Chart
+      if (tvAreaSeries) {
+        tvAreaSeries.applyOptions({
+          priceFormat: {
+            type: 'custom',
+            formatter: p => symChar + ' ' + Number(p).toFixed(2),
+            minMove: 0.05
+          }
+        });
+        const pts = generateRealisticHistory(symbol);
+        tvAreaSeries.setData(pts);
+        tvChart.timeScale().fitContent();
       }
 
-      // Draw Volume histogram at bottom
-      const maxVol = Math.max(...chartData.map(d => d.volume));
-      const colWidth = (w - 70) / chartData.length;
-      chartData.forEach((d, i) => {
-        const x = i * colWidth + 10;
-        const volH = (d.volume / maxVol) * 45;
-        ctx.fillStyle = d.price >= (chartData[i-1]?.price || d.price) ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.2)';
-        ctx.fillRect(x, h - volH - 10, colWidth * 0.7, volH);
-      });
+      resetHudSummary();
+    }
 
-      // Draw Area Gradient under price line
-      const areaGrad = ctx.createLinearGradient(0, 0, 0, h - 50);
-      areaGrad.addColorStop(0, 'rgba(56, 189, 248, 0.28)');
-      areaGrad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
-
-      ctx.beginPath();
-      chartData.forEach((d, i) => {
-        const x = i * colWidth + 10;
-        const y = (h - 60) * (1 - (d.price - minPrice) / priceRange) + 15;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.lineTo((chartData.length - 1) * colWidth + 10, h - 20);
-      ctx.lineTo(10, h - 20);
-      ctx.closePath();
-      ctx.fillStyle = areaGrad;
-      ctx.fill();
-
-      // Draw Main Price Stroke
-      ctx.beginPath();
-      chartData.forEach((d, i) => {
-        const x = i * colWidth + 10;
-        const y = (h - 60) * (1 - (d.price - minPrice) / priceRange) + 15;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      });
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 2.2;
-      ctx.stroke();
-
-      // Render Crosshair if active
-      if (mousePos.active && mousePos.x >= 0 && mousePos.x <= w - 60) {
-        const idx = Math.min(chartData.length - 1, Math.max(0, Math.floor((mousePos.x - 10) / colWidth)));
-        const d = chartData[idx];
-        const dotX = idx * colWidth + 10;
-        const dotY = (h - 60) * (1 - (d.price - minPrice) / priceRange) + 15;
-
-        // Vertical line
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(dotX, 0);
-        ctx.lineTo(dotX, h);
-        ctx.stroke();
-
-        // Horizontal line
-        ctx.beginPath();
-        ctx.moveTo(0, dotY);
-        ctx.lineTo(w, dotY);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Intersection Beacon
-        ctx.beginPath();
-        ctx.arc(dotX, dotY, 5, 0, Math.PI * 2);
-        ctx.fillStyle = '#38bdf8';
-        ctx.fill();
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Update HUD
-        hudTime.textContent = d.time.toLocaleTimeString();
-        hudPrice.textContent = '₹ ' + d.price.toFixed(2);
-        hudHigh.textContent = '₹ ' + d.high.toFixed(2);
-        hudLow.textContent = '₹ ' + d.low.toFixed(2);
-        hudLat.textContent = (370 + Math.floor(Math.random() * 80)) + ' ns';
+    function toggleDemoTz() {
+      isLocalTz = !isLocalTz;
+      const badge = document.getElementById('demo-tz-badge');
+      if (isLocalTz) {
+        badge.textContent = 'LOCAL (IST)';
+        badge.className = 'toggle-badge active-local';
+      } else {
+        const isUs = currentSymbol === 'AAPL';
+        badge.textContent = isUs ? 'MARKET (ET)' : 'MARKET (IST)';
+        badge.className = 'toggle-badge';
       }
     }
 
-    canvas.addEventListener('mousemove', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      mousePos.x = e.clientX - rect.left;
-      mousePos.y = e.clientY - rect.top;
-      mousePos.active = true;
-      renderChart();
-    });
+    function toggleDemoCurr() {
+      isLocalCurrency = !isLocalCurrency;
+      const badge = document.getElementById('demo-curr-badge');
+      if (isLocalCurrency) {
+        badge.textContent = 'LOCAL (INR)';
+        badge.className = 'toggle-badge active-local';
+      } else {
+        badge.textContent = `NATIVE (${currentCurrency})`;
+        badge.className = 'toggle-badge';
+      }
+      switchSymbol(currentSymbol, document.getElementById('active-company-name').textContent, 
+        SYMBOL_DATA[currentSymbol]?.basePrice || 4124, 
+        document.getElementById('active-change-val').textContent, 
+        document.getElementById('active-isin').textContent, 
+        document.getElementById('active-sedol').textContent, 
+        document.getElementById('active-ric').textContent, 
+        currentCurrency
+      );
+    }
 
-    canvas.addEventListener('mouseleave', () => {
-      mousePos.active = false;
-      renderChart();
-    });
-
-    tfButtons.forEach(btn => {
+    // Timeframe selector clicks
+    document.querySelectorAll('#timeframe-buttons .btn-tf').forEach(btn => {
       btn.addEventListener('click', () => {
-        tfButtons.forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#timeframe-buttons .btn-tf').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        currentTf = btn.getAttribute('data-tf');
-        chartData = generateChartData(currentTf);
-        renderChart();
+        const tf = btn.getAttribute('data-tf').toUpperCase();
+        document.getElementById('hud-stat-tf').textContent = tf;
+        if (tvAreaSeries) {
+          const pts = generateRealisticHistory(currentSymbol);
+          tvAreaSeries.setData(pts);
+          tvChart.timeScale().fitContent();
+        }
       });
     });
 
-    chartData = generateChartData('1D');
-    window.addEventListener('resize', resizeCanvas);
-    setTimeout(resizeCanvas, 50);
-
-    // --- Interactive Savings Calculator ---
-    const rateSlider = document.getElementById('rate-slider');
-    const sliderVal = document.getElementById('slider-val');
-    const calcGcSaved = document.getElementById('calc-gc-saved');
-    const calcWireSaved = document.getElementById('calc-wire-saved');
-
-    function updateCalculator() {
-      const rate = parseInt(rateSlider.value, 10);
-      sliderVal.textContent = rate.toLocaleString() + ' ticks/sec';
-
-      // 3420 bytes JSON GC alloc vs 0 bytes SBE
-      const bytesGcPerSec = rate * 3420;
-      const bytesGcPerHour = bytesGcPerSec * 3600;
-      const gbGcPerHour = (bytesGcPerHour / (1024 ** 3)).toFixed(1);
-
-      // (480 bytes - 64 bytes) = 416 bytes wire saved
-      const wireSavedPerSec = rate * 416;
-      const wireSavedPerHour = wireSavedPerSec * 3600;
-      const gbWirePerHour = (wireSavedPerHour / (1024 ** 3)).toFixed(2);
-
-      calcGcSaved.textContent = gbGcPerHour + ' GB';
-      calcWireSaved.textContent = gbWirePerHour + ' GB';
-    }
-
-    rateSlider.addEventListener('input', updateCalculator);
-    updateCalculator();
-
-    // --- Quickstart Tab Switcher ---
-    const qsTabs = document.querySelectorAll('.qs-tab-btn');
-    const qsBlocks = document.querySelectorAll('.qs-snippet-block');
-    const btnCopyCode = document.getElementById('btn-copy-code');
-    const copyBtnText = document.getElementById('copy-btn-text');
-
-    qsTabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        qsTabs.forEach(t => t.classList.remove('active'));
-        qsBlocks.forEach(b => b.classList.remove('active'));
-        tab.classList.add('active');
-        const targetId = 'tab-' + tab.getAttribute('data-tab');
-        document.getElementById(targetId)?.classList.add('active');
-      });
-    });
-
-    btnCopyCode.addEventListener('click', () => {
-      const activeBlock = document.querySelector('.qs-snippet-block.active pre');
-      if (!activeBlock) return;
-      navigator.clipboard.writeText(activeBlock.innerText).then(() => {
-        copyBtnText.textContent = 'Copied!';
-        setTimeout(() => { copyBtnText.textContent = 'Copy'; }, 2000);
-      });
+    window.addEventListener('DOMContentLoaded', () => {
+      initTradingViewPreview();
+      resetHudSummary();
     });
   </script>
 </body>
