@@ -1864,6 +1864,21 @@
       return Number(price) * rate;
     }
 
+    function formatCurrency(val, symbol, forceNative = false) {
+      if (val == null || isNaN(val)) return '--';
+      const sym = symbol || state.activeSymbol || '';
+      const useNative = forceNative || state.currencyMode === 'native';
+      const targetCurr = useNative ? getNativeCurrency(sym) : state.userLocalCurrency;
+      const nativeCurr = getNativeCurrency(sym);
+      const rate = useNative ? 1.0 : getFxRate(nativeCurr, targetCurr);
+      const converted = Number(val) * rate;
+      const symbolChar = CURRENCY_SYMBOLS[targetCurr] || (targetCurr + ' ');
+      return symbolChar + ' ' + converted.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
     function updateToggleBadges() {
       const activeSym = state.activeSymbol || 'RELIANCE.NS';
       if (dom.tzModeBadge) {
