@@ -19,6 +19,7 @@ The goal of this subsystem is to provide an interactive, real-time web dashboard
 ## 2. Goals, Non-Goals & Anti-Goals
 
 ### Goals
+- **Decoupled & Optional Module:** The UI and streaming web server reside in an isolated module (`market.web`) that is **completely optional and disabled by default**. It is activated only when `--enable-ui` or `market.ui.enabled=true` / `MARKET_UI_ENABLED=true` is supplied. When disabled, the application runs headless with zero port binding and zero web memory overhead.
 - **Zero-Dependency Embedded Server:** Uses Java's embedded HTTP server (`com.sun.net.httpserver.HttpServer`) to serve static assets and handle Server-Sent Events (SSE) streaming (`text/event-stream`).
 - **Dynamic Watchlist Management:** REST endpoints (`GET /api/symbols`, `POST /api/symbols`, `DELETE /api/symbols/{symbol}`) to inspect, add, and remove monitored symbols on the fly, immediately updating `YahooFinanceProvider`.
 - **Low-Latency Broadcast Bridge:** An Aeron subscription component (`MarketStreamBroadcaster`) that decodes SBE ticks from the IPC bus and broadcasts JSON events to connected browser streams.
@@ -83,17 +84,21 @@ The goal of this subsystem is to provide an interactive, real-time web dashboard
 
 ### 4.1 Server Endpoints (`market.web.MarketHttpServer`)
 - `GET /` & `GET /index.html`: Serves the embedded single-page dashboard.
-- `GET /api/stream`: Server-Sent Events stream (`text/event-stream`). Dispatches:
-  ```json
-  event: tick
-  data: {"symbol":"RELIANCE.NS","price":2510.75,"isin":"INE002A01018","sedol":"6714072","ric":"RELI.NS","quoteTime":1730790000000,"fetchDurationMs":12.5,"busLatencyUs":4.2,"provider":"YAHOO"}
-  ```
+- `GET /api/stream`: Server-Sent Events stream (`text/event-stream`).
+  - **Initial Snapshot (Builder Decision):** Upon connection handshake, immediately sends an `initial-snapshot` event containing the latest cached quotes and latency stats for all currently monitored symbols so the UI renders immediately without waiting for the next tick.
+  - Followed by continuous live `tick` events:
+    ```json
+    event: tick
+    data: {"symbol":"RELIANCE.NS","price":2510.75,"isin":"INE002A01018","sedol":"6714072","ric":"RELI.NS","quoteTime":1730790000000,"fetchDurationMs":12.5,"busLatencyUs":4.2,"provider":"YAHOO"}
+    ```
 - `GET /api/symbols`: Returns JSON array of currently subscribed symbols: `["RELIANCE.NS", "TCS.NS", ...]`.
-- `POST /api/symbols`: Adds a new symbol (e.g. `{"symbol": "BAJFINANCE.NS"}`). Validates, invokes `provider.subscribe(...)`, and broadcasts an updated symbols event.
+- `POST /api/symbols`: Adds a new symbol (e.g. `{"symbol": "BAJFINANCE.NS"}`).
+  - **Validation & Dynamic Trigger (Builder Decision):** Performs immediate syntactic normalization (trimming, uppercase), adds the symbol to `YahooFinanceProvider`, triggers an immediate background poll, and returns HTTP 200 with the updated symbol list.
 - `DELETE /api/symbols/{symbol}`: Removes a symbol from active monitoring.
 
 ### 4.2 Broadcaster Bridge (`market.web.MarketStreamBroadcaster`)
 - Maintains a thread-safe set of connected SSE `HttpExchange` output streams (`CopyOnWriteArrayList<OutputStream>`).
+- Caches the latest `MarketTickView` per symbol in a concurrent map to supply initial snapshots to new clients.
 - Subscribes to the Aeron bus stream (`DEFAULT_STREAM_ID = 1001`).
 - On every tick fragment, calculates `busLatencyUs = (nowNs - ingressNs) / 1000.0`.
 - Serializes a compact JSON payload and flushes it across all connected clients. Dead client connections (e.g., closed browser tabs) are automatically detected and pruned.
@@ -101,10 +106,10 @@ The goal of this subsystem is to provide an interactive, real-time web dashboard
 ### 4.3 Web Dashboard UI (`src/main/resources/web/index.html`)
 - Built with standard HTML5, CSS Grid/Flexbox, and vanilla JavaScript (ES6).
 - **TradingView Lightweight Charts:** Embedded via CDN script tag with a local offline fallback.
-  - Automatically plots streaming tick prices on a responsive dark canvas.
-  - Switchable active chart tab (click any stock in the watchlist table to switch the chart view to that stock).
+  - **Live Session Streaming (Builder Decision):** The chart visualizes live session ticks with high-precision time resolution, updating smoothly as new ticks arrive over the SSE stream. Switching stocks displays the active symbol's session tick series.
 - **Dynamic Watchlist Input:** Clean search bar with auto-uppercase and "+ Add Stock" button.
 - **Latency HUD:** Live updating badges displaying current Network Ingestion Latency and Aeron Bus Latency.
+
 
 ---
 
