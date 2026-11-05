@@ -1452,7 +1452,7 @@
             <span class="toggle-label">Time:</span>
             <span id="tz-mode-badge" class="toggle-badge active-local">LOCAL (IST)</span>
           </button>
-          <button type="button" class="btn-toggle-switch" id="btn-toggle-currency" onclick="toggleCurrencyMode()" title="Toggle between native instrument currency and your browser's local currency">
+          <button type="button" class="btn-toggle-switch" id="btn-toggle-currency" onclick="toggleCurrencyMode()" title="Click to toggle Native/Local currency. Right-click to cycle target currency (INR, USD, EUR, GBP, BRL, CNY)">
             <span class="toggle-icon">💱</span>
             <span class="toggle-label">Currency:</span>
             <span id="currency-mode-badge" class="toggle-badge">NATIVE</span>
@@ -1690,6 +1690,21 @@
 
     function detectBrowserCurrency() {
       try {
+        const tz = browserTimezone || '';
+        const offset = new Date().getTimezoneOffset(); // -330 for IST
+
+        // 1. Physical Geographic Timezone takes primary precedence (detects user's actual country)
+        if (tz.includes('Kolkata') || tz.includes('Calcutta') || tz.includes('India') || offset === -330) return 'INR';
+        if (tz.includes('Sao_Paulo') || tz.includes('Brazil') || tz.includes('Fortaleza') || tz.includes('Recife') || tz.includes('Manaus') || tz.includes('Belem')) return 'BRL';
+        if (tz.includes('Shanghai') || tz.includes('Beijing') || tz.includes('Chongqing') || tz.includes('Urumqi') || tz.includes('China') || tz.includes('Hong_Kong')) return 'CNY';
+        if (tz.includes('Tokyo')) return 'JPY';
+        if (tz.includes('London') || tz.includes('Belfast')) return 'GBP';
+        if (tz.includes('Toronto') || tz.includes('Vancouver') || tz.includes('Montreal') || tz.includes('Edmonton') || tz.includes('Calgary')) return 'CAD';
+        if (tz.includes('Sydney') || tz.includes('Melbourne') || tz.includes('Brisbane') || tz.includes('Perth') || tz.includes('Adelaide')) return 'AUD';
+        if (tz.includes('Paris') || tz.includes('Berlin') || tz.includes('Rome') || tz.includes('Madrid') || tz.includes('Amsterdam') || tz.includes('Brussels') || tz.includes('Vienna') || tz.includes('Dublin') || tz.includes('Lisbon')) return 'EUR';
+        if (tz.includes('New_York') || tz.includes('Chicago') || tz.includes('Los_Angeles') || tz.includes('Denver') || tz.includes('Phoenix') || tz.includes('Detroit') || tz.includes('Indianapolis')) return 'USD';
+
+        // 2. Secondary fallback: Locale / region code from navigator.languages (e.g. en-IN -> INR)
         const lang = (navigator.languages && navigator.languages[0]) || navigator.language || 'en-US';
         const regionMatch = lang.match(/[-_]([A-Za-z]{2})$/);
         const region = regionMatch ? regionMatch[1].toUpperCase() : '';
@@ -1699,16 +1714,7 @@
           'IT': 'EUR', 'ES': 'EUR', 'NL': 'EUR', 'PT': 'EUR', 'IE': 'EUR'
         };
         if (region && regionMap[region]) return regionMap[region];
-        const tz = browserTimezone;
-        if (tz.includes('Kolkata') || tz.includes('Calcutta') || tz.includes('India')) return 'INR';
-        if (tz.includes('Sao_Paulo') || tz.includes('Brazil') || tz.includes('Fortaleza') || tz.includes('Recife')) return 'BRL';
-        if (tz.includes('Shanghai') || tz.includes('Beijing') || tz.includes('Chongqing') || tz.includes('Urumqi') || tz.includes('China')) return 'CNY';
-        if (tz.includes('London')) return 'GBP';
-        if (tz.includes('Tokyo')) return 'JPY';
-        if (tz.includes('Toronto') || tz.includes('Vancouver')) return 'CAD';
-        if (tz.includes('Sydney') || tz.includes('Melbourne')) return 'AUD';
-        if (tz.includes('Paris') || tz.includes('Berlin') || tz.includes('Rome') || tz.includes('Madrid') || tz.includes('Amsterdam')) return 'EUR';
-        if (tz.includes('New_York') || tz.includes('Chicago') || tz.includes('Los_Angeles') || tz.includes('Denver')) return 'USD';
+
         return 'INR';
       } catch (e) {
         return 'INR';
@@ -1920,8 +1926,9 @@
       showToast(`Timezone switched to ${state.timezoneMode.toUpperCase()} (${getTimezoneShortLabel(getEffectiveTimezone(state.activeSymbol))})`, 'info');
     }
 
-    function toggleCurrencyMode() {
-      state.currencyMode = (state.currencyMode === 'native') ? 'local' : 'native';
+    const CURRENCY_CYCLE = ['INR', 'USD', 'EUR', 'GBP', 'BRL', 'CNY', 'JPY', 'CAD', 'AUD'];
+
+    function applyCurrencyChange() {
       updateToggleBadges();
       // Re-apply converted data to chart
       if (state.activeSymbol) {
@@ -1956,7 +1963,20 @@
         renderFallbackCanvas();
       }
       const activeCurr = getActiveCurrency(state.activeSymbol);
-      showToast(`Currency switched to ${state.currencyMode.toUpperCase()} (${activeCurr})`, 'info');
+      showToast(`Currency: ${state.currencyMode.toUpperCase()} (${activeCurr})`, 'info');
+    }
+
+    function toggleCurrencyMode() {
+      state.currencyMode = (state.currencyMode === 'native') ? 'local' : 'native';
+      applyCurrencyChange();
+    }
+
+    function cycleLocalCurrency() {
+      const idx = CURRENCY_CYCLE.indexOf(state.userLocalCurrency);
+      const nextIdx = (idx + 1) % CURRENCY_CYCLE.length;
+      state.userLocalCurrency = CURRENCY_CYCLE[nextIdx];
+      state.currencyMode = 'local';
+      applyCurrencyChange();
     }
 
     function getChartLocalizationOptions(symbol) {
@@ -3304,6 +3324,12 @@
     window.addEventListener('DOMContentLoaded', () => {
       initChart();
       updateToggleBadges();
+      if (dom.btnToggleCurrency) {
+        dom.btnToggleCurrency.addEventListener('contextmenu', (e) => {
+          e.preventDefault();
+          cycleLocalCurrency();
+        });
+      }
       loadFxRates();
       loadSymbols();
       connectSse();
