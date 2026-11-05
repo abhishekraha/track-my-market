@@ -8,13 +8,13 @@
 [![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-38bdf8?style=for-the-badge&logo=github&logoColor=white)](https://abhishekraha.github.io/track-my-market/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](LICENSE)
 
-> **Ultra-Low Latency Financial Market Data Engine powered by Embedded Real Logic Aeron IPC, Zero-Allocation Simple Binary Encoding (SBE v1), and Java 25 Virtual Threads.**  
-> Stream real-time quotes and historical price action across NSE/BSE, US Equities, and Global Indices with **zero KYC, zero Demat account requirements, and zero API keys.**
+> **A pluggable financial market data engine built using Real Logic Aeron IPC, Zero-Allocation Simple Binary Encoding (SBE v1), and Java 25 Virtual Threads.**  
+> Designed with a decoupled, modular architecture so developers can easily plug in custom exchange feeds, lower-latency hardware/kernel-bypass transports, or specialized order book adapters. Streams real-time quotes and historical price action across NSE/BSE, US Equities, and Global Indices with **zero KYC, zero Demat account requirements, and zero API keys.**
 
 ---
 
-### 🌐 Live Landing Page & Interactive Simulator
-Visit the interactive tech showcase hosted on GitHub Pages:  
+### 🌐 Live Landing Page & Trading Desk Preview
+Visit the interactive showcase hosted on GitHub Pages:  
 👉 **[https://abhishekraha.github.io/track-my-market/](https://abhishekraha.github.io/track-my-market/)**
 
 ---
@@ -61,6 +61,7 @@ flowchart LR
 
 ## 🚀 Key Highlights & Architectural Advantages
 
+- **🔌 Pluggable & Extensible Architecture**: Decoupled interface boundaries (`MarketEventBus`, `MarketDataProvider`, `FragmentHandler`) allow developers to easily plug in custom exchange gateways, proprietary low-latency multicast adapters (e.g. Aeron UDP / InfiniBand), or specialized order-book implementations.
 - **⚡ Embedded Real Logic Aeron IPC**: High-throughput, mechanical-sympathetic IPC communication over memory-mapped files without kernel context switching. Sub-microsecond ring buffer transit latency.
 - **📦 Zero-Allocation SBE v1 Encoding**: Compact binary wire format encoding prices and timestamps directly into off-heap direct byte buffers (`UnsafeBuffer`), eliminating GC allocation overhead during tick broadcasting.
 - **🧵 Java 25 Virtual Threads (`Thread.ofVirtual()`)**: Millions of lightweight concurrent threads handling persistent Server-Sent Events (SSE) connections and HTTP client quote polling simultaneously without thread pool starvation.
@@ -154,34 +155,27 @@ Run a zero-overhead console terminal that streams raw Aeron IPC frames and nanos
 ```
 track-my-market/
 ├── .github/                       # GitHub Actions workflows & configurations
-├── docs/                          # GitHub Pages marketing showcase & sitemap
-│   ├── index.html                 # Sellable landing page with interactive simulator
-│   ├── AGENTS.md                  # Autonomous Multi-Agent engineering documentation
-│   ├── ROADMAP.md                 # Scalability milestones & gateway architecture
-│   └── .nojekyll                  # GitHub Pages raw static bypass
+├── docs/                          # GitHub Pages showcase & documentation
+│   ├── index.html                 # Interactive landing page & trading desk preview
+│   └── .nojekyll                  # GitHub Pages static bypass
 ├── nginx/
 │   └── nginx.conf                 # Ingress proxy config (gzip, unbuffered SSE)
 ├── src/
 │   └── main/
-│       ├── java/dev/market/       # Java 25 high-frequency Aeron & SBE engine
-│       │   ├── App.java           # Application entrypoint & virtual thread orchestration
-│       │   ├── aeron/             # Embedded Aeron Media Driver & Ring Buffer IPC
-│       │   ├── model/             # Market data models & watchlist registry
-│       │   ├── provider/          # Yahoo Finance / public market feed connectors
-│       │   └── web/               # Sun HttpServer & SSE streaming broadcaster
+│       ├── java/market/           # Java 25 Aeron & SBE financial engine
+│       │   ├── MarketApp.java     # Application entrypoint & virtual thread orchestration
+│       │   ├── bus/               # Event bus abstractions & Aeron IPC ring buffer
+│       │   ├── consumer/          # Zero-copy SBE decoders & latency metric monitors
+│       │   ├── producer/          # High-frequency quote publishers
+│       │   ├── provider/          # Yahoo Finance & public market feed connectors
+│       │   └── web/               # Embedded HttpServer, SSE stream & dynamic watchlist
 │       └── resources/
-│           ├── sbe/               # SBE XML schema definition (market-data-schema.xml)
+│           ├── market-data-schema.xml # SBE XML schema definition (MarketTick)
 │           └── web/               # Production Trading Desk UI (Lightweight Charts)
 ├── build.gradle.kts               # Gradle build script with SBE stub generation
 ├── docker-compose.yml             # Orchestration: Java engine (8080) + Nginx (8081)
 └── Dockerfile                     # Multi-stage Eclipse Temurin 25 JRE container
 ```
-
----
-
-## 🤝 Autonomous Multi-Agent Architecture
-
-This codebase was designed and engineered using **Google Antigravity autonomous multi-agent swarms**, utilizing specialized agents for zero-allocation Aeron bus architecture, SBE stub compilation, responsive UI rendering, and sub-millisecond event streaming. Read the complete story in [`docs/AGENTS.md`](docs/AGENTS.md).
 
 ---
 
