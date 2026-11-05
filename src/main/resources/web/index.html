@@ -351,6 +351,67 @@
       flex-wrap: wrap;
     }
 
+    .display-toggles-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-toggle-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 0.375rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .btn-toggle-switch:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--accent-blue);
+      color: var(--text-main);
+    }
+
+    .btn-toggle-switch .toggle-badge {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 0.1rem 0.45rem;
+      border-radius: 0.25rem;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid var(--border-medium);
+      color: var(--text-dim);
+      transition: all 0.2s ease;
+    }
+
+    .btn-toggle-switch .toggle-badge.active-local {
+      background: rgba(56, 189, 248, 0.18);
+      border-color: rgba(56, 189, 248, 0.5);
+      color: var(--accent-blue);
+    }
+
+    .btn-toggle-switch .toggle-badge.active-market {
+      background: rgba(16, 185, 129, 0.18);
+      border-color: rgba(16, 185, 129, 0.5);
+      color: #34d399;
+    }
+
+    .native-price-sub {
+      font-size: 0.68rem;
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      font-weight: 500;
+      margin-top: 0.15rem;
+    }
+
     .btn-tf {
       background-color: var(--bg-card);
       border: 1px solid var(--border-medium);
@@ -1384,6 +1445,20 @@
           <button type="button" class="btn-tf" data-tf="max" onclick="selectTimeframe('max')">ALL</button>
         </div>
 
+        <!-- Timezone & Currency Flip Controls -->
+        <div class="display-toggles-group">
+          <button type="button" class="btn-toggle-switch" id="btn-toggle-tz" onclick="toggleTimezoneMode()" title="Toggle between machine local time and exchange market time">
+            <span class="toggle-icon">🕒</span>
+            <span class="toggle-label">Time:</span>
+            <span id="tz-mode-badge" class="toggle-badge active-local">LOCAL (IST)</span>
+          </button>
+          <button type="button" class="btn-toggle-switch" id="btn-toggle-currency" onclick="toggleCurrencyMode()" title="Toggle between native instrument currency and your browser's local currency">
+            <span class="toggle-icon">💱</span>
+            <span class="toggle-label">Currency:</span>
+            <span id="currency-mode-badge" class="toggle-badge">NATIVE</span>
+          </button>
+        </div>
+
         <div class="chart-metrics-hud" id="chart-metrics-hud">
           <div class="hud-stat-pill">
             <span class="hud-stat-lbl">TF:</span>
@@ -1604,6 +1679,54 @@
         .replace(/'/g, '&#039;');
     }
 
+    // --- Browser Locale & Currency Auto-Detection ---
+    const browserTimezone = (function() {
+      try {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata';
+      } catch (e) {
+        return 'Asia/Kolkata';
+      }
+    })();
+
+    function detectBrowserCurrency() {
+      try {
+        const lang = (navigator.languages && navigator.languages[0]) || navigator.language || 'en-US';
+        const regionMatch = lang.match(/[-_]([A-Za-z]{2})$/);
+        const region = regionMatch ? regionMatch[1].toUpperCase() : '';
+        const regionMap = {
+          'IN': 'INR', 'BR': 'BRL', 'CN': 'CNY', 'US': 'USD', 'GB': 'GBP',
+          'JP': 'JPY', 'CA': 'CAD', 'AU': 'AUD', 'DE': 'EUR', 'FR': 'EUR',
+          'IT': 'EUR', 'ES': 'EUR', 'NL': 'EUR', 'PT': 'EUR', 'IE': 'EUR'
+        };
+        if (region && regionMap[region]) return regionMap[region];
+        const tz = browserTimezone;
+        if (tz.includes('Kolkata') || tz.includes('Calcutta') || tz.includes('India')) return 'INR';
+        if (tz.includes('Sao_Paulo') || tz.includes('Brazil') || tz.includes('Fortaleza') || tz.includes('Recife')) return 'BRL';
+        if (tz.includes('Shanghai') || tz.includes('Beijing') || tz.includes('Chongqing') || tz.includes('Urumqi') || tz.includes('China')) return 'CNY';
+        if (tz.includes('London')) return 'GBP';
+        if (tz.includes('Tokyo')) return 'JPY';
+        if (tz.includes('Toronto') || tz.includes('Vancouver')) return 'CAD';
+        if (tz.includes('Sydney') || tz.includes('Melbourne')) return 'AUD';
+        if (tz.includes('Paris') || tz.includes('Berlin') || tz.includes('Rome') || tz.includes('Madrid') || tz.includes('Amsterdam')) return 'EUR';
+        if (tz.includes('New_York') || tz.includes('Chicago') || tz.includes('Los_Angeles') || tz.includes('Denver')) return 'USD';
+        return 'INR';
+      } catch (e) {
+        return 'INR';
+      }
+    }
+
+    const CURRENCY_SYMBOLS = {
+      'INR': '₹',
+      'USD': '$',
+      'EUR': '€',
+      'GBP': '£',
+      'BRL': 'R$',
+      'CNY': '¥',
+      'JPY': '¥',
+      'CAD': 'CA$',
+      'AUD': 'A$'
+    };
+
     const state = {
       activeSymbol: null,
       selectedTimeframe: '1d',
@@ -1618,7 +1741,15 @@
       lastChartTimestampSec: 0,
       eventSource: null,
       useCanvasFallback: false,
-      statsModalOpen: false
+      statsModalOpen: false,
+      timezoneMode: 'local',       // 'local' (browser machine) | 'market' (exchange)
+      currencyMode: 'native',      // 'native' | 'local'
+      userLocalCurrency: detectBrowserCurrency(),
+      browserTimezone: browserTimezone,
+      fxRates: {
+        base: 'USD',
+        rates: { USD: 1.0, INR: 86.85, BRL: 5.75, CNY: 7.24, EUR: 0.95, GBP: 0.79, JPY: 154.5, CAD: 1.41, AUD: 1.55 }
+      }
     };
 
     // --- DOM Elements ---
@@ -1661,8 +1792,203 @@
       modalTicksCount: document.getElementById('modal-ticks-count'),
       statsDetailTbody: document.getElementById('stats-detail-tbody'),
       yAxisLabel: document.querySelector('.chart-axis-label.y-axis-label'),
-      xAxisLabel: document.querySelector('.chart-axis-label.x-axis-label')
+      xAxisLabel: document.querySelector('.chart-axis-label.x-axis-label'),
+      btnToggleTz: document.getElementById('btn-toggle-tz'),
+      tzModeBadge: document.getElementById('tz-mode-badge'),
+      btnToggleCurrency: document.getElementById('btn-toggle-currency'),
+      currencyModeBadge: document.getElementById('currency-mode-badge')
     };
+
+    // --- Currency & Timezone Utility Functions ---
+    function getNativeCurrency(symbol) {
+      const sym = symbol || state.activeSymbol || '';
+      if (sym.endsWith('.NS') || sym.endsWith('.BO')) return 'INR';
+      if (sym.endsWith('.SA')) return 'BRL';
+      if (sym.endsWith('.SS') || sym.endsWith('.SZ')) return 'CNY';
+      if (sym.endsWith('.L')) return 'GBP';
+      if (sym.endsWith('.TO')) return 'CAD';
+      if (sym.endsWith('.T')) return 'JPY';
+      if (!sym.includes('.') || sym.endsWith('.US')) return 'USD';
+      return 'INR';
+    }
+
+    function getMarketTimezone(symbol) {
+      const sym = symbol || state.activeSymbol || '';
+      if (sym.endsWith('.NS') || sym.endsWith('.BO')) return 'Asia/Kolkata';
+      if (sym.endsWith('.SA')) return 'America/Sao_Paulo';
+      if (sym.endsWith('.SS') || sym.endsWith('.SZ')) return 'Asia/Shanghai';
+      if (sym.endsWith('.L')) return 'Europe/London';
+      if (sym.endsWith('.TO')) return 'America/Toronto';
+      if (sym.endsWith('.T')) return 'Asia/Tokyo';
+      if (!sym.includes('.') || sym.endsWith('.US')) return 'America/New_York';
+      return 'Asia/Kolkata';
+    }
+
+    function getEffectiveTimezone(symbol) {
+      if (state.timezoneMode === 'market') {
+        return getMarketTimezone(symbol);
+      }
+      return state.browserTimezone;
+    }
+
+    function getTimezoneShortLabel(tz) {
+      try {
+        const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'short' }).formatToParts(new Date());
+        const match = parts.find(p => p.type === 'timeZoneName');
+        return match ? match.value : tz;
+      } catch (e) {
+        return tz;
+      }
+    }
+
+    function getActiveCurrency(symbol) {
+      return (state.currencyMode === 'native') ? getNativeCurrency(symbol) : state.userLocalCurrency;
+    }
+
+    function getFxRate(fromCurr, toCurr) {
+      if (!fromCurr || !toCurr || fromCurr === toCurr) return 1.0;
+      const rates = state.fxRates && state.fxRates.rates ? state.fxRates.rates : null;
+      if (!rates) return 1.0;
+      const fromRate = rates[fromCurr] || 1.0;
+      const toRate = rates[toCurr] || 1.0;
+      return toRate / fromRate;
+    }
+
+    function convertPrice(price, symbol) {
+      if (price == null || isNaN(price)) return price;
+      if (state.currencyMode === 'native') return Number(price);
+      const nativeCurr = getNativeCurrency(symbol);
+      const targetCurr = state.userLocalCurrency;
+      if (nativeCurr === targetCurr) return Number(price);
+      const rate = getFxRate(nativeCurr, targetCurr);
+      return Number(price) * rate;
+    }
+
+    function updateToggleBadges() {
+      const activeSym = state.activeSymbol || 'RELIANCE.NS';
+      if (dom.tzModeBadge) {
+        const effectiveTz = getEffectiveTimezone(activeSym);
+        const tzShort = getTimezoneShortLabel(effectiveTz);
+        if (state.timezoneMode === 'local') {
+          dom.tzModeBadge.className = 'toggle-badge active-local';
+          dom.tzModeBadge.textContent = `LOCAL (${tzShort})`;
+        } else {
+          dom.tzModeBadge.className = 'toggle-badge active-market';
+          dom.tzModeBadge.textContent = `MARKET (${tzShort})`;
+        }
+      }
+
+      if (dom.currencyModeBadge) {
+        const nativeCurr = getNativeCurrency(activeSym);
+        if (state.currencyMode === 'native') {
+          dom.currencyModeBadge.className = 'toggle-badge';
+          dom.currencyModeBadge.textContent = `NATIVE (${nativeCurr})`;
+        } else {
+          dom.currencyModeBadge.className = 'toggle-badge active-local';
+          dom.currencyModeBadge.textContent = `LOCAL (${state.userLocalCurrency})`;
+        }
+      }
+    }
+
+    function toggleTimezoneMode() {
+      state.timezoneMode = (state.timezoneMode === 'local') ? 'market' : 'local';
+      updateToggleBadges();
+      applyTimezoneToChart();
+      if (state.activeSymbol) {
+        const q = state.quotes.get(state.activeSymbol) || { symbol: state.activeSymbol };
+        renderActiveSymbolHero(q);
+      }
+      renderChartSummaryHud();
+      if (state.useCanvasFallback) {
+        renderFallbackCanvas();
+      }
+      showToast(`Timezone switched to ${state.timezoneMode.toUpperCase()} (${getTimezoneShortLabel(getEffectiveTimezone(state.activeSymbol))})`, 'info');
+    }
+
+    function toggleCurrencyMode() {
+      state.currencyMode = (state.currencyMode === 'native') ? 'local' : 'native';
+      updateToggleBadges();
+      // Re-apply converted data to chart
+      if (state.activeSymbol) {
+        const rawHistory = state.chartHistory.get(state.activeSymbol) || [];
+        if (tvAreaSeries && rawHistory.length > 0) {
+          const displayPts = rawHistory.map(pt => ({
+            time: pt.time,
+            value: convertPrice(pt.value, state.activeSymbol)
+          }));
+          const activeCurr = getActiveCurrency(state.activeSymbol);
+          const symChar = CURRENCY_SYMBOLS[activeCurr] || (activeCurr + ' ');
+          try {
+            tvAreaSeries.applyOptions({
+              priceFormat: {
+                type: 'custom',
+                formatter: price => symChar + ' ' + Number(price).toFixed(2),
+                minMove: 0.05
+              }
+            });
+          } catch (e) {}
+          tvAreaSeries.setData(displayPts);
+        }
+        const q = state.quotes.get(state.activeSymbol) || { symbol: state.activeSymbol };
+        renderActiveSymbolHero(q);
+      }
+      // Re-render table rows with new currency
+      state.quotes.forEach(quote => {
+        renderRow(quote);
+      });
+      renderChartSummaryHud();
+      if (state.useCanvasFallback) {
+        renderFallbackCanvas();
+      }
+      const activeCurr = getActiveCurrency(state.activeSymbol);
+      showToast(`Currency switched to ${state.currencyMode.toUpperCase()} (${activeCurr})`, 'info');
+    }
+
+    function getChartLocalizationOptions(symbol) {
+      const activeCurr = getActiveCurrency(symbol);
+      const symChar = CURRENCY_SYMBOLS[activeCurr] || (activeCurr + ' ');
+      return {
+        priceFormatter: price => symChar + ' ' + Number(price).toFixed(2),
+        timeFormatter: (time) => {
+          const ts = (typeof time === 'number') ? time : (time.timestamp || (new Date(time).getTime() / 1000));
+          const d = new Date(ts * 1000);
+          const tz = getEffectiveTimezone(symbol);
+          const isIntraday = ['1h', '3h', '6h', '12h', '1d'].includes(state.selectedTimeframe.toLowerCase());
+          if (isIntraday) {
+            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: tz, hour12: false });
+          }
+          return d.toLocaleDateString([], { year: 'numeric', month: 'short', day: 'numeric', timeZone: tz });
+        }
+      };
+    }
+
+    function getChartTimeScaleOptions(symbol) {
+      return {
+        tickMarkFormatter: (time, tickMarkType, locale) => {
+          const ts = (typeof time === 'number') ? time : (time.timestamp || (new Date(time).getTime() / 1000));
+          const d = new Date(ts * 1000);
+          const tz = getEffectiveTimezone(symbol);
+          const isIntraday = ['1h', '3h', '6h', '12h', '1d'].includes(state.selectedTimeframe.toLowerCase());
+          if (isIntraday) {
+            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: tz, hour12: false });
+          }
+          return d.toLocaleDateString([], { month: 'short', day: 'numeric', timeZone: tz });
+        }
+      };
+    }
+
+    function applyTimezoneToChart() {
+      if (tvChart) {
+        try {
+          tvChart.applyOptions({
+            localization: getChartLocalizationOptions(state.activeSymbol),
+            timeScale: getChartTimeScaleOptions(state.activeSymbol)
+          });
+        } catch (e) {
+          console.warn('Failed to apply chart timezone options:', e);
+        }
+      }
+    }
 
     // --- Chart Controller ---
     let tvChart = null;
@@ -1723,13 +2049,14 @@
               timeVisible: true,
               secondsVisible: false,
               rightOffset: 12,
-              barSpacing: 6
+              barSpacing: 6,
+              ...getChartTimeScaleOptions(state.activeSymbol)
             },
-            localization: {
-              priceFormatter: price => '₹ ' + Number(price).toFixed(2)
-            }
+            localization: getChartLocalizationOptions(state.activeSymbol)
           });
 
+          const activeCurr = getActiveCurrency(state.activeSymbol);
+          const symChar = CURRENCY_SYMBOLS[activeCurr] || (activeCurr + ' ');
           const seriesOpts = {
             topColor: 'rgba(56, 189, 248, 0.45)',
             bottomColor: 'rgba(56, 189, 248, 0.02)',
@@ -1737,7 +2064,7 @@
             lineWidth: 2,
             priceFormat: {
               type: 'custom',
-              formatter: price => '₹ ' + Number(price).toFixed(2),
+              formatter: price => symChar + ' ' + Number(price).toFixed(2),
               minMove: 0.05
             }
           };
@@ -1851,11 +2178,21 @@
       const height = rect.height;
       ctx.clearRect(0, 0, width, height);
 
-      const history = state.chartHistory.get(state.activeSymbol) || [];
-      if (history.length < 2) return;
+      const rawHistory = state.chartHistory.get(state.activeSymbol) || [];
+      if (rawHistory.length < 2) return;
+
+      const activeCurr = getActiveCurrency(state.activeSymbol);
+      const symChar = CURRENCY_SYMBOLS[activeCurr] || (activeCurr + ' ');
+      const effectiveTz = getEffectiveTimezone(state.activeSymbol);
+
+      // Map raw points to converted prices
+      const history = rawHistory.map(h => ({
+        time: h.time,
+        value: convertPrice(h.value, state.activeSymbol)
+      }));
 
       const padLeft = 20;
-      const padRight = 85;
+      const padRight = 95;
       const padTop = 30;
       const padBottom = 35;
       const plotWidth = width - padLeft - padRight;
@@ -1891,7 +2228,7 @@
         ctx.font = '11px "JetBrains Mono", Consolas, monospace';
         ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        ctx.fillText('₹ ' + tickPrice.toFixed(2), width - 8, y);
+        ctx.fillText(symChar + ' ' + tickPrice.toFixed(2), width - 8, y);
         ctx.setLineDash([4, 4]);
       }
       ctx.setLineDash([]);
@@ -1917,8 +2254,8 @@
           ctx.setLineDash([]);
           const d = new Date(pt.time * 1000);
           const timeStr = isIntraday
-            ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            : d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+            ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: effectiveTz, hour12: false })
+            : d.toLocaleDateString([], { month: 'short', day: 'numeric', timeZone: effectiveTz });
 
           ctx.fillStyle = '#94a3b8';
           ctx.font = '11px "JetBrains Mono", Consolas, monospace';
@@ -1955,8 +2292,9 @@
       // Crosshair & Hover Annotations
       if (canvasHoverPoint) {
         const hp = canvasHoverPoint;
+        const convertedHpValue = convertPrice(hp.value, state.activeSymbol);
         const hx = padLeft + (hp.idx / (history.length - 1)) * plotWidth;
-        const hy = padTop + ((maxPrice - hp.value) / range) * plotHeight;
+        const hy = padTop + ((maxPrice - convertedHpValue) / range) * plotHeight;
 
         ctx.strokeStyle = 'rgba(56, 189, 248, 0.85)';
         ctx.lineWidth = 1;
@@ -1985,7 +2323,7 @@
         ctx.stroke();
 
         // Price badge on Y-axis
-        const priceText = '₹ ' + hp.value.toFixed(2);
+        const priceText = symChar + ' ' + convertedHpValue.toFixed(2);
         ctx.fillStyle = '#0284c7';
         ctx.fillRect(width - padRight + 2, hy - 11, padRight - 6, 22);
         ctx.fillStyle = '#ffffff';
@@ -1997,8 +2335,8 @@
         // Time badge on X-axis
         const d = new Date(hp.time * 1000);
         const timeText = isIntraday
-          ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-          : d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+          ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: effectiveTz, hour12: false })
+          : d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric', timeZone: effectiveTz });
         ctx.font = 'bold 11px "JetBrains Mono", Consolas, monospace';
         const tWidth = ctx.measureText(timeText).width + 12;
         ctx.fillStyle = '#0284c7';
@@ -2025,17 +2363,22 @@
       }
       state.lastChartTimestampSec = timeSec;
 
-      const pt = { time: timeSec, value: Number(price) };
-      history.push(pt);
+      const rawPt = { time: timeSec, value: Number(price) };
+      history.push(rawPt);
       if (history.length > 500) history.shift();
 
       if (symbol === state.activeSymbol) {
         dom.chartEmptyMsg.style.display = 'none';
+        const displayPt = { time: timeSec, value: convertPrice(rawPt.value, symbol) };
         if (tvAreaSeries) {
           try {
-            tvAreaSeries.update(pt);
+            tvAreaSeries.update(displayPt);
           } catch (e) {
-            tvAreaSeries.setData(history);
+            const displayPts = history.map(p => ({
+              time: p.time,
+              value: convertPrice(p.value, symbol)
+            }));
+            tvAreaSeries.setData(displayPts);
           }
         } else if (state.useCanvasFallback) {
           renderFallbackCanvas();
@@ -2114,22 +2457,47 @@
           const isIntraday = ['1h', '3h', '6h', '12h', '1d'].includes(cleanTf);
           if (tvChart) {
             tvChart.timeScale().applyOptions({
+              ...getChartTimeScaleOptions(symbol),
               timeVisible: isIntraday,
               secondsVisible: false
             });
+            tvChart.applyOptions({
+              localization: getChartLocalizationOptions(symbol)
+            });
           }
 
+          const displayPts = pts.map(pt => ({
+            time: pt.time,
+            value: convertPrice(pt.value, symbol)
+          }));
+
           if (tvAreaSeries) {
-            tvAreaSeries.setData(pts);
+            const activeCurr = getActiveCurrency(symbol);
+            const symChar = CURRENCY_SYMBOLS[activeCurr] || (activeCurr + ' ');
+            try {
+              tvAreaSeries.applyOptions({
+                priceFormat: {
+                  type: 'custom',
+                  formatter: price => symChar + ' ' + Number(price).toFixed(2),
+                  minMove: 0.05
+                }
+              });
+            } catch (e) {}
+            tvAreaSeries.setData(displayPts);
             tvChart.timeScale().fitContent();
           } else if (state.useCanvasFallback) {
             renderFallbackCanvas();
           }
 
-          const first = data.firstPrice != null ? data.firstPrice : pts[0].value;
-          const last = data.lastPrice != null ? data.lastPrice : pts[pts.length - 1].value;
-          const high = data.highPrice != null ? data.highPrice : Math.max(...pts.map(p => p.value));
-          const low = data.lowPrice != null ? data.lowPrice : Math.min(...pts.map(p => p.value));
+          const firstRaw = data.firstPrice != null ? data.firstPrice : pts[0].value;
+          const lastRaw = data.lastPrice != null ? data.lastPrice : pts[pts.length - 1].value;
+          const highRaw = data.highPrice != null ? data.highPrice : Math.max(...pts.map(p => p.value));
+          const lowRaw = data.lowPrice != null ? data.lowPrice : Math.min(...pts.map(p => p.value));
+
+          const first = convertPrice(firstRaw, symbol);
+          const last = convertPrice(lastRaw, symbol);
+          const high = convertPrice(highRaw, symbol);
+          const low = convertPrice(lowRaw, symbol);
           const chgPct = (first > 0) ? ((last - first) / first) * 100 : 0;
 
           state.chartSummary = {
@@ -2156,13 +2524,19 @@
 
     function updateChartMetricsCrosshair(timeSec, price) {
       if (!dom.hudStatPoint || !dom.hudStatTime) return;
-      dom.hudStatPoint.textContent = formatCurrency(price);
+      const activeCurr = getActiveCurrency(state.activeSymbol);
+      const symChar = CURRENCY_SYMBOLS[activeCurr] || (activeCurr + ' ');
+      dom.hudStatPoint.textContent = symChar + ' ' + Number(price).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
       
       const isIntraday = ['1H', '3H', '6H', '12H', '1D'].includes(state.selectedTimeframe.toUpperCase());
       const d = new Date(timeSec * 1000);
+      const effectiveTz = getEffectiveTimezone(state.activeSymbol);
       dom.hudStatTime.textContent = isIntraday 
-        ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-        : d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+        ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: effectiveTz, hour12: false })
+        : d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric', timeZone: effectiveTz });
 
       if (state.chartSummary && state.chartSummary.first) {
         const diff = price - state.chartSummary.first;
@@ -2176,16 +2550,20 @@
     function renderChartSummaryHud() {
       if (!state.chartSummary) return;
       const s = state.chartSummary;
+      const activeCurr = getActiveCurrency(state.activeSymbol);
+      const symChar = CURRENCY_SYMBOLS[activeCurr] || (activeCurr + ' ');
+      const effectiveTz = getEffectiveTimezone(state.activeSymbol);
+
       if (dom.hudStatTf) dom.hudStatTf.textContent = s.tf;
-      if (dom.hudStatPoint) dom.hudStatPoint.textContent = formatCurrency(s.last);
-      if (dom.hudStatHigh) dom.hudStatHigh.textContent = formatCurrency(s.high);
-      if (dom.hudStatLow) dom.hudStatLow.textContent = formatCurrency(s.low);
+      if (dom.hudStatPoint) dom.hudStatPoint.textContent = symChar + ' ' + Number(s.last).toFixed(2);
+      if (dom.hudStatHigh) dom.hudStatHigh.textContent = symChar + ' ' + Number(s.high).toFixed(2);
+      if (dom.hudStatLow) dom.hudStatLow.textContent = symChar + ' ' + Number(s.low).toFixed(2);
       if (dom.hudStatTime) {
         const isIntraday = ['1H', '3H', '6H', '12H', '1D'].includes(s.tf);
         const d = new Date((s.lastTime || Date.now() / 1000) * 1000);
         dom.hudStatTime.textContent = isIntraday 
-          ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          : d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+          ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: effectiveTz, hour12: false })
+          : d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric', timeZone: effectiveTz });
       }
       if (dom.hudStatChg) {
         const sign = s.chgPct >= 0 ? '+' : '';
@@ -2222,16 +2600,22 @@
         dom.chartCompanySubtitle.title = companyName || '';
       }
 
+      const activeCurr = getActiveCurrency(q.symbol);
+      const activeCurrChar = CURRENCY_SYMBOLS[activeCurr] || activeCurr;
+      const effectiveTz = getEffectiveTimezone(q.symbol);
+      const tzShort = getTimezoneShortLabel(effectiveTz);
       const isUs = q.symbol && (!q.symbol.includes('.') || q.symbol.endsWith('.US'));
       const isUk = q.symbol && q.symbol.endsWith('.L');
       const exchLabel = isUs ? 'NASDAQ/NYSE' : isUk ? 'LSE' : 'NSE/BSE';
 
       if (dom.yAxisLabel) {
-        dom.yAxisLabel.textContent = isUs ? 'PRICE ($)' : isUk ? 'PRICE (£)' : 'PRICE (₹)';
+        dom.yAxisLabel.textContent = `PRICE (${activeCurrChar} ${activeCurr})`;
       }
       if (dom.xAxisLabel) {
-        dom.xAxisLabel.textContent = isUs ? 'TIME (ET)' : isUk ? 'TIME (GMT)' : 'TIME (IST)';
+        dom.xAxisLabel.textContent = `TIME (${tzShort})`;
       }
+
+      updateToggleBadges();
 
       const statusInfo = state.symbolStatuses.get(q.symbol);
       const isError = statusInfo && statusInfo.status === 'ERROR';
@@ -2271,6 +2655,17 @@
       } else {
         dom.chartSymbolPrice.textContent = '--';
         dom.chartSymbolChange.textContent = '0.00%';
+        dom.chartSymbolChange.className = 'active-symbol-change change-flat mono-num';
+      }
+
+      dom.chartIsin.textContent = q.isin || '--';
+      dom.chartSedol.textContent = q.sedol || '--';
+      dom.chartRic.textContent = q.ric || '--';
+      dom.chartProvider.textContent = q.provider || '--';
+      dom.chartLastTime.textContent = q.quoteTime 
+        ? new Date(q.quoteTime).toLocaleTimeString([], { timeZone: effectiveTz }) 
+        : '--';
+    }
         dom.chartSymbolChange.className = 'active-symbol-change change-flat mono-num';
       }
 
@@ -2358,6 +2753,9 @@
       const companyName = state.companyNames.get(q.symbol) || (statusInfo ? statusInfo.companyName : '') || q.symbol;
 
       let priceHtml = formatCurrency(q.price, q.symbol);
+      if (state.currencyMode === 'local' && getNativeCurrency(q.symbol) !== state.userLocalCurrency && q.price != null && !isError) {
+        priceHtml += `<div class="native-price-sub">${formatCurrency(q.price, q.symbol, true)} native</div>`;
+      }
       let sessionChangeHtml = `<span class="active-symbol-change ${changeClass} mono-num">${sign}${changePct.toFixed(2)}%</span>`;
 
       // Status Badge
@@ -2740,17 +3138,17 @@
       }
     }
 
-    function formatCurrency(val, symbol) {
-      if (val == null || isNaN(val)) return '--';
-      const sym = symbol || state.activeSymbol || '';
-      const isUs = sym && (!sym.includes('.') || sym.endsWith('.US'));
-      const isUk = sym && sym.endsWith('.L');
-      const prefix = isUs ? '$ ' : isUk ? '£ ' : '₹ ';
-      const locale = isUs ? 'en-US' : isUk ? 'en-GB' : 'en-IN';
-      return prefix + Number(val).toLocaleString(locale, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
+    async function loadFxRates() {
+      try {
+        const res = await fetch('./api/fx');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.rates) {
+          state.fxRates = data;
+        }
+      } catch (e) {
+        console.warn('Could not fetch FX rates:', e);
+      }
     }
 
     function showToast(msg, type = 'info') {
@@ -2899,6 +3297,8 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       initChart();
+      updateToggleBadges();
+      loadFxRates();
       loadSymbols();
       connectSse();
     });

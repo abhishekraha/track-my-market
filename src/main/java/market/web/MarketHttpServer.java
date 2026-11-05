@@ -87,6 +87,7 @@ public class MarketHttpServer {
         server.createContext(fullPath("/api/symbols"), this::handleSymbols);
         server.createContext(fullPath("/api/search"), this::handleSearch);
         server.createContext(fullPath("/api/chart"), this::handleChart);
+        server.createContext(fullPath("/api/fx"), this::handleFx);
         server.createContext(baseContext, this::handleStatic);
     }
 
@@ -279,6 +280,24 @@ public class MarketHttpServer {
         }
 
         String json = watchlistController.handleGetChartJson(symbol, timeframe);
+        sendJson(exchange, 200, json);
+    }
+
+    private void handleFx(HttpExchange exchange) throws IOException {
+        String method = exchange.getRequestMethod().toUpperCase();
+        if (!"GET".equals(method)) {
+            sendError(exchange, 405, "Method Not Allowed");
+            return;
+        }
+
+        String path = exchange.getRequestURI().getPath();
+        String fxBase = fullPath("/api/fx");
+        if (!path.equals(fxBase) && !path.equals(fxBase + "/")) {
+            sendError(exchange, 404, "Not Found");
+            return;
+        }
+
+        String json = watchlistController.handleGetFxRatesJson();
         sendJson(exchange, 200, json);
     }
 

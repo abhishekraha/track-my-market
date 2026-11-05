@@ -109,6 +109,18 @@ public class DynamicWatchlistController {
     }
 
     /**
+     * Returns JSON object with live/cached currency FX exchange rates against USD.
+     *
+     * @return JSON string with base currency and rates map
+     */
+    public String handleGetFxRatesJson() {
+        if (provider instanceof YahooFinanceProvider yahoo) {
+            return yahoo.getFxRatesJson();
+        }
+        return YahooFinanceProvider.getDefaultFxRatesJson();
+    }
+
+    /**
      * Parses the symbol from the request body JSON, normalizes it, subscribes to it,
      * and returns the updated symbol list.
      *

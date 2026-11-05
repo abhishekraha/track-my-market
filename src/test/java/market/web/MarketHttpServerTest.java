@@ -304,4 +304,21 @@ class MarketHttpServerTest {
         assertThat(resp.body()).contains("\"symbol\":\"RELIANCE.NS\"");
         assertThat(resp.body()).contains("\"timeframe\":\"1d\"");
     }
+
+    @Test
+    @DisplayName("Should serve FX rates API under context path")
+    void shouldServeFxEndpoint() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+            .uri(URI.create("http://127.0.0.1:" + server.getPort() + "/market/api/fx"))
+            .GET()
+            .build();
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+        assertThat(resp.statusCode()).isEqualTo(200);
+        assertThat(resp.headers().firstValue("Content-Type").orElse("")).contains("application/json");
+        assertThat(resp.body()).contains("\"base\":\"USD\"");
+        assertThat(resp.body()).contains("\"rates\":");
+        assertThat(resp.body()).contains("\"INR\":");
+        assertThat(resp.body()).contains("\"BRL\":");
+        assertThat(resp.body()).contains("\"CNY\":");
+    }
 }

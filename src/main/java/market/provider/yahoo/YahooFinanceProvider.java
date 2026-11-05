@@ -107,6 +107,17 @@ public class YahooFinanceProvider implements MarketDataProvider {
     private final Map<String, Double> previousCloses = new ConcurrentHashMap<>();
     private final Map<String, SymbolIdentifiers> identifierMap = new ConcurrentHashMap<>();
     private final Map<String, String> companyNames = new ConcurrentHashMap<>();
+    private final Map<String, Double> fxUsdRates = new ConcurrentHashMap<>(Map.of(
+        "USD", 1.0,
+        "INR", 94.465,
+        "BRL", 5.4695,
+        "CNY", 6.6574,
+        "EUR", 0.8850,
+        "GBP", 0.7620,
+        "JPY", 152.50,
+        "CAD", 1.3800,
+        "AUD", 1.5200
+    ));
 
     public YahooFinanceProvider() {
         this(null, null, null, null);
@@ -603,6 +614,36 @@ public class YahooFinanceProvider implements MarketDataProvider {
         if (symbol != null) {
             previousCloses.put(symbol.trim().toUpperCase(), price);
         }
+    }
+
+    public Map<String, Double> getFxUsdRates() {
+        return Collections.unmodifiableMap(fxUsdRates);
+    }
+
+    public void updateFxRate(String currency, double rateToUsd) {
+        if (currency != null && rateToUsd > 0) {
+            fxUsdRates.put(currency.trim().toUpperCase(), rateToUsd);
+        }
+    }
+
+    public String getFxRatesJson() {
+        return buildFxRatesJson(fxUsdRates);
+    }
+
+    public static String getDefaultFxRatesJson() {
+        return "{\"base\":\"USD\",\"rates\":{\"USD\":1.0,\"INR\":94.465,\"BRL\":5.4695,\"CNY\":6.6574,\"EUR\":0.8850,\"GBP\":0.7620,\"JPY\":152.50,\"CAD\":1.3800,\"AUD\":1.5200},\"updatedAt\":" + System.currentTimeMillis() + "}";
+    }
+
+    private static String buildFxRatesJson(Map<String, Double> rates) {
+        StringBuilder sb = new StringBuilder("{\"base\":\"USD\",\"rates\":{");
+        boolean first = true;
+        for (Map.Entry<String, Double> entry : rates.entrySet()) {
+            if (!first) sb.append(",");
+            first = false;
+            sb.append("\"").append(entry.getKey()).append("\":").append(entry.getValue());
+        }
+        sb.append("},\"updatedAt\":").append(System.currentTimeMillis()).append("}");
+        return sb.toString();
     }
 
     public static ZoneId getExchangeZone(String symbol) {
