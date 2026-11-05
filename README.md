@@ -6,6 +6,7 @@
 [![Docker Compose](https://img.shields.io/badge/Docker-Compose%20Ready-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 [![Nginx Ingress](https://img.shields.io/badge/Nginx-Reverse%20Proxy-009639?style=for-the-badge&logo=nginx&logoColor=white)](https://nginx.org/)
 [![GitHub Pages](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-38bdf8?style=for-the-badge&logo=github&logoColor=white)](https://abhishekraha.github.io/track-my-market/)
+[![Developer: Abhishek Raha](https://img.shields.io/badge/Developer-Abhishek%20Raha-38bdf8?style=for-the-badge&logo=github&logoColor=white)](https://abhishekraha.github.io/AbhishekRaha/)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=for-the-badge)](LICENSE)
 
 > **A pluggable financial market data engine built using Real Logic Aeron IPC, Zero-Allocation Simple Binary Encoding (SBE v1), and Java 25 Virtual Threads.**  
@@ -176,6 +177,21 @@ track-my-market/
 ├── docker-compose.yml             # Orchestration: Java engine (8080) + Nginx (8081)
 └── Dockerfile                     # Multi-stage Eclipse Temurin 25 JRE container
 ```
+
+---
+
+## 👨‍💻 Developer & Author
+
+**Abhishek Raha**  
+*Senior Backend Engineer & Enterprise Architect*
+
+- 🌐 **Portfolio & Works**: [https://abhishekraha.github.io/AbhishekRaha/](https://abhishekraha.github.io/AbhishekRaha/)
+- 💼 **LinkedIn**: [linkedin.com/in/abhishek-raha](https://www.linkedin.com/in/abhishek-raha/)
+- 🐙 **GitHub**: [@abhishekraha](https://github.com/abhishekraha)
+- 🐦 **X (Twitter)**: [@abhishek_raha_](https://x.com/abhishek_raha_)
+- ✉️ **Email**: [abhishekraha0001@gmail.com](mailto:abhishekraha0001@gmail.com)
+
+Senior Backend Engineer with 7+ years of experience engineering high-throughput distributed systems, low-latency financial/market event architectures, cloud infrastructure on GCP, and AI-assisted developer workflows.
 
 ---
 

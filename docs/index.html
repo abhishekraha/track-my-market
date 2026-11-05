@@ -976,6 +976,140 @@
     .code-comment { color: #64748b; }
     .code-cmd { color: #38bdf8; font-weight: 700; }
 
+    /* Developer Profile Section */
+    .developer-card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border-medium);
+      border-radius: 12px;
+      padding: 2.25rem 2rem;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      gap: 2rem;
+      align-items: center;
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+    .developer-card:hover {
+      border-color: rgba(56, 189, 248, 0.5);
+      box-shadow: 0 10px 30px -10px rgba(56, 189, 248, 0.15);
+    }
+    .developer-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-cyan), var(--accent-green), transparent);
+    }
+    .dev-avatar-wrap {
+      flex-shrink: 0;
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(16, 185, 129, 0.15));
+      border: 2px solid rgba(56, 189, 248, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+    }
+    .dev-content {
+      flex: 1;
+    }
+    .dev-header {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.5rem;
+    }
+    .dev-name {
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin: 0;
+    }
+    .dev-title {
+      font-size: 0.88rem;
+      color: var(--accent-cyan);
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+    .dev-bio {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+      max-width: 850px;
+    }
+    .dev-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+    .dev-badge {
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-medium);
+      color: var(--text-dim);
+    }
+    .dev-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+    }
+    .btn-dev-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.55rem 1.1rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-dev-primary {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(16, 185, 129, 0.2));
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: #ffffff;
+    }
+    .btn-dev-primary:hover {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.35), rgba(16, 185, 129, 0.35));
+      border-color: var(--accent-cyan);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+    .btn-dev-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-medium);
+      color: var(--text-muted);
+    }
+    .btn-dev-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--border-subtle);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+    @media (max-width: 768px) {
+      .developer-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1.25rem;
+        padding: 1.5rem 1.25rem;
+      }
+    }
+
     /* Footer */
     footer.site-footer {
       border-top: 1px solid var(--border-subtle);
@@ -1034,6 +1168,7 @@
         <li><a href="#architecture">Architecture</a></li>
         <li><a href="#benchmarks">Benchmarks</a></li>
         <li><a href="#quickstart">Quickstart</a></li>
+        <li><a href="#developer">Developer</a></li>
       </ul>
 
       <div class="nav-actions">
@@ -1531,19 +1666,92 @@
     </div>
   </section>
 
+  <!-- =========================================================
+       DEVELOPER & ARCHITECT SECTION
+       ========================================================= -->
+  <section id="developer" class="content-section">
+    <div class="section-header">
+      <span class="section-tag">// SYSTEM ARCHITECT & AUTHOR</span>
+      <h2 class="section-title">About the Developer</h2>
+      <p class="section-subtitle">
+        Architected and built by Abhishek Raha &mdash; Senior Backend Engineer specializing in Java, Python, and AI-assisted enterprise development.
+      </p>
+    </div>
+
+    <div class="developer-card">
+      <div class="dev-avatar-wrap">AR</div>
+      <div class="dev-content">
+        <div class="dev-header">
+          <h3 class="dev-name">Abhishek Raha</h3>
+          <span class="dev-title">Senior Backend Engineer &bull; Enterprise &amp; Distributed Systems</span>
+        </div>
+        <p class="dev-bio">
+          Senior Backend Engineer with 7+ years of experience engineering enterprise-grade banking systems, high-throughput financial pipelines, and cloud architectures on GCP. Specialist in Java (Virtual Threads), Python, Real Logic Aeron IPC, Zero-Allocation SBE, and AI-assisted developer workflows.
+        </p>
+        <div class="dev-badges">
+          <span class="dev-badge">Java 25 (Virtual Threads)</span>
+          <span class="dev-badge">Aeron IPC &amp; SBE v1</span>
+          <span class="dev-badge">Python</span>
+          <span class="dev-badge">Distributed Systems</span>
+          <span class="dev-badge">GCP Cloud Architecture</span>
+          <span class="dev-badge">AI-Native Engineering</span>
+        </div>
+        <div class="dev-actions">
+          <a href="https://abhishekraha.github.io/AbhishekRaha/" target="_blank" rel="noopener noreferrer" class="btn-dev-action btn-dev-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <line x1="10" y1="14" x2="21" y2="3"></line>
+            </svg>
+            <span>Portfolio &amp; Works</span>
+          </a>
+          <a href="https://github.com/abhishekraha" target="_blank" rel="noopener noreferrer" class="btn-dev-action btn-dev-secondary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+            </svg>
+            <span>GitHub</span>
+          </a>
+          <a href="https://www.linkedin.com/in/abhishek-raha/" target="_blank" rel="noopener noreferrer" class="btn-dev-action btn-dev-secondary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+            </svg>
+            <span>LinkedIn</span>
+          </a>
+          <a href="https://x.com/abhishek_raha_" target="_blank" rel="noopener noreferrer" class="btn-dev-action btn-dev-secondary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            <span>X (Twitter)</span>
+          </a>
+          <a href="mailto:abhishekraha0001@gmail.com" class="btn-dev-action btn-dev-secondary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <span>Contact</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Footer -->
   <footer class="site-footer">
     <div class="footer-inner">
       <div>
         <strong style="color:#ffffff;">Track My Market</strong> &mdash; Pluggable Financial Market Data Engine built with Aeron IPC & SBE v1.
-        <div style="margin-top:0.25rem;">Open source under the Apache 2.0 License.</div>
+        <div style="margin-top:0.25rem;">
+          Architected &amp; developed by <a href="https://abhishekraha.github.io/AbhishekRaha/" target="_blank" rel="noopener noreferrer" style="color:var(--accent-cyan); text-decoration:none; font-weight:600;">Abhishek Raha</a> &bull; Open source under the Apache 2.0 License.
+        </div>
       </div>
 
       <ul class="footer-links">
         <li><a href="#preview">Trading Desk</a></li>
         <li><a href="#architecture">Architecture</a></li>
         <li><a href="#quickstart">Quickstart</a></li>
-        <li><a href="https://github.com/abhishekraha/track-my-market" target="_blank" rel="noopener noreferrer">GitHub Repository</a></li>
+        <li><a href="#developer">Developer</a></li>
+        <li><a href="https://abhishekraha.github.io/AbhishekRaha/" target="_blank" rel="noopener noreferrer">Portfolio</a></li>
+        <li><a href="https://github.com/abhishekraha/track-my-market" target="_blank" rel="noopener noreferrer">GitHub</a></li>
       </ul>
     </div>
   </footer>
