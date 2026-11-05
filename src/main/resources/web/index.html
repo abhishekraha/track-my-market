@@ -361,8 +361,10 @@
     .btn-toggle-switch {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 0.4rem;
       padding: 0.25rem 0.65rem;
+      min-width: 145px;
       border-radius: 0.375rem;
       background: var(--bg-card);
       border: 1px solid var(--border-medium);
@@ -585,6 +587,7 @@
       height: 380px;
       position: relative;
       background-color: var(--bg-panel);
+      overflow: hidden;
     }
 
     .chart-axis-label {
@@ -1838,10 +1841,18 @@
     }
 
     function getTimezoneShortLabel(tz) {
+      if (!tz) return '';
+      if (tz.includes('Kolkata') || tz.includes('Calcutta') || tz === 'IST') return 'IST';
+      if (tz.includes('New_York') || tz.includes('EDT') || tz.includes('EST')) return 'ET';
+      if (tz.includes('London') || tz.includes('GMT') || tz.includes('BST')) return 'GMT';
+      if (tz.includes('Sao_Paulo')) return 'BRT';
+      if (tz.includes('Shanghai') || tz.includes('Beijing')) return 'CST';
+      if (tz.includes('Tokyo')) return 'JST';
       try {
         const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'short' }).formatToParts(new Date());
         const match = parts.find(p => p.type === 'timeZoneName');
-        return match ? match.value : tz;
+        const val = match ? match.value : tz;
+        return val.length > 6 ? val.replace(/GMT([+-]\d+).*/, '$1') : val;
       } catch (e) {
         return tz;
       }
@@ -1923,7 +1934,7 @@
       if (state.useCanvasFallback) {
         renderFallbackCanvas();
       }
-      showToast(`Timezone switched to ${state.timezoneMode.toUpperCase()} (${getTimezoneShortLabel(getEffectiveTimezone(state.activeSymbol))})`, 'info');
+      showToast(`Timezone: ${state.timezoneMode.toUpperCase()} (${getTimezoneShortLabel(getEffectiveTimezone(state.activeSymbol))})`, 'info');
     }
 
     const CURRENCY_CYCLE = ['INR', 'USD', 'EUR', 'GBP', 'BRL', 'CNY', 'JPY', 'CAD', 'AUD'];
@@ -1998,12 +2009,14 @@
     }
 
     function getChartTimeScaleOptions(symbol) {
+      const isIntraday = ['1h', '3h', '6h', '12h', '1d'].includes(state.selectedTimeframe.toLowerCase());
       return {
+        timeVisible: isIntraday,
+        secondsVisible: false,
         tickMarkFormatter: (time, tickMarkType, locale) => {
           const ts = (typeof time === 'number') ? time : (time.timestamp || (new Date(time).getTime() / 1000));
           const d = new Date(ts * 1000);
           const tz = getEffectiveTimezone(symbol);
-          const isIntraday = ['1h', '3h', '6h', '12h', '1d'].includes(state.selectedTimeframe.toLowerCase());
           if (isIntraday) {
             return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: tz, hour12: false });
           }
@@ -2015,10 +2028,39 @@
     function applyTimezoneToChart() {
       if (tvChart) {
         try {
+          const container = dom.tradingviewChart;
+          const width = container.clientWidth || 800;
+          const height = container.clientHeight || 380;
+          const isIntraday = ['1h', '3h', '6h', '12h', '1d'].includes(state.selectedTimeframe.toLowerCase());
+
+          // 1. Maintain fixed width/height so chart canvas never collapses or jumps
           tvChart.applyOptions({
-            localization: getChartLocalizationOptions(state.activeSymbol),
-            timeScale: getChartTimeScaleOptions(state.activeSymbol)
+            width: width,
+            height: height,
+            localization: getChartLocalizationOptions(state.activeSymbol)
           });
+
+          // 2. Explicitly apply timeScale options on the timeScale instance preserving spacing
+          tvChart.timeScale().applyOptions({
+            timeVisible: isIntraday,
+            secondsVisible: false,
+            rightOffset: 12,
+            barSpacing: 6,
+            ...getChartTimeScaleOptions(state.activeSymbol)
+          });
+
+          // 3. Re-feed data to series to force time-scale redraw without warping or stretching
+          if (state.activeSymbol) {
+            const rawHistory = state.chartHistory.get(state.activeSymbol) || [];
+            if (tvAreaSeries && rawHistory.length > 0) {
+              const displayPts = rawHistory.map(pt => ({
+                time: pt.time,
+                value: convertPrice(pt.value, state.activeSymbol)
+              }));
+              tvAreaSeries.setData(displayPts);
+              tvChart.timeScale().fitContent();
+            }
+          }
         } catch (e) {
           console.warn('Failed to apply chart timezone options:', e);
         }
