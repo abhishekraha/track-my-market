@@ -2666,15 +2666,6 @@
         ? new Date(q.quoteTime).toLocaleTimeString([], { timeZone: effectiveTz }) 
         : '--';
     }
-        dom.chartSymbolChange.className = 'active-symbol-change change-flat mono-num';
-      }
-
-      dom.chartIsin.textContent = q.isin || '--';
-      dom.chartSedol.textContent = q.sedol || '--';
-      dom.chartRic.textContent = q.ric || '--';
-      dom.chartProvider.textContent = q.provider || '--';
-      dom.chartLastTime.textContent = q.quoteTime ? new Date(q.quoteTime).toLocaleTimeString() : '--';
-    }
 
     // --- Table & Quote Management ---
     function updateOrAddQuote(tick) {
