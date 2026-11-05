@@ -85,6 +85,7 @@ public class MarketHttpServer {
 
         server.createContext(fullPath("/api/stream"), this::handleStream);
         server.createContext(fullPath("/api/symbols"), this::handleSymbols);
+        server.createContext(fullPath("/api/search"), this::handleSearch);
         server.createContext(baseContext, this::handleStatic);
     }
 
@@ -208,6 +209,37 @@ public class MarketHttpServer {
         } catch (IllegalArgumentException e) {
             sendError(exchange, 400, e.getMessage());
         }
+    }
+
+    private void handleSearch(HttpExchange exchange) throws IOException {
+        String method = exchange.getRequestMethod().toUpperCase();
+        if (!"GET".equals(method)) {
+            exchange.sendResponseHeaders(405, -1);
+            exchange.close();
+            return;
+        }
+
+        String path = exchange.getRequestURI().getPath();
+        String searchBase = fullPath("/api/search");
+        if (!path.equals(searchBase) && !path.equals(searchBase + "/")) {
+            sendError(exchange, 404, "Not Found");
+            return;
+        }
+
+        String query = exchange.getRequestURI().getQuery();
+        String searchTerm = "";
+        if (query != null) {
+            for (String param : query.split("&")) {
+                String[] pair = param.split("=", 2);
+                if (pair.length == 2 && "q".equalsIgnoreCase(pair[0])) {
+                    searchTerm = URLDecoder.decode(pair[1], StandardCharsets.UTF_8);
+                    break;
+                }
+            }
+        }
+
+        String json = watchlistController.handleSearchJson(searchTerm);
+        sendJson(exchange, 200, json);
     }
 
     private void sendJson(HttpExchange exchange, int statusCode, String json) throws IOException {

@@ -282,4 +282,43 @@ class YahooFinanceProviderTest {
             server.stop(0);
         }
     }
+
+    @Test
+    void shouldParseSearchResultsJson() {
+        String mockSearchJson = """
+        {
+          "count": 2,
+          "quotes": [
+            {
+              "exchange": "NSI",
+              "shortname": "TATA CONSULTANCY SERV LT",
+              "quoteType": "EQUITY",
+              "symbol": "TCS.NS",
+              "longname": "Tata Consultancy Services Limited",
+              "exchDisp": "NSE"
+            },
+            {
+              "exchange": "NSI",
+              "shortname": "TATA STEEL LIMITED",
+              "quoteType": "EQUITY",
+              "symbol": "TATASTEEL.NS",
+              "longname": "Tata Steel Limited",
+              "exchDisp": "NSE"
+            }
+          ]
+        }
+        """;
+
+        YahooFinanceProvider provider = new YahooFinanceProvider();
+        List<YahooFinanceProvider.SearchResult> results = provider.parseSearchResults(mockSearchJson);
+
+        assertThat(results).hasSize(2);
+        assertThat(results.get(0).symbol()).isEqualTo("TCS.NS");
+        assertThat(results.get(0).name()).isEqualTo("Tata Consultancy Services Limited");
+        assertThat(results.get(0).exchange()).isEqualTo("NSE");
+        assertThat(results.get(0).type()).isEqualTo("EQUITY");
+
+        assertThat(results.get(1).symbol()).isEqualTo("TATASTEEL.NS");
+        assertThat(results.get(1).name()).isEqualTo("Tata Steel Limited");
+    }
 }

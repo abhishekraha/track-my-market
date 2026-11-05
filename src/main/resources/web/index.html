@@ -439,6 +439,63 @@
       box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
       background-color: #172033;
     }
+    .search-dropdown {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-medium);
+      border-radius: 0.5rem;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
+      z-index: 1000;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+    .search-dropdown.hidden {
+      display: none;
+    }
+    .search-result-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.65rem 0.85rem;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+      transition: background 0.15s ease;
+    }
+    .search-result-item:hover, .search-result-item.active {
+      background-color: rgba(56, 189, 248, 0.15);
+    }
+    .search-result-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      text-align: left;
+    }
+    .search-result-symbol {
+      font-weight: 700;
+      color: var(--accent-blue);
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+    }
+    .search-result-name {
+      color: var(--text-dim);
+      font-size: 0.78rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 320px;
+    }
+    .search-result-badge {
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: var(--bg-main);
+      color: var(--text-muted);
+      border: 1px solid var(--border-medium);
+    }
 
     .btn-add {
       background: linear-gradient(135deg, #0284c7, #2563eb);
@@ -846,10 +903,12 @@
               type="text" 
               id="symbol-input" 
               class="search-input" 
-              placeholder="Enter stock symbol (e.g. BAJFINANCE.NS, WIPRO.NS)" 
+              placeholder="Search stock by name or symbol (e.g. Tata, Reliance, INFY.NS)" 
               required
               spellcheck="false"
+              autocomplete="off"
             />
+            <div id="search-dropdown" class="search-dropdown hidden"></div>
           </div>
           <button type="submit" id="btn-add-stock" class="btn-add">
             <span>+ Add Stock</span>
@@ -1493,8 +1552,118 @@
       addSymbol(dom.symbolInput.value);
     });
 
+    // --- Live Stock Search Autocomplete ---
+    let searchDebounceTimer = null;
+    let activeSearchIndex = -1;
+    let currentSearchResults = [];
+
     dom.symbolInput.addEventListener('input', (e) => {
-      e.target.value = e.target.value.toUpperCase();
+      clearTimeout(searchDebounceTimer);
+      const query = e.target.value.trim();
+      if (query.length < 2) {
+        hideSearchDropdown();
+        return;
+      }
+      searchDebounceTimer = setTimeout(() => executeSearch(query), 220);
+    });
+
+    dom.symbolInput.addEventListener('keydown', (e) => {
+      const dropdown = document.getElementById('search-dropdown');
+      if (!dropdown || dropdown.classList.contains('hidden') || currentSearchResults.length === 0) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        activeSearchIndex = (activeSearchIndex + 1) % currentSearchResults.length;
+        updateSearchHighlight();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        activeSearchIndex = (activeSearchIndex - 1 + currentSearchResults.length) % currentSearchResults.length;
+        updateSearchHighlight();
+      } else if (e.key === 'Enter') {
+        if (activeSearchIndex >= 0 && activeSearchIndex < currentSearchResults.length) {
+          e.preventDefault();
+          selectSearchResult(currentSearchResults[activeSearchIndex]);
+        }
+      } else if (e.key === 'Escape') {
+        hideSearchDropdown();
+      }
+    });
+
+    async function executeSearch(query) {
+      try {
+        const resp = await fetch(`./api/search?q=${encodeURIComponent(query)}`);
+        if (!resp.ok) return;
+        const results = await resp.json();
+        renderSearchResults(results);
+      } catch (err) {
+        console.warn('Search request failed', err);
+      }
+    }
+
+    function renderSearchResults(results) {
+      const dropdown = document.getElementById('search-dropdown');
+      if (!dropdown) return;
+      dropdown.innerHTML = '';
+      currentSearchResults = results || [];
+      activeSearchIndex = -1;
+
+      if (!results || results.length === 0) {
+        dropdown.innerHTML = '<div style="padding: 10px 14px; color: #64748b; font-size: 0.8rem; text-align: left;">No matching stocks found</div>';
+        dropdown.classList.remove('hidden');
+        return;
+      }
+
+      results.forEach((item) => {
+        const div = document.createElement('div');
+        div.className = 'search-result-item';
+        div.innerHTML = `
+          <div class="search-result-info">
+            <span class="search-result-symbol">${escapeHtml(item.symbol)}</span>
+            <span class="search-result-name">${escapeHtml(item.name || item.symbol)}</span>
+          </div>
+          <span class="search-result-badge">${escapeHtml(item.exchange || 'NSE')}</span>
+        `;
+        div.addEventListener('click', () => selectSearchResult(item));
+        dropdown.appendChild(div);
+      });
+
+      dropdown.classList.remove('hidden');
+    }
+
+    function updateSearchHighlight() {
+      const dropdown = document.getElementById('search-dropdown');
+      if (!dropdown) return;
+      const items = dropdown.querySelectorAll('.search-result-item');
+      items.forEach((el, idx) => {
+        if (idx === activeSearchIndex) {
+          el.classList.add('active');
+          el.scrollIntoView({ block: 'nearest' });
+        } else {
+          el.classList.remove('active');
+        }
+      });
+    }
+
+    function selectSearchResult(item) {
+      hideSearchDropdown();
+      dom.symbolInput.value = item.symbol;
+      addSymbol(item.symbol);
+    }
+
+    function hideSearchDropdown() {
+      const dropdown = document.getElementById('search-dropdown');
+      if (dropdown) {
+        dropdown.classList.add('hidden');
+        dropdown.innerHTML = '';
+      }
+      currentSearchResults = [];
+      activeSearchIndex = -1;
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search-input-wrap')) {
+        hideSearchDropdown();
+      }
     });
 
     window.addEventListener('DOMContentLoaded', () => {

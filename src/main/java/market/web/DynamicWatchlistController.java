@@ -76,6 +76,41 @@ public class DynamicWatchlistController {
         return handleGetSymbolsJson();
     }
 
+    /**
+     * Searches for matching stock instruments and returns a JSON array of search results.
+     *
+     * @param query search text
+     * @return JSON array of search results
+     */
+    public String handleSearchJson(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return "[]";
+        }
+        if (provider instanceof market.provider.yahoo.YahooFinanceProvider yahoo) {
+            try {
+                var results = yahoo.search(query).get(5, java.util.concurrent.TimeUnit.SECONDS);
+                StringBuilder sb = new StringBuilder("[");
+                for (int i = 0; i < results.size(); i++) {
+                    if (i > 0) {
+                        sb.append(",");
+                    }
+                    var r = results.get(i);
+                    sb.append("{")
+                      .append("\"symbol\":\"").append(escapeJson(r.symbol())).append("\",")
+                      .append("\"name\":\"").append(escapeJson(r.name())).append("\",")
+                      .append("\"exchange\":\"").append(escapeJson(r.exchange())).append("\",")
+                      .append("\"type\":\"").append(escapeJson(r.type())).append("\"")
+                      .append("}");
+                }
+                sb.append("]");
+                return sb.toString();
+            } catch (Exception e) {
+                return "[]";
+            }
+        }
+        return "[]";
+    }
+
     private String normalizeSymbol(String raw) {
         if (raw == null) {
             throw new IllegalArgumentException("Symbol must not be null");

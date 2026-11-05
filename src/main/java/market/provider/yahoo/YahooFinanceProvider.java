@@ -10,6 +10,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -46,6 +47,16 @@ public class YahooFinanceProvider implements MarketDataProvider {
         Pattern.compile("\"regularMarketTime\"\\s*:\\s*([0-9]+)");
 
     public record SymbolIdentifiers(String isin, String sedol, String ric) {}
+    public record SearchResult(String symbol, String name, String exchange, String type) {}
+
+    private static final Pattern QUOTE_OBJECT_PATTERN =
+        Pattern.compile("\\{[^{}]*\"symbol\"\\s*:\\s*\"[^\"]+\"[^{}]*\\}");
+    private static final Pattern SYMBOL_PATTERN = Pattern.compile("\"symbol\"\\s*:\\s*\"([^\"]+)\"");
+    private static final Pattern LONGNAME_PATTERN = Pattern.compile("\"longname\"\\s*:\\s*\"([^\"]+)\"");
+    private static final Pattern SHORTNAME_PATTERN = Pattern.compile("\"shortname\"\\s*:\\s*\"([^\"]+)\"");
+    private static final Pattern EXCH_DISP_PATTERN = Pattern.compile("\"exchDisp\"\\s*:\\s*\"([^\"]+)\"");
+    private static final Pattern EXCHANGE_PATTERN = Pattern.compile("\"exchange\"\\s*:\\s*\"([^\"]+)\"");
+    private static final Pattern QUOTE_TYPE_PATTERN = Pattern.compile("\"quoteType\"\\s*:\\s*\"([^\"]+)\"");
 
     private final String baseUrl;
     private final Duration pollInterval;
@@ -371,5 +382,79 @@ public class YahooFinanceProvider implements MarketDataProvider {
 
     public Double getLastPrice(String symbol) {
         return lastPrices.get(symbol);
+    }
+
+    public List<SearchResult> parseSearchResults(String json) {
+        if (json == null || json.isBlank()) {
+            return Collections.emptyList();
+        }
+        List<SearchResult> results = new ArrayList<>();
+        Matcher matcher = QUOTE_OBJECT_PATTERN.matcher(json);
+        while (matcher.find()) {
+            String quoteBlock = matcher.group();
+            Matcher symM = SYMBOL_PATTERN.matcher(quoteBlock);
+            if (!symM.find()) {
+                continue;
+            }
+            String symbol = symM.group(1);
+
+            String name = symbol;
+            Matcher longM = LONGNAME_PATTERN.matcher(quoteBlock);
+            if (longM.find()) {
+                name = longM.group(1);
+            } else {
+                Matcher shortM = SHORTNAME_PATTERN.matcher(quoteBlock);
+                if (shortM.find()) {
+                    name = shortM.group(1);
+                }
+            }
+
+            String exchange = "NSE";
+            Matcher exchDispM = EXCH_DISP_PATTERN.matcher(quoteBlock);
+            if (exchDispM.find()) {
+                exchange = exchDispM.group(1);
+            } else {
+                Matcher exchM = EXCHANGE_PATTERN.matcher(quoteBlock);
+                if (exchM.find()) {
+                    exchange = exchM.group(1);
+                }
+            }
+
+            String type = "EQUITY";
+            Matcher typeM = QUOTE_TYPE_PATTERN.matcher(quoteBlock);
+            if (typeM.find()) {
+                type = typeM.group(1);
+            }
+
+            results.add(new SearchResult(symbol, name, exchange, type));
+        }
+        return results;
+    }
+
+    public CompletableFuture<List<SearchResult>> search(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return CompletableFuture.completedFuture(Collections.emptyList());
+        }
+        String cleanQuery = query.trim();
+        String encodedQuery = URLEncoder.encode(cleanQuery, StandardCharsets.UTF_8);
+        String searchUrl = baseUrl + "/v1/finance/search?q=" + encodedQuery + "&quotesCount=8&newsCount=0";
+
+        HttpClient client = (this.httpClient != null) ? this.httpClient : HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(searchUrl))
+            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) track-my-market/1.0")
+            .header("Accept", "application/json")
+            .timeout(Duration.ofSeconds(5))
+            .GET()
+            .build();
+
+        return client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+            .thenApply(response -> {
+                if (response.statusCode() == 200) {
+                    return parseSearchResults(response.body());
+                }
+                return Collections.<SearchResult>emptyList();
+            })
+            .exceptionally(ex -> Collections.emptyList());
     }
 }

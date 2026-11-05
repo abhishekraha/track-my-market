@@ -264,4 +264,17 @@ class MarketHttpServerTest {
             slashServer.stop();
         }
     }
+
+    @Test
+    @DisplayName("Should serve search API under context path")
+    void shouldServeSearchEndpoint() throws Exception {
+        HttpRequest req = HttpRequest.newBuilder()
+            .uri(URI.create("http://127.0.0.1:" + server.getPort() + "/market/api/search?q=test"))
+            .GET()
+            .build();
+        HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
+        assertThat(resp.statusCode()).isEqualTo(200);
+        assertThat(resp.headers().firstValue("Content-Type").orElse("")).contains("application/json");
+        assertThat(resp.body()).startsWith("[").endsWith("]");
+    }
 }
