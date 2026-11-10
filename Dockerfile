@@ -1,9 +1,15 @@
+FROM eclipse-temurin:25-jdk AS build
+
+WORKDIR /app
+
+COPY . .
+RUN chmod +x gradlew && ./gradlew --no-daemon installDist
+
 FROM eclipse-temurin:25-jre
 
 WORKDIR /app
 
-# Copy pre-built application distribution
-COPY build/install/track-my-market/ ./
+COPY --from=build /app/build/install/track-my-market/ ./
 
 # Expose web dashboard port
 EXPOSE 8080

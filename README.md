@@ -101,7 +101,7 @@ cd track-my-market
 docker compose up -d --build
 
 # 3. Access the trading desk
-# Nginx Reverse Proxy (Gzip + Ingress): http://localhost:8081/
+# Nginx Reverse Proxy (Gzip + Ingress): http://localhost:8082/
 # Direct High-Throughput Java Engine:    http://localhost:8080/
 ```
 
